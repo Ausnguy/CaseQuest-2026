@@ -95,7 +95,18 @@ Rule: an alert is a Valid, Running reading above a multiple of the asset's norma
 
 **Treat as feasibility, not proof.** Detection and precision near 1.00 are far cleaner than published field results (Navy studies cited by NASA: detection 0.76-0.92, false-alarm rate 0.08), which indicates a generated signal. The backtest does not validate the Solutions reduction fractions. A 2-day median lead on daily snapshots is only 2-3 data points (NASA asks for at least 3 to confirm a trend). Precision counts an unplanned event of any cause within 7 days as a hit.
 
-Caveats: synthetic scenario data with daily 06:00 snapshots; Dictionary says daily sampling cannot establish production-grade predictive accuracy. Signals exist only for mechanical causes (bearing, seal), matching O1's eligible causes. Arroyo (S04) had 12% of pre-failure readings missing and 6% delayed, the worst of any site.
+Caveats: synthetic scenario data with daily 06:00 snapshots; Dictionary says daily sampling cannot establish production-grade predictive accuracy. Signals exist only for mechanical causes (bearing, seal), matching O1's eligible causes.
+
+Readings in the 7 days before bearing/seal failures, by site (missing = quality Missing; delayed = received > 1 h after observation):
+
+| site_id | readings | missing_pct | delayed_pct |
+|---|---|---|---|
+| S01 | 168 | 1.2 | 0.0 |
+| S02 | 256 | 5.9 | 0.0 |
+| S03 | 159 | 3.1 | 0.0 |
+| S04 | 264 | 12.1 | 6.4 |
+| S05 | 137 | 2.2 | 0.0 |
+| S06 | 210 | 4.8 | 0.0 |
 
 ## 3. MODELED: candidate strategies (full steady-state year, base fractions)
 
@@ -109,7 +120,7 @@ Rules applied: eligible causes and asset types only; overlapping options multipl
 | D. Mechanical refurbishment (O5), all 12 pumps | 488 | 7.4% | 293-634 | $390,806 | $563,500 | $19,500 | 4 | 72 | none |
 | E. Hybrid: O4 + O3, all sites | 1,527 | 23.1% | 844-1,988 | $1,322,277 | $464,520 | $65,700 | 3 | 0 | S04 (+12 h) |
 | F. Hybrid: O4 all sites + O1 all assets | 1,657 | 25.1% | 929-2,125 | $1,416,420 | $629,240 | $126,300 | 5 | 0 | S04 (+44 h) |
-| G. Hybrid: O4 all sites + O1 on top-6 assets (A005, A006, A010, A011, A012, A017) | 1,297 | 19.6% | 739-1,645 | $1,129,185 | $447,240 | $72,300 | 5 | 0 | S04 (+44 h) |
+| G. Hybrid: O4 all sites + O1 on top-6 assets (A005, A006, A010, A011, A012, A017) | 1,297 | 19.6% | 739-1,645 | $1,129,185 | $448,090 | $72,300 | 5 | 0 | S04 (+54 h) |
 | H. Digital: O1 all assets + O3 all sites | 1,182 | 17.9% | 625-1,570 | $998,674 | $595,875 | $147,300 | 5 | 0 | S02 (+10 h), S04 (+56 h), S06 (+9 h) |
 
 Every strategy covering S02, S04 or S06 is gated: those sites cannot start a pilot until their open severity-5 HSE actions are verified closed.
@@ -132,7 +143,7 @@ Cost lines:
 | item | units | upfront_usd | annual_usd | note |
 |---|---|---|---|---|
 | O1 Condition monitoring | 18 | 216,000.0 | 75,600.0 | per asset |
-| O2 Data integration and alert platform (prerequisite for O1) | 1 | 40,000.0 | 18,000.0 | once per organization; install hours shared across sites |
+| O2 Data integration and alert platform (prerequisite for O1) | 1 | 40,000.0 | 18,000.0 | once per organization; install hours split across S01, S02, S03, S04, S05, S06 |
 | O6 Digital training (prerequisite) | 6 | 36,000.0 | 7,200.0 | technicians x training hours, once per site |
 | Site data cleanup (prerequisite) | 6 | 68,000.0 | 0.0 | Assets.cleanup_setup_usd per site |
 | Edge buffering (prerequisite, uptime < 97%) | 2 | 38,000.0 | 6,000.0 | S02, S04 |
@@ -188,7 +199,7 @@ Cost lines:
 |---|---|---|---|---|
 | O4 Critical spare parts program | 6 | 168,000.0 | 18,000.0 | per site |
 | O1 Condition monitoring | 18 | 216,000.0 | 75,600.0 | per asset |
-| O2 Data integration and alert platform (prerequisite for O1) | 1 | 40,000.0 | 18,000.0 | once per organization; install hours shared across sites |
+| O2 Data integration and alert platform (prerequisite for O1) | 1 | 40,000.0 | 18,000.0 | once per organization; install hours split across S01, S02, S03, S04, S05, S06 |
 | O6 Digital training (prerequisite) | 6 | 36,000.0 | 7,200.0 | technicians x training hours, once per site |
 | Site data cleanup (prerequisite) | 6 | 68,000.0 | 0.0 | Assets.cleanup_setup_usd per site |
 | Edge buffering (prerequisite, uptime < 97%) | 2 | 38,000.0 | 6,000.0 | S02, S04 |
@@ -205,12 +216,12 @@ Cost lines:
 |---|---|---|---|---|
 | O4 Critical spare parts program | 6 | 168,000.0 | 18,000.0 | per site |
 | O1 Condition monitoring | 6 | 72,000.0 | 25,200.0 | per asset |
-| O2 Data integration and alert platform (prerequisite for O1) | 1 | 40,000.0 | 18,000.0 | once per organization; install hours shared across sites |
+| O2 Data integration and alert platform (prerequisite for O1) | 1 | 40,000.0 | 18,000.0 | once per organization; install hours split across S02, S04, S06 |
 | O6 Digital training (prerequisite) | 3 | 18,000.0 | 3,600.0 | technicians x training hours, once per site |
 | Site data cleanup (prerequisite) | 3 | 48,000.0 | 0.0 | Assets.cleanup_setup_usd per site |
 | Edge buffering (prerequisite, uptime < 97%) | 2 | 38,000.0 | 6,000.0 | S02, S04 |
 | Open HSE corrective actions at in-scope sites | 11 | 59,500.0 | 1,500.0 | required before or alongside rollout; severity-5 items gate the pilot |
-| Additional implementation help (assumption) | 44 | 3,740.0 | 0.0 | shortfall hours x $85/h |
+| Additional implementation help (assumption) | 54 | 4,590.0 | 0.0 | shortfall hours x $85/h |
 
 Avoided hours by site (base): S01 66, S02 292, S03 53, S04 575, S05 117, S06 194
 
@@ -222,7 +233,7 @@ Cost lines:
 |---|---|---|---|---|
 | O1 Condition monitoring | 18 | 216,000.0 | 75,600.0 | per asset |
 | O3 Work order workflow | 6 | 132,000.0 | 39,000.0 | per site |
-| O2 Data integration and alert platform (prerequisite for O1) | 1 | 40,000.0 | 18,000.0 | once per organization; install hours shared across sites |
+| O2 Data integration and alert platform (prerequisite for O1) | 1 | 40,000.0 | 18,000.0 | once per organization; install hours split across S01, S02, S03, S04, S05, S06 |
 | O6 Digital training (prerequisite) | 6 | 36,000.0 | 7,200.0 | technicians x training hours, once per site |
 | Site data cleanup (prerequisite) | 6 | 68,000.0 | 0.0 | Assets.cleanup_setup_usd per site |
 | Edge buffering (prerequisite, uptime < 97%) | 2 | 38,000.0 | 6,000.0 | S02, S04 |

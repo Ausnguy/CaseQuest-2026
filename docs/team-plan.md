@@ -22,8 +22,8 @@
 | 1 | Hook: the cost of downtime at Lone Mesa | Aayan | 0:30 | Problem 15 |
 | 2 | Where the downtime comes from (cause × stage × site) | Austin | 0:45 | Data 20 |
 | 3 | What we checked: data cleaning, reconciliation, early-warning backtest | Austin | 0:40 | Data 20, Bonus 5 |
-| 4 | Our recommendation (one primary plus required supports) | Nick | 0:45 | Recommendation 10 |
-| 5 | Costs, resources and avoided hours (modeled, labeled) | Nick | 0:40 | Costs 10 |
+| 4 | Our recommendation (one primary plus required supports) | Nick | 0:45 | Recommendation, costs & resources 10 |
+| 5 | Costs, resources and avoided hours (modeled, labeled) | Nick | 0:40 | Recommendation, costs & resources 10 |
 | 6 | Live demo: how an employee uses it | Wali | 1:15 | Tech 20 |
 | 7 | Architecture and workflow visual | Wali | 0:30 | Tech 20 |
 | 8 | HSE gate and responsible use (humans approve; no bypass) | Sidra | 0:45 | HSE 15 |
@@ -47,7 +47,7 @@
 
 ## Q&A prep: everyone must be able to answer
 - Why this problem and not another? (Show the numbers.)
-- How did you clean the data? (38 checks; nothing invented; unknowns stay unknown.)
+- How did you clean the data? (39 checks; nothing invented; unknowns stay unknown.)
 - Are the savings real? (They're modeled using the case's own reduction fractions. First-year results will be lower.)
 - What stops someone using this to skip safety? (The HSE gate is a hard block; humans approve every action.)
 - What happens if a sensor is wrong or offline? (Alerts are advisory, and manual inspection routes remain.)

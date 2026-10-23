@@ -4,7 +4,7 @@
 **Inputs:**
 - [phase-3-fact-pack.md](phase-3-fact-pack.md): observed baseline and modeled strategies
 - [research-external.md](research-external.md): OSHA, NIOSH, DOE, NASA, NIST, CISA and GAO evidence
-- three independent graders (fresh Sonnet agents, identical instructions, blind to our preferences)
+- three **AI grader agents** (fresh Sonnet contexts, identical instructions, blind to our preference). This is internal decision support, **not** human judges; record in [grader-reports.md](grader-reports.md)
 
 > **Like I'm 5:** Three judges each tasted all 8 medicines on their own, without knowing which one we liked. All three picked the same favorite.
 
@@ -22,7 +22,7 @@
 | D. Refurbishment (O5) | 54 | 48 | 53 | 51.7 | 8 |
 
 - **#1 pick:** A, from all three graders, each recommending a **gate-first, phased rollout**.
-- **#2 pick:** G, G and B.
+- **#2 pick:** G, G, and B (grader 3 had B and G tied at 84).
 - **Confidence:** medium, from all three.
 
 ## 2. Why A wins (points all three graders raised)
@@ -30,7 +30,7 @@
 1. **Best evidence-to-claim fit.**
    - At each site, the share of breakdowns that wait for parts ≈ 1 − spare-fill %. Arroyo is 56% vs 58%; Juniper is 10% vs 8%; r ≈ −0.99 across the 6 sites.
    - When parts are missing, the wait is long (about 16–18 h) whatever the cause.
-   - O4 is the only option that helps **every** failure cause.
+   - O4 is the only option that cuts **parts-wait**, and it applies to every failure cause (O3 also covers all causes, but only detect and dispatch).
 2. **Best economics, lowest delivery risk.**
    - $235 upfront per avoided hour, versus $304–$1,155 for the others.
    - 1 month to commission, no prerequisites, no site over its project-hour budget.
@@ -50,7 +50,7 @@
 - **The monitoring half is slow and fully gated.**
   - O1 needs the data platform first: about 5 months to commission.
   - In G, every monitored asset sits at a blocked site.
-  - NASA notes that new predictive programs typically **raise** cost for 2–3 years before saving.
+  - NASA's RCM guide notes that a new RCM program typically **raises** cost for 2–3 years before saving (§3.5.3).
 - **More build in 6 hours, more to explain in 7 minutes.**
 
 ## 4. Red flags graders found, and what we did
@@ -60,7 +60,7 @@
 | Sensor backtest is "too clean" (≈100% detection, no false alarms vs Navy field rates of 0.76–0.92 detection and 0.08 false alarms) | Relabeled **feasibility, not proof** in the fact pack. It will never be presented as validating savings. |
 | "Held-out" second half wasn't truly held out | Wording corrected |
 | Lead time ignored the prerequisite chain | Fixed: O1 = 5 months, O3 = 3, O4 = 1 (tested) |
-| Only steady-state benefit shown; ReadMe asks about first year | To add in the roadmap: **A ≈ 634–791 h in year 1**, depending on how fast the gate is verified |
+| Only steady-state benefit shown; ReadMe asks about first year | Added (`roadmap.py`): **A = 666 h in year 1** if closures are verified by month 3 (483–788 h for month 6 to month 1) |
 | Uniform 60% parts-wait cut is generous at Cedar and Juniper, which already rarely wait | Present a range. Optionally show "core 4 sites" (849 h, $167.5k upfront) |
 | HSE cost bundle hidden inside totals | Show separately: "HSE backlog, needed regardless" |
 | $85/h extra-help rate is an internal rate | Labeled an assumption |
@@ -143,27 +143,41 @@
   - emergency-maintenance share, target < 10% (DOE FEMP Table 3.1.1)
 
 ### App feature: sensor-aware parts readiness (decision support only)
-- **What it reads:** the **existing** daily readings and operator notes, received data only.
-- **When it flags:** any valid running reading in the last 7 days above 1.3× the asset's normal vibration, or an "abnormal noise" note. The flag suggests pre-staging a bearing/seal kit.
-- **Workload:** about 4 assets flagged per week across the fleet.
-- **Guardrails:**
-  - A planner approves, edits or rejects every flag, with a reason, and decisions are logged.
-  - A flag never authorizes work and never touches LOTO, permits or restart.
-  - Suspect and missing readings are ignored, and data gaps are shown.
-- **Claims:** no downtime reduction is claimed from this feature. In the case's own backtest the signal preceded every bearing and seal failure, but that is synthetic and *feasibility, not proof*.
+
+**Scope boundary.** This is what keeps the ask to one primary.
+- **In the ask (Phase 1):**
+  - The parts console is the planner's working view of the **O4 program**: inventory audit, stock-out risk, pre-staging decisions and the HSE gate.
+  - Readiness flags are computed from the **existing daily readings export**. The company already receives these snapshots centrally (`received_utc`), so this is a batch file, exactly like the prototype.
+  - **No new integration, no historian connection and no automated alerts.**
+  - *Assumption:* setting up the console is part of O4's program setup (20 install person-hours per site). It is not a Solutions-sheet option.
+- **Not in the ask:**
+  - Live integration with the ERP/CMMS and the sensor historian, plus automated alerting. That is **O2 "Data integration and alert platform"** ($40,000 upfront + $18,000/yr), and it sits in the costed Phase 2.
+  - **Sensitivity:** if Lone Mesa wanted live integration in Phase 1, the ask would rise to **$267,500 upfront and $37,500/yr**, with no extra modeled hours.
+
+**How flags work**
+- **What triggers a flag:** any **valid, running** reading in the last 7 days above 1.3× the asset's normal vibration, or an operator "abnormal noise" note. Notes count whatever the sensor quality flag says that day, because they are human observations.
+- **What the flag says:** pre-stage a bearing/seal kit.
+- **Workload:** about 4 assets flagged per weekly snapshot across the fleet. The range is 0–14 in 2025.
+
+**Guardrails**
+- A planner approves, edits or rejects every flag, with a reason, and decisions are logged.
+- A flag never authorizes work and never touches LOTO, permits or restart.
+- Suspect and missing readings are never used as vibration evidence, and data gaps are shown.
+
+**Claims.** No downtime reduction is claimed from this feature. In the case's own backtest the signal preceded every bearing and seal failure, but that data is synthetic: *feasibility, not proof*.
 
 ### Phase 2 (roadmap, costed, NOT part of the ask): condition monitoring at Arroyo
 
 | | Value |
 |---|---|
-| Scope | O1 on A010, A011, A012, plus required O2 platform, O6 training, Arroyo cleanup, Arroyo edge buffering (92.8% uptime) |
+| Scope | O1 on A010, A011, A012, plus required O2 platform (which also brings live integration and alerting for the console), O6 training, Arroyo cleanup, Arroyo edge buffering (92.8% uptime) |
 | Incremental benefit (modeled, steady state) | **+188 h/yr** (bearing and seal causes only) |
-| Incremental cost | **+$129,740 upfront, +$35,300/yr** |
+| Incremental cost | **+$133,990 upfront, +$35,300/yr** (incl. $7,990 assumed help at $85/h) |
 | Time to commission | 5 months (O2 platform, then O1) |
-| Resources | Arroyo needs 164 h vs 120 available: **+44 h of help** (assumed $85/h) |
-| Go/no-go at month 6 of Phase 1 | (1) Arroyo's sev-5 actions verified closed; (2) O4 live at Arroyo with parts-wait per event falling; (3) readiness-flag precision and planner override rate acceptable on real data; (4) staffing for the 44 h gap confirmed |
+| Resources | Arroyo needs 214 h vs 120 available: **+94 h of help** (assumed $85/h). O2's 60 install hours are charged to Arroyo, the only site using it, which is the conservative choice |
+| Go/no-go at month 6 of Phase 1 | (1) Arroyo's sev-5 actions verified closed; (2) O4 live at Arroyo with parts-wait per event falling; (3) readiness-flag precision and planner override rate acceptable on real data; (4) staffing for the 94 h gap confirmed |
 
-NASA notes that new predictive programs typically cost more for 2–3 years before saving. That's why this is a gated Phase 2 and not part of the ask.
+NASA's RCM guide notes that a new RCM program typically costs more for 2–3 years before saving (§3.5.3). Condition monitoring is a core RCM technology, so this is a gated Phase 2 and not part of the ask.
 
 ### Safety considerations
 - O4 never compresses detect, dispatch, repair or restart. LOTO verification, gas monitoring, no lone work near tanks, and controlled restart are untouched (29 CFR 1910.147; NIOSH/OSHA 2016-108).

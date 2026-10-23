@@ -69,7 +69,7 @@ def test_readiness_ignores_suspect_spikes(data):
     flags = readiness_flags(data, as_of).set_index("asset_id")
     others = data.readings[(data.readings["asset_id"] == suspect["asset_id"]) & (data.readings["received_utc"] <= as_of)
                            & (data.readings["observed_utc"] > as_of - pd.Timedelta(days=7)) & (data.readings["quality"] == "Valid")]
-    assert flags.loc[suspect["asset_id"], "max_vibration"] >= suspect["vibration_mm_s"]  # shown for context
+    assert flags.loc[suspect["asset_id"], "max_valid_vibration"] < suspect["vibration_mm_s"]  # spike not displayed as evidence
     normal = data.assets.set_index("asset_id").loc[suspect["asset_id"], "vibration_normal_mm_s"]
     expected_alerts = int(((others["vibration_mm_s"] > 1.3 * normal) & (others["operating_state"] == "Running")).sum())
     assert flags.loc[suspect["asset_id"], "vibration_alerts"] == expected_alerts
@@ -81,3 +81,22 @@ def test_kpi_baselines_match_events(data):
     assert k["unplanned_events"].sum() == 313
     assert k.loc["S04", "share_events_waiting_for_parts"] == pytest.approx(38 / 68)
     assert k["overdue_critical_hse_actions"].sum() == 6
+
+
+def test_flag_never_hidden_behind_displayed_vibration(data):
+    # Whenever the displayed (valid) max exceeds 1.3x normal on a running reading, the asset must be flagged.
+    normal = data.assets.set_index("asset_id")["vibration_normal_mm_s"]
+    for as_of in pd.date_range("2025-02-01 07:00", "2025-12-31 07:00", freq="14D"):
+        f = readiness_flags(data, as_of).set_index("asset_id")
+        over = f["max_valid_vibration"] > 1.3 * normal
+        # Valid-but-Stopped readings are 0.0, so any valid value over the threshold is a running reading.
+        assert f.loc[over, "flag"].all(), as_of
+
+
+def test_o2_install_hours_charged_to_monitoring_sites(data):
+    events = enrich_events(data)
+    from casequest.options import sites_to_assets
+    r = model_plan(data, events, Plan("ph2", {"O4": tuple(data.assets["asset_id"]), "O1": sites_to_assets(data, ["S04"])}))
+    res = r.site_resources.set_index("site_id")
+    assert res.loc["S04", "required_hours"] == 20 + 24 + 3 * 18 + 60 + 2 * 28  # O4 + HSE + O1 + O2 + O6 training
+    assert res.loc["S01", "required_hours"] == 20 + 8

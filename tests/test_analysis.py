@@ -56,11 +56,16 @@ def test_protected_repair_time_is_never_reduced(data, events, all_assets):
 
 
 def test_overlapping_options_multiply_not_add(data, events, all_assets):
-    # O1 and O3 both reduce detection; combined detect remaining must be (1-0.6)(1-0.2), not 1-0.8
+    # O1 (detect 0.6, repair 0.25) + O3 (detect 0.2, dispatch 0.3) on a bearing event:
+    # detect keeps (1-0.6)(1-0.2) = 0.32, so avoids 0.68 (an additive bug would avoid 0.80).
     r = model_plan(data, events, Plan("O1+O3", {"O1": all_assets, "O3": all_assets}))
     ev = r.events[r.events["cause"] == "Bearing wear"].iloc[0]
-    remaining_detect = ev["detect_hours"] * 0.4 * 0.8
-    assert ev["avoided_hours"] >= ev["detect_hours"] - remaining_detect - 1e-9
+    expected = (
+        ev["detect_hours"] * (1 - 0.4 * 0.8)
+        + ev["dispatch_hours"] * 0.3
+        + (ev["repair_hours"] - ev["protected_repair_hours"]) * 0.25
+    )
+    assert ev["avoided_hours"] == pytest.approx(expected)
 
 
 def test_o1_pulls_in_prerequisites_once(data, events, all_assets):

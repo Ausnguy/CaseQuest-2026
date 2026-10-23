@@ -32,6 +32,15 @@ def candidate_plans(data: CleanData, events: pd.DataFrame) -> list[Plan]:
     ]
 
 
+def _pre_failure_gaps(data: CleanData, events: pd.DataFrame) -> pd.DataFrame:
+    mech = events[(events["event_type"] == "Unplanned") & events["cause"].isin(["Bearing wear", "Seal leak"])]
+    pairs = mech[["asset_id", "start_utc"]].merge(data.readings[["asset_id", "observed_utc", "quality", "delayed_ingest"]].reset_index(), on="asset_id")
+    window = pairs[(pairs["observed_utc"] < pairs["start_utc"]) & (pairs["observed_utc"] >= pairs["start_utc"] - pd.Timedelta(days=7))]
+    window = window.drop_duplicates("index").merge(data.assets[["asset_id", "site_id"]], on="asset_id")
+    out = window.groupby("site_id").agg(readings=("index", "count"), missing_pct=("quality", lambda s: 100 * (s == "Missing").mean()), delayed_pct=("delayed_ingest", lambda s: 100 * s.mean()))
+    return out.reset_index()
+
+
 def _money(v: float) -> str:
     return f"${v:,.0f}"
 
@@ -117,7 +126,11 @@ def build() -> str:
         "",
         "**Treat as feasibility, not proof.** Detection and precision near 1.00 are far cleaner than published field results (Navy studies cited by NASA: detection 0.76-0.92, false-alarm rate 0.08), which indicates a generated signal. The backtest does not validate the Solutions reduction fractions. A 2-day median lead on daily snapshots is only 2-3 data points (NASA asks for at least 3 to confirm a trend). Precision counts an unplanned event of any cause within 7 days as a hit.",
         "",
-        "Caveats: synthetic scenario data with daily 06:00 snapshots; Dictionary says daily sampling cannot establish production-grade predictive accuracy. Signals exist only for mechanical causes (bearing, seal), matching O1's eligible causes. Arroyo (S04) had 12% of pre-failure readings missing and 6% delayed, the worst of any site.",
+        "Caveats: synthetic scenario data with daily 06:00 snapshots; Dictionary says daily sampling cannot establish production-grade predictive accuracy. Signals exist only for mechanical causes (bearing, seal), matching O1's eligible causes.",
+        "",
+        "Readings in the 7 days before bearing/seal failures, by site (missing = quality Missing; delayed = received > 1 h after observation):",
+        "",
+        _table(_pre_failure_gaps(data, events)),
         "",
         "## 3. MODELED: candidate strategies (full steady-state year, base fractions)",
         "",
@@ -149,7 +162,7 @@ def build() -> str:
 
 
 def main() -> int:
-    (DOCS_DIR / "phase-3-fact-pack.md").write_text(build())
+    (DOCS_DIR / "phase-3-fact-pack.md").write_text(build(), encoding="utf-8", newline="\n")
     print(f"Wrote {DOCS_DIR / 'phase-3-fact-pack.md'}")
     return 0
 

@@ -110,7 +110,7 @@ def model_plan(data: CleanData, enriched_events: pd.DataFrame, plan: Plan) -> Pl
 
     cost_lines, site_resources = _costs_and_resources(data, solutions, plan)
     scope_sites = set(site_resources["site_id"])
-    blocked = sorted(set(data.hse.loc[data.hse["blocks_pilot"], "site_id"]) & scope_sites)
+    blocked = sorted(set(data.sites.loc[data.sites["pilot_blocked"], "site_id"]) & scope_sites)
     asset_type = data.assets.set_index("asset_id")["asset_type"]
     o5_assets = [a for a in plan.scope.get("O5", ()) if asset_type[a] in _split(solutions.loc["O5", "applicable_types"])]
     lead = critical_path_months(solutions, _all_options(plan))
@@ -191,8 +191,10 @@ def _costs_and_resources(data: CleanData, solutions: pd.DataFrame, plan: Plan) -
 
     if "O1" in deployed or "O2" in deployed:
         o2 = solutions.loc["O2"]
-        share = o2["install_person_hours"] / len(scope_sites)
-        add("O2 Data integration and alert platform (prerequisite for O1)", 1, o2["setup_usd"], o2["annual_usd"], {s: share for s in scope_sites}, "once per organization; install hours shared across sites")
+        # Conservative allocation: O2 install hours land on the sites that actually use the platform (O1 sites).
+        o2_sites = monitored_sites or scope_sites
+        share = o2["install_person_hours"] / len(o2_sites)
+        add("O2 Data integration and alert platform (prerequisite for O1)", 1, o2["setup_usd"], o2["annual_usd"], {s: share for s in o2_sites}, f"once per organization; install hours split across {', '.join(o2_sites)}")
     if prereq_sites or "O6" in deployed:
         o6 = solutions.loc["O6"]
         o6_sites = sorted(set(prereq_sites) | set(sites_for.get("O6", [])))
@@ -204,7 +206,8 @@ def _costs_and_resources(data: CleanData, solutions: pd.DataFrame, plan: Plan) -
     if edge_sites:
         add("Edge buffering (prerequisite, uptime < 97%)", len(edge_sites), float(sites.loc[edge_sites, "edge_setup_usd"].sum()), float(sites.loc[edge_sites, "edge_annual_usd"].sum()), note=", ".join(edge_sites))
 
-    open_hse = data.hse[(data.hse["action_status"] == "Open") & data.hse["site_id"].isin(scope_sites)]
+    hse_site = data.hse["asset_id"].map(site_of)  # site derived from the asset, as in the HSE gate
+    open_hse = data.hse[(data.hse["action_status"] == "Open") & hse_site.isin(scope_sites)].assign(site_id=hse_site)
     if not open_hse.empty:
         add(
             "Open HSE corrective actions at in-scope sites",

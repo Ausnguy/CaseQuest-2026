@@ -88,18 +88,20 @@ def readiness_flags(data: CleanData, as_of: pd.Timestamp) -> pd.DataFrame:
     """Advisory 'pre-stage a bearing/seal kit' flags per asset, using only readings received by `as_of`.
 
     This is decision support for the spare-parts planner. It claims no downtime reduction, never authorizes
-    work, and a qualified person reviews every flag. Suspect and Missing readings are ignored.
+    work, and a qualified person reviews every flag. Vibration evidence uses Valid, Running readings only (Suspect
+    and Missing are ignored). Operator "abnormal noise" notes are a human observation, so they count whatever the
+    sensor quality flag on that day.
     """
     r = data.readings
     window = r[(r["received_utc"] <= as_of) & (r["observed_utc"] > as_of - pd.Timedelta(days=READINESS_LOOKBACK_DAYS))]
     vib_alert = vibration_alerts(data, READINESS_MULTIPLE).loc[window.index]
     noise = window["inspection_note"].eq(NOISE_NOTE)
-    window = window.assign(vib_alert=vib_alert, noise=noise)
+    window = window.assign(vib_alert=vib_alert, noise=noise, valid_vibration=window["vibration_mm_s"].where(window["quality"] == "Valid"))
     by_asset = window.groupby("asset_id").agg(
         readings_received=("reading_id", "count"),
         vibration_alerts=("vib_alert", "sum"),
         noise_notes=("noise", "sum"),
-        max_vibration=("vibration_mm_s", "max"),
+        max_valid_vibration=("valid_vibration", "max"),
         last_received=("received_utc", "max"),
     )
     out = data.assets.set_index("asset_id")[["site_id", "asset_type", "criticality", "vibration_normal_mm_s"]].join(by_asset)

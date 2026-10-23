@@ -63,7 +63,7 @@ Roles are picked from a dropdown in the demo. **Production would use company SSO
 | R1 | A site with any sev-5 action not yet verified as closed shows HOLD, and nothing in the app can switch it to ELIGIBLE | Unit test on the gate function; try to approve as a Planner |
 | R2 | Only the Site HSE supervisor role can record a verified closure, and only for their chosen site's actions | Role test |
 | R3 | A closure needs a name, a date no later than today, and an evidence note | Form validation test |
-| R4 | Readiness flags use **only received** readings and ignore Suspect and Missing readings | Already tested in `tests/test_recommendation.py` |
+| R4 | Readiness flags use **only received** readings. Vibration evidence uses Valid, Running readings only; operator notes count as human observations | Tested in `tests/test_recommendation.py` |
 | R5 | Every approve, edit, reject or verification is appended to the log with time, role, name and reason. **The log is never edited** | Log test |
 | R6 | The app never writes to the raw workbook or the processed CSVs. Decisions go to a separate append-only file | File-hash test |
 | R7 | If the data fails to load or checks fail, the app shows an error and **every site defaults to HOLD** (fails closed) | Simulated failure test |
@@ -83,8 +83,14 @@ CaseQuest2026Dataset.xlsx (raw, read-only, SHA-256 pinned)
                        └─ data/app_state/decisions.jsonl (append-only audit log, git-ignored)
 ```
 
-**Production architecture** (what Lone Mesa would run; on the slide, not built):
-- **Inputs:** the ERP/CMMS inventory and work orders, the sensor historian, and site edge buffers (for Phase 2).
+**Production architecture, Phase 1** (in the ask; same shape as the prototype):
+- **Inputs:** the existing daily readings export, Events/work-order export and HSE register, as batch files.
+- **Pipeline:** the same cleaning and checks run nightly.
+- **App:** the same console, with company SSO roles.
+- **No new integration and no automated alerts.** Console setup is assumed part of the O4 program setup.
+
+**Production architecture, Phase 2** (costed, gated, not in the ask). Adds O2 "Data integration and alert platform":
+- **Inputs:** the ERP/CMMS inventory and work orders, the sensor historian, and the Arroyo edge buffer.
 - **Pipeline:** the same cleaning and checks run nightly.
 - **App:** the same rules engine, with SSO roles.
 - **Alerts** go into the existing change-management process (CISA/NSA AI-in-OT guidance: passive recommendations, human decides).
