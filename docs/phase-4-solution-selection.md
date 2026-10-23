@@ -153,6 +153,7 @@
 - **Not in the ask:**
   - Live integration with the ERP/CMMS and the sensor historian, plus automated alerting. That is **O2 "Data integration and alert platform"** ($40,000 upfront + $18,000/yr), and it sits in the costed Phase 2.
   - **Sensitivity:** if Lone Mesa wanted live integration in Phase 1, the ask would rise to **$267,500 upfront and $37,500/yr**, with no extra modeled hours.
+- **Not the O3 work-order workflow.** The planner's approve/reject step is part of O4's stocking program. It isn't the O3 work-order workflow, so the Dictionary's site-cleanup requirement ("required for workflow or monitoring") isn't triggered. **Sensitivity:** if a reviewer disagreed, site cleanup at all 6 sites would add $68,000 upfront.
 
 **How flags work**
 - **What triggers a flag:** any **valid, running** reading in the last 7 days above 1.3× the asset's normal vibration, or an operator "abnormal noise" note. Notes count whatever the sensor quality flag says that day, because they are human observations.
