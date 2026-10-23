@@ -82,15 +82,15 @@ def main() -> int:
         return 1
     data = clean_all()
     checks = run_checks(data)
-    write_doc("reconciliation.md", reconciliation_markdown(checks))
     failed = [c for c in checks if not c.passed]
     print(f"{len(checks) - len(failed)}/{len(checks)} reconciliation checks pass")
     if failed:
         for c in failed:
             print(f"FAIL: {c.name}: {c.detail}", file=sys.stderr)
-        print("Processed tables NOT written because checks failed.", file=sys.stderr)
+        print("Processed tables and audit docs NOT written because checks failed.", file=sys.stderr)
         return 1
     write_tables(data)
+    write_doc("reconciliation.md", reconciliation_markdown(checks))
     write_doc("cleaning-log.md", cleaning_log_markdown(data, raw_hash))
     if sha256(RAW_WORKBOOK) != raw_hash:
         print("Raw workbook changed during build", file=sys.stderr)

@@ -100,8 +100,9 @@ def run_checks(data: CleanData) -> list[Check]:
     checks.append(_check("Readings: asset_tag number matches asset_id", int((~tag_ok).sum()), len(r), "Supplied asset_id mapping aid"))
     checks.append(_check("Readings: received_utc never before observed_utc", int((r["ingest_lag_hours"] < 0).sum()), len(r), "Dictionary received_utc"))
     checks.append(_check("Readings: no Fahrenheit-scale values remain (temp <= 120 C)", int((r["temperature_c"] > 120).sum()), len(r), "ReadMe 'Raw quality'"))
-    missing_ok = (r["quality"] == "Missing") == r["vibration_mm_s"].isna()
-    checks.append(_check("Readings: quality = Missing exactly when vibration is blank", int((~missing_ok).sum()), len(r), "Dictionary quality / vibration_mm_s"))
+    is_missing = r["quality"] == "Missing"
+    missing_ok = (is_missing == r["vibration_mm_s"].isna()) & (is_missing == r["temperature_c"].isna())
+    checks.append(_check("Readings: quality = Missing exactly when vibration and temperature are blank", int((~missing_ok).sum()), len(r), "Dictionary quality / vibration_mm_s / temperature_c"))
 
     # --- HSE -----------------------------------------------------------------------------------
     linked = h.merge(e[["event_id", "asset_id", "start_utc"]], on="event_id", how="left", suffixes=("", "_event"))
@@ -112,7 +113,10 @@ def run_checks(data: CleanData) -> list[Check]:
     status_ok = (h["action_status"] == "Closed") == h["closed_date"].notna()
     checks.append(_check("HSE: closed_date present exactly when Closed", int((~status_ok).sum()), len(h), "Dictionary closed_date"))
     checks.append(_check("HSE: closed actions carry no remaining cost", int(((h["action_status"] == "Closed") & (h["action_setup_usd"] + h["action_annual_usd"] + h["action_person_hours"] > 0)).sum()), len(h), "Dictionary action_setup_usd"))
+    # Independent of the cleaning code's expression: "open" = no verified closure date; site via the asset.
     gate = data.sites.set_index("site_id")["pilot_blocked"]
-    expected_gate = pd.Series(data.sites["site_id"].isin(h.loc[(h["action_status"] == "Open") & (h["potential_severity"] == 5), "site_id"]).values, index=data.sites["site_id"])
-    checks.append(_check("Sites: pilot_blocked exactly where an open severity-5 action exists", int((gate != expected_gate).sum()), len(gate), "ReadMe 'HSE decision gate'", "sites"))
+    unclosed_sev5 = h[h["closed_date"].isna() & (pd.to_numeric(h["potential_severity"]) >= 5)]
+    blocked_sites = set(unclosed_sev5["asset_id"].map(a.set_index("asset_id")["site_id"]))
+    expected_gate = pd.Series([s in blocked_sites for s in gate.index], index=gate.index)
+    checks.append(_check("Sites: pilot_blocked exactly where a severity-5 action lacks a verified closure date", int((gate != expected_gate).sum()), len(gate), "ReadMe 'HSE decision gate'; Dictionary closed_date null = open", "sites"))
     return checks

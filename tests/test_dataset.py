@@ -62,6 +62,36 @@ def test_hse_gate_matches_rule_on_real_data(data):
     assert data.hse["is_overdue_critical"].sum() == len(open_sev5)
 
 
+def test_blocked_sites_are_mesa_arroyo_prairie(data):
+    # Pinned expected answer from the raw data (6 open severity-5 actions), independent of the gate code.
+    assert set(data.sites.loc[data.sites["pilot_blocked"], "site_id"]) == {"S02", "S04", "S06"}
+    assert data.sites.set_index("site_id").loc[["S02", "S04", "S06"], "open_sev5_actions"].tolist() == [2, 2, 2]
+
+
+@pytest.mark.parametrize("value", ["5", " 5 "])
+def test_text_severity_in_raw_keeps_site_blocked(raw, value):
+    mutated = {k: v.copy() for k, v in raw.items()}
+    hse = mutated["HSE"]
+    hse["potential_severity"] = hse["potential_severity"].astype(object)
+    hse.loc[hse["hse_id"].isin(["H007", "H008"]), "potential_severity"] = value
+    assert clean_all(mutated).sites.set_index("site_id").loc["S02", "pilot_blocked"]
+
+
+def test_blank_status_in_raw_stops_build(raw):
+    mutated = {k: v.copy() for k, v in raw.items()}
+    mutated["HSE"].loc[mutated["HSE"]["hse_id"].isin(["H007", "H008"]), "action_status"] = None
+    with pytest.raises(DataQualityError):
+        clean_all(mutated)
+
+
+def test_mistyped_hse_site_cannot_unblock(raw):
+    mutated = {k: v.copy() for k, v in raw.items()}
+    mutated["HSE"].loc[mutated["HSE"]["hse_id"].isin(["H007", "H008"]), "site_id"] = "S01"
+    data = clean_all(mutated)
+    assert data.sites.set_index("site_id").loc["S02", "pilot_blocked"]
+    assert "HSE: site_id agrees with Assets" in failed_names(data)
+
+
 def test_lowercase_status_in_raw_still_blocks_site(raw):
     mutated = {k: v.copy() for k, v in raw.items()}
     mutated["HSE"].loc[mutated["HSE"]["hse_id"].isin(["H007", "H008"]), "action_status"] = "open"
@@ -90,9 +120,11 @@ def test_unexpected_category_in_raw_stops_build(raw):
         (lambda d: d.readings.__setitem__("vibration_mm_s", d.readings["vibration_mm_s"].where(d.readings.index != 1, -50.0)),
          "All tables: no negative hours, volumes, costs or measures"),
         (lambda d: d.sites.__setitem__("pilot_blocked", False),
-         "Sites: pilot_blocked exactly where an open severity-5 action exists"),
+         "Sites: pilot_blocked exactly where a severity-5 action lacks a verified closure date"),
+        (lambda d: d.readings.__setitem__("temperature_c", d.readings["temperature_c"].where(d.readings.index != 2)),
+         "Readings: quality = Missing exactly when vibration and temperature are blank"),
     ],
-    ids=["production-gross", "readings-duplicate-day", "labor-crew", "price-per-month", "negative-vibration", "site-gate"],
+    ids=["production-gross", "readings-duplicate-day", "labor-crew", "price-per-month", "negative-vibration", "site-gate", "valid-blank-temperature"],
 )
 def test_checks_detect_corruption(fresh, mutate, expected_failure):
     mutate(fresh)

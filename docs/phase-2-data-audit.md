@@ -1,7 +1,7 @@
 # Phase 2: Data Audit
 
 **Date:** 2026-10-23
-**Status:** Complete. The cleaned data is reproducible, all 38 integrity and reconciliation checks pass, and all 48 automated tests pass. Audited by an independent skeptical reviewer (section 11).
+**Status:** Complete. The cleaned data is reproducible, all 38 integrity and reconciliation checks pass, and all 63 automated tests pass. Audited twice by an independent skeptical reviewer (section 11).
 
 > **Like I'm 5:** Someone handed us a box of puzzle pieces. Some pieces were in there twice, some had smudged labels, and a few were missing. In this phase we sorted the pieces, wiped the labels clean, and wrote down every single thing we did. Then we checked that the pieces actually fit together. They do.
 
@@ -25,7 +25,7 @@ All six data tabs (Assets, Events, Production, Readings, Solutions, HSE), checke
 | `data/processed/*.csv` | 7 clean tables, including a new **Sites** table | The sorted pieces |
 | `docs/cleaning-log.md` | Every rule, why it was applied, how many rows, and which records (generated) | The diary of what we changed |
 | `docs/reconciliation.md` | Pass/fail for each check (generated) | The report card |
-| `tests/` | 48 pytest tests: rule-by-rule unit tests, real-workbook tests, and mutation tests that corrupt data on purpose to prove the checks catch it | Robots that re-check our work every time |
+| `tests/` | 63 pytest tests: rule-by-rule unit tests, real-workbook tests, and mutation tests that corrupt data on purpose to prove the checks catch it | Robots that re-check our work every time |
 
 **To rebuild everything:**
 
@@ -61,6 +61,7 @@ The full record-level detail is in [cleaning-log.md](cleaning-log.md).
 | Readings: arrived late | 102 | Flagged. Timestamps left unchanged. | The letter came late, but what it says is still true |
 | HSE: every row appears twice | 36 | Removed after verifying | — |
 | Category labels (statuses, causes, quality flags…) | 0 variants today | Case/spacing variants mapped to the canonical label; **any unknown label stops the build** | A lowercase "open" must never sneak past the safety lock |
+| HSE gate inputs | 0 issues today | **Fails closed:** a blank `action_status` stops the build; severity must be an integer 1–5 (text "5" is coerced; "5 - Severe" stops the build); an action counts as open unless it is Closed **and** has a closure date; the site comes from the action's asset; dates must be `YYYY-MM-DD` and the snapshot date must be 2026-10-01 | If the safety form is unclear, the site stays locked |
 | Text whitespace | 0 cells today | Trimmed and logged (the count is logged even when it is zero) | — |
 
 **Safety design:** the code **stops with an error** instead of guessing in all of these cases:
@@ -124,10 +125,10 @@ These are **facts about data quality**, not recommendations yet.
 - [x] Every cleaning change logged with its rule, reason, count and records
 - [x] No imputation of measurements; unknown costs stay unknown
 - [x] Conflicting duplicates would stop the build rather than be silently resolved
-- [x] All 38 integrity and reconciliation checks pass, with no circular checks
-- [x] All 48 automated tests pass, including mutation tests
-- [x] Unknown labels, units and conflicting values stop the build
-- [x] Independent skeptical audit completed and its findings fixed (section 11)
+- [x] All 38 integrity and reconciliation checks pass. Recovered values are excluded from self-referential checks, and the HSE gate check uses an independent rule (no closure date + severity 5, site via asset)
+- [x] All 63 automated tests pass, including mutation tests and a pinned expected gate (S02, S04, S06)
+- [x] Unknown or blank gate labels, units and conflicting values stop the build; the HSE gate fails closed
+- [x] Two rounds of independent skeptical audit, with findings fixed (section 11)
 - [x] Outputs are reproducible with one command
 
 ## 10. Status and next step
@@ -160,3 +161,20 @@ A separate Opus agent audited this branch with a skeptical brief. It was read-on
   - Stricter parsing of capacity and temperature units.
   - Whitespace trimming is now logged.
   - The doc claims above are corrected.
+
+### Re-audit (round 2)
+
+- **Verdict:** MERGE AFTER FIXES. 19 of 20 original findings were resolved, and the independent numbers still match.
+- **The remaining Major finding:** the HSE gate could still be bypassed. Two inputs did it:
+  - a **blank** `action_status`
+  - a severity stored as **text "5"**
+- **Fixed by making the gate fail closed:**
+  - A blank status stops the build.
+  - Severity is coerced to an integer 1–5, and anything else stops the build.
+  - "Open" means not both Closed and dated.
+  - The site is derived from the asset.
+  - Dates must be strict `YYYY-MM-DD`, and the snapshot is pinned to 2026-10-01.
+  - The gate check is now independent of the cleaning code.
+  - The Missing check also covers temperature.
+  - Audit docs are written only when all checks pass.
+- **Every attack the auditor used is now a permanent test:** blank status, text severity, an invalid severity, a mistyped HSE site, an ambiguous date, and the pinned {S02, S04, S06}.

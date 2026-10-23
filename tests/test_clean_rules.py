@@ -155,7 +155,8 @@ def test_hse_gate_ignores_low_severity_or_closed(overrides):
 
 def test_site_gate_marks_only_sites_with_blocking_actions():
     hse = clean_hse(pd.DataFrame([_hse(), _hse(hse_id="H002", site_id="S03", potential_severity=3)]), CleaningLog())
-    sites = add_site_gate(pd.DataFrame({"site_id": ["S01", "S03"]}), hse)
+    assets = pd.DataFrame({"asset_id": ["A001"], "site_id": ["S01"]})
+    sites = add_site_gate(pd.DataFrame({"site_id": ["S01", "S03"]}), hse.assign(asset_id="A001").iloc[:1], assets)
     assert sites["pilot_blocked"].tolist() == [True, False]
 
 
@@ -181,3 +182,30 @@ def test_production_recovers_missing_potential_and_flags_it():
     out = clean_production(raw, assets, CleaningLog())
     assert out.loc[0, "potential_oil_bbl"] == 744 * 22
     assert out.loc[0, "potential_recovered"]
+
+
+def test_blank_action_status_stops_the_build():
+    with pytest.raises(DataQualityError, match="action_status is blank"):
+        clean_hse(pd.DataFrame([_hse(action_status=None)]), CleaningLog())
+
+
+def test_closed_without_verified_date_still_blocks():
+    out = clean_hse(pd.DataFrame([_hse(action_status="Closed", closed_date=None)]), CleaningLog())
+    assert out.loc[0, "blocks_pilot"]
+
+
+@pytest.mark.parametrize("severity", ["5", " 5 ", 5.0])
+def test_text_or_float_severity_is_coerced_and_still_blocks(severity):
+    out = clean_hse(pd.DataFrame([_hse(potential_severity=severity)]), CleaningLog())
+    assert out.loc[0, "blocks_pilot"]
+
+
+@pytest.mark.parametrize("severity", ["5 - Severe", 6, None])
+def test_invalid_severity_stops_the_build(severity):
+    with pytest.raises(DataQualityError, match="potential_severity"):
+        clean_hse(pd.DataFrame([_hse(potential_severity=severity)]), CleaningLog())
+
+
+def test_ambiguous_snapshot_date_stops_the_build():
+    with pytest.raises(DataQualityError):
+        clean_hse(pd.DataFrame([_hse(status_as_of="01/10/2026")]), CleaningLog())

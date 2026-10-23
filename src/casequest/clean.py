@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from casequest.config import CATEGORIES, DATA_SHEETS, DELAYED_INGEST_HOURS, NO_STANDALONE_REDUCTION, RAW_WORKBOOK, SITE_FIELDS, STAGES
+from casequest.config import CATEGORIES, DATA_SHEETS, DELAYED_INGEST_HOURS, HSE_SNAPSHOT_DATE, NO_STANDALONE_REDUCTION, RAW_WORKBOOK, SITE_FIELDS, STAGES
 
 
 class DataQualityError(ValueError):
@@ -344,16 +344,37 @@ def clean_readings(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
     return df
 
 
+def _ordinal_band(series: pd.Series, column: str) -> pd.Series:
+    """Coerce a 1-5 ordinal band to int (text '5' is fine); anything else stops the build."""
+    numeric = pd.to_numeric(series.map(lambda v: v.strip() if isinstance(v, str) else v), errors="coerce")
+    bad = numeric.isna() | ~numeric.isin([1, 2, 3, 4, 5])
+    if bad.any():
+        raise DataQualityError(f"HSE.{column}: expected an integer 1-5, got {sorted(map(repr, series[bad].unique()))[:10]}")
+    return numeric.astype(int)
+
+
 def clean_hse(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
+    """HSE observations with the pilot gate. The gate fails closed: ambiguous inputs stop the build."""
     df = _strip_strings(raw, "HSE", log)
     df = _normalize_id_column(df, "asset_id", "HSE", log)
     df = normalize_categories(df, "HSE", log)
     df = drop_verified_duplicates(df, "hse_id", "HSE", log)
 
+    blank_status = df["action_status"].isna()
+    if blank_status.any():
+        raise DataQualityError(f"HSE.action_status is blank for {df.loc[blank_status, 'hse_id'].tolist()}; the pilot gate cannot be evaluated")
+    for column in ["potential_severity", "likelihood_band"]:
+        df[column] = _ordinal_band(df[column], column)
     for column in ["due_date", "closed_date", "status_as_of"]:
-        df[column] = pd.to_datetime(df[column])
+        try:
+            df[column] = pd.to_datetime(df[column], format="%Y-%m-%d")
+        except (ValueError, TypeError) as err:
+            raise DataQualityError(f"HSE.{column}: dates must be YYYY-MM-DD ({err})") from err
+    if not (df["status_as_of"] == HSE_SNAPSHOT_DATE).all():
+        raise DataQualityError(f"HSE.status_as_of must be {HSE_SNAPSHOT_DATE:%Y-%m-%d} for every row")
 
-    is_open = df["action_status"] == "Open"
+    # Fail closed: an action counts as open unless it is marked Closed AND has a verified closure date.
+    is_open = (df["action_status"] != "Closed") | df["closed_date"].isna()
     critical = df["potential_severity"] == 5
     df["is_overdue"] = is_open & (df["due_date"] < df["status_as_of"])
     df["is_overdue_critical"] = df["is_overdue"] & critical
@@ -383,9 +404,15 @@ def clean_solutions(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
     return df
 
 
-def add_site_gate(sites: pd.DataFrame, hse: pd.DataFrame) -> pd.DataFrame:
-    """Site-level HSE status: a site with any open severity-5 action cannot enter the pilot."""
-    blocking = hse[hse["blocks_pilot"]].groupby("site_id").size()
+def add_site_gate(sites: pd.DataFrame, hse: pd.DataFrame, assets: pd.DataFrame) -> pd.DataFrame:
+    """Site-level HSE status: a site with any open severity-5 action cannot enter the pilot.
+
+    The site is derived from the action's asset via Assets, so a mistyped HSE.site_id cannot unblock a site.
+    """
+    site_of_asset = hse["asset_id"].map(assets.set_index("asset_id")["site_id"])
+    if site_of_asset.isna().any():
+        raise DataQualityError(f"HSE rows reference unknown assets: {hse.loc[site_of_asset.isna(), 'hse_id'].tolist()}")
+    blocking = hse[hse["blocks_pilot"]].groupby(site_of_asset[hse["blocks_pilot"]]).size()
     out = sites.copy()
     out["open_sev5_actions"] = out["site_id"].map(blocking).fillna(0).astype(int)
     out["pilot_blocked"] = out["open_sev5_actions"] > 0
@@ -410,7 +437,7 @@ def clean_all(raw: dict[str, pd.DataFrame] | None = None) -> CleanData:
     production = clean_production(raw["Production"], assets, log)
     readings = clean_readings(raw["Readings"], log)
     hse = clean_hse(raw["HSE"], log)
-    sites = add_site_gate(sites, hse)
+    sites = add_site_gate(sites, hse, assets)
     solutions = clean_solutions(raw["Solutions"], log)
     return CleanData(
         assets=assets,

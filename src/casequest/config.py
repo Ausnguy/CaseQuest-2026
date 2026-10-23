@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pandas as pd
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RAW_WORKBOOK = REPO_ROOT / "Dataset-Rules" / "CaseQuest2026Dataset.xlsx"
 RAW_WORKBOOK_SHA256 = "b4d32ee1935619eec5a7729428e525eb74c44f2d5cd04a0f7e13fe4cd84533b8"
@@ -65,3 +67,6 @@ CATEGORIES = {
         "billing_unit": ["Asset", "Site", "Organization"],
     },
 }
+
+# ReadMe 'HSE grain': snapshot date for evaluating open/overdue status.
+HSE_SNAPSHOT_DATE = pd.Timestamp("2026-10-01")
