@@ -372,6 +372,8 @@ def clean_hse(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
             raise DataQualityError(f"HSE.{column}: dates must be YYYY-MM-DD ({err})") from err
     if not (df["status_as_of"] == HSE_SNAPSHOT_DATE).all():
         raise DataQualityError(f"HSE.status_as_of must be {HSE_SNAPSHOT_DATE:%Y-%m-%d} for every row")
+    if df["observed_utc"].isna().any():
+        raise DataQualityError(f"HSE.observed_utc is blank for {df.loc[df['observed_utc'].isna(), 'hse_id'].tolist()}")
     if df["due_date"].isna().any():
         raise DataQualityError(f"HSE.due_date is blank for {df.loc[df['due_date'].isna(), 'hse_id'].tolist()}")
     dated = df["closed_date"].notna()

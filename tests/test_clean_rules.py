@@ -220,3 +220,8 @@ def test_closure_outside_observation_to_snapshot_stops_the_build(closed_date):
 def test_blank_due_date_stops_the_build():
     with pytest.raises(DataQualityError, match="due_date"):
         clean_hse(pd.DataFrame([_hse(due_date=None)]), CleaningLog())
+
+
+def test_blank_observation_time_stops_the_build():
+    with pytest.raises(DataQualityError, match="observed_utc"):
+        clean_hse(pd.DataFrame([_hse(observed_utc=None, action_status="Closed", closed_date="2025-01-20")]), CleaningLog())
