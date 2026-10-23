@@ -92,6 +92,14 @@ def test_mistyped_hse_site_cannot_unblock(raw):
     assert "HSE: site_id agrees with Assets" in failed_names(data)
 
 
+def test_future_closure_in_raw_stops_build(raw):
+    mutated = {k: v.copy() for k, v in raw.items()}
+    rows = mutated["HSE"]["hse_id"].isin(["H007", "H008"])
+    mutated["HSE"].loc[rows, ["action_status", "closed_date", "action_setup_usd", "action_annual_usd", "action_person_hours"]] = ["Closed", "2026-10-02", 0, 0, 0]
+    with pytest.raises(DataQualityError, match="closed_date"):
+        clean_all(mutated)
+
+
 def test_lowercase_status_in_raw_still_blocks_site(raw):
     mutated = {k: v.copy() for k, v in raw.items()}
     mutated["HSE"].loc[mutated["HSE"]["hse_id"].isin(["H007", "H008"]), "action_status"] = "open"

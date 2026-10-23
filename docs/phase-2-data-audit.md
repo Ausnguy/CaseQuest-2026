@@ -61,7 +61,7 @@ The full record-level detail is in [cleaning-log.md](cleaning-log.md).
 | Readings: arrived late | 102 | Flagged. Timestamps left unchanged. | The letter came late, but what it says is still true |
 | HSE: every row appears twice | 36 | Removed after verifying | — |
 | Category labels (statuses, causes, quality flags…) | 0 variants today | Case/spacing variants mapped to the canonical label; **any unknown label stops the build** | A lowercase "open" must never sneak past the safety lock |
-| HSE gate inputs | 0 issues today | **Fails closed:** a blank `action_status` stops the build; severity must be an integer 1–5 (text "5" is coerced; "5 - Severe" stops the build); an action counts as open unless it is Closed **and** has a closure date; the site comes from the action's asset; dates must be `YYYY-MM-DD` and the snapshot date must be 2026-10-01 | If the safety form is unclear, the site stays locked |
+| HSE gate inputs | 0 issues today | **Fails closed:** a blank `action_status` stops the build; severity must be an integer 1–5 (text "5" is coerced; "5 - Severe" stops the build); an action counts as open unless it is Closed **and** has a closure date no later than the snapshot; a closure dated before the observation or after the 2026-10-01 snapshot, a blank due date, or a True/False severity stops the build; the site comes from the action's asset; dates must be `YYYY-MM-DD` and the snapshot date must be 2026-10-01 | If the safety form is unclear, the site stays locked |
 | Text whitespace | 0 cells today | Trimmed and logged (the count is logged even when it is zero) | — |
 
 **Safety design:** the code **stops with an error** instead of guessing in all of these cases:
@@ -178,3 +178,17 @@ A separate Opus agent audited this branch with a skeptical brief. It was read-on
   - The Missing check also covers temperature.
   - Audit docs are written only when all checks pass.
 - **Every attack the auditor used is now a permanent test:** blank status, text severity, an invalid severity, a mistyped HSE site, an ambiguous date, and the pinned {S02, S04, S06}.
+
+### Re-audit (round 3)
+
+- **Verdict:** MERGE AFTER FIXES. Every round-2 attack now holds.
+- **Two new silent unblocks found:**
+  - a `closed_date` **after** the snapshot (or before the observation)
+  - a boolean severity (`True` read as 1)
+- **Fixed:**
+  - Closures must fall between the observation and the 2026-10-01 snapshot, otherwise the build stops. A future closure would also count as open.
+  - Booleans are rejected as severity values.
+  - A blank `due_date` stops the build (it would otherwise undercount the overdue critical actions).
+  - A new validate check covers the closure-date range.
+  - Each attack is now a test.
+- **Known, acceptable limitation:** if an HSE row is deleted from the export entirely, only the pinned test (S02/S04/S06 = 2/2/2) catches it.

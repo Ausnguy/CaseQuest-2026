@@ -200,7 +200,7 @@ def test_text_or_float_severity_is_coerced_and_still_blocks(severity):
     assert out.loc[0, "blocks_pilot"]
 
 
-@pytest.mark.parametrize("severity", ["5 - Severe", 6, None])
+@pytest.mark.parametrize("severity", ["5 - Severe", 6, None, True])
 def test_invalid_severity_stops_the_build(severity):
     with pytest.raises(DataQualityError, match="potential_severity"):
         clean_hse(pd.DataFrame([_hse(potential_severity=severity)]), CleaningLog())
@@ -209,3 +209,14 @@ def test_invalid_severity_stops_the_build(severity):
 def test_ambiguous_snapshot_date_stops_the_build():
     with pytest.raises(DataQualityError):
         clean_hse(pd.DataFrame([_hse(status_as_of="01/10/2026")]), CleaningLog())
+
+
+@pytest.mark.parametrize("closed_date", ["2026-10-02", "2027-01-01", "2024-01-01"])
+def test_closure_outside_observation_to_snapshot_stops_the_build(closed_date):
+    with pytest.raises(DataQualityError, match="closed_date"):
+        clean_hse(pd.DataFrame([_hse(action_status="Closed", closed_date=closed_date)]), CleaningLog())
+
+
+def test_blank_due_date_stops_the_build():
+    with pytest.raises(DataQualityError, match="due_date"):
+        clean_hse(pd.DataFrame([_hse(due_date=None)]), CleaningLog())

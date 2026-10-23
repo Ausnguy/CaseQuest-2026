@@ -346,7 +346,7 @@ def clean_readings(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
 
 def _ordinal_band(series: pd.Series, column: str) -> pd.Series:
     """Coerce a 1-5 ordinal band to int (text '5' is fine); anything else stops the build."""
-    numeric = pd.to_numeric(series.map(lambda v: v.strip() if isinstance(v, str) else v), errors="coerce")
+    numeric = pd.to_numeric(series.map(lambda v: v.strip() if isinstance(v, str) else (np.nan if isinstance(v, (bool, np.bool_)) else v)), errors="coerce")
     bad = numeric.isna() | ~numeric.isin([1, 2, 3, 4, 5])
     if bad.any():
         raise DataQualityError(f"HSE.{column}: expected an integer 1-5, got {sorted(map(repr, series[bad].unique()))[:10]}")
@@ -372,9 +372,16 @@ def clean_hse(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
             raise DataQualityError(f"HSE.{column}: dates must be YYYY-MM-DD ({err})") from err
     if not (df["status_as_of"] == HSE_SNAPSHOT_DATE).all():
         raise DataQualityError(f"HSE.status_as_of must be {HSE_SNAPSHOT_DATE:%Y-%m-%d} for every row")
+    if df["due_date"].isna().any():
+        raise DataQualityError(f"HSE.due_date is blank for {df.loc[df['due_date'].isna(), 'hse_id'].tolist()}")
+    dated = df["closed_date"].notna()
+    out_of_range = dated & ((df["closed_date"] < df["observed_utc"].dt.normalize()) | (df["closed_date"] > df["status_as_of"]))
+    if out_of_range.any():
+        raise DataQualityError(f"HSE.closed_date must fall between observation and the {HSE_SNAPSHOT_DATE:%Y-%m-%d} snapshot: {df.loc[out_of_range, 'hse_id'].tolist()}")
 
-    # Fail closed: an action counts as open unless it is marked Closed AND has a verified closure date.
-    is_open = (df["action_status"] != "Closed") | df["closed_date"].isna()
+    # Fail closed: an action counts as open unless it is marked Closed AND has a verified closure date on or
+    # before the snapshot.
+    is_open = (df["action_status"] != "Closed") | df["closed_date"].isna() | (df["closed_date"] > df["status_as_of"])
     critical = df["potential_severity"] == 5
     df["is_overdue"] = is_open & (df["due_date"] < df["status_as_of"])
     df["is_overdue_critical"] = df["is_overdue"] & critical

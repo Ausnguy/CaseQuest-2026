@@ -112,6 +112,9 @@ def run_checks(data: CleanData) -> list[Check]:
     checks.append(_check("HSE: site_id agrees with Assets", int((~site_ok).sum()), len(h), "Foreign key consistency"))
     status_ok = (h["action_status"] == "Closed") == h["closed_date"].notna()
     checks.append(_check("HSE: closed_date present exactly when Closed", int((~status_ok).sum()), len(h), "Dictionary closed_date"))
+    dated = h["closed_date"].notna()
+    in_range = ~dated | ((h["closed_date"] >= h["observed_utc"].dt.normalize()) & (h["closed_date"] <= h["status_as_of"]))
+    checks.append(_check("HSE: closed_date between observation and snapshot", int((~in_range).sum()), len(h), "A closure cannot precede the observation or postdate the 2026-10-01 snapshot"))
     checks.append(_check("HSE: closed actions carry no remaining cost", int(((h["action_status"] == "Closed") & (h["action_setup_usd"] + h["action_annual_usd"] + h["action_person_hours"] > 0)).sum()), len(h), "Dictionary action_setup_usd"))
     # Independent of the cleaning code's expression: "open" = no verified closure date; site via the asset.
     gate = data.sites.set_index("site_id")["pilot_blocked"]
