@@ -20,7 +20,11 @@ def sha256(path) -> str:
 def write_tables(data: CleanData) -> None:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     for name, df in data.tables().items():
-        df.to_csv(PROCESSED_DIR / f"{name}.csv", index=False)
+        df.to_csv(PROCESSED_DIR / f"{name}.csv", index=False, lineterminator="\n", encoding="utf-8")
+
+
+def write_doc(name: str, text: str) -> None:
+    (DOCS_DIR / name).write_text(text, encoding="utf-8", newline="\n")
 
 
 def cleaning_log_markdown(data: CleanData, raw_hash: str) -> str:
@@ -73,20 +77,26 @@ def reconciliation_markdown(checks: list[Check]) -> str:
 
 def main() -> int:
     raw_hash = sha256(RAW_WORKBOOK)
+    if raw_hash != RAW_WORKBOOK_SHA256:
+        print(f"Raw workbook hash {raw_hash} does not match the Phase 1 fingerprint; refusing to build.", file=sys.stderr)
+        return 1
     data = clean_all()
     checks = run_checks(data)
+    write_doc("reconciliation.md", reconciliation_markdown(checks))
+    failed = [c for c in checks if not c.passed]
+    print(f"{len(checks) - len(failed)}/{len(checks)} reconciliation checks pass")
+    if failed:
+        for c in failed:
+            print(f"FAIL: {c.name}: {c.detail}", file=sys.stderr)
+        print("Processed tables NOT written because checks failed.", file=sys.stderr)
+        return 1
     write_tables(data)
-    (DOCS_DIR / "cleaning-log.md").write_text(cleaning_log_markdown(data, raw_hash))
-    (DOCS_DIR / "reconciliation.md").write_text(reconciliation_markdown(checks))
+    write_doc("cleaning-log.md", cleaning_log_markdown(data, raw_hash))
     if sha256(RAW_WORKBOOK) != raw_hash:
         print("Raw workbook changed during build", file=sys.stderr)
         return 1
-    failed = [c for c in checks if not c.passed]
     print(f"Wrote {len(data.tables())} tables to {PROCESSED_DIR}")
-    print(f"{len(checks) - len(failed)}/{len(checks)} reconciliation checks pass")
-    for c in failed:
-        print(f"FAIL: {c.name}: {c.detail}", file=sys.stderr)
-    return 1 if failed else 0
+    return 0
 
 
 if __name__ == "__main__":

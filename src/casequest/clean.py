@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from casequest.config import DATA_SHEETS, DELAYED_INGEST_HOURS, RAW_WORKBOOK, SITE_FIELDS, STAGES
+from casequest.config import CATEGORIES, DATA_SHEETS, DELAYED_INGEST_HOURS, NO_STANDALONE_REDUCTION, RAW_WORKBOOK, SITE_FIELDS, STAGES
 
 
 class DataQualityError(ValueError):
@@ -66,6 +66,8 @@ class CleanData:
 
 _ASSET_ID = re.compile(r"A?0*(\d+)")
 _LEGACY_TAG = re.compile(r"LEG-0*(\d+)")
+_CAPACITY = re.compile(r"(\d+(?:\.\d+)?)\s*(?:BBL/HR)?", re.IGNORECASE)
+_TEMPERATURE = re.compile(r"(-?\d+(?:\.\d+)?)\s*(F)?", re.IGNORECASE)
 
 
 def normalize_asset_id(value) -> str:
@@ -87,21 +89,51 @@ def resolve_reading_tag(tag) -> str:
 
 
 def parse_capacity(value) -> float:
-    """'22 bbl/hr' or 22 -> 22.0"""
-    match = re.search(r"\d+(?:\.\d+)?", str(value))
+    """'22 bbl/hr' or 22 -> 22.0. Any other unit is rejected rather than silently read."""
+    match = _CAPACITY.fullmatch(str(value).strip())
     if not match:
-        raise DataQualityError(f"Unparseable capacity: {value!r}")
-    return float(match.group())
+        raise DataQualityError(f"Unparseable capacity (expected bbl/hr): {value!r}")
+    return float(match.group(1))
 
 
 def parse_temperature_c(value) -> float:
-    """Numbers are already Celsius; strings ending in 'F' are converted to Celsius."""
+    """Numbers are already Celsius; values suffixed 'F' are converted. Anything else is rejected."""
     if pd.isna(value):
         return np.nan
-    text = str(value).strip()
-    if text.upper().endswith("F"):
-        return round((float(text[:-1].strip()) - 32) * 5 / 9, 2)
-    return float(text)
+    match = _TEMPERATURE.fullmatch(str(value).strip())
+    if not match:
+        raise DataQualityError(f"Unparseable temperature: {value!r}")
+    number = float(match.group(1))
+    return round((number - 32) * 5 / 9, 2) if match.group(2) else number
+
+
+def normalize_categories(df: pd.DataFrame, table: str, log: CleaningLog) -> pd.DataFrame:
+    """Map case/spacing variants to canonical labels; raise on any value outside the allowed set.
+
+    Safety-relevant logic (e.g. the HSE gate) compares exact labels, so an unexpected variant such
+    as 'open' must never pass silently.
+    """
+    out = df.copy()
+    for column, allowed in CATEGORIES.get(table, {}).items():
+        if column not in out.columns:
+            raise DataQualityError(f"{table}: expected column {column!r} is missing")
+        lookup = {label.casefold(): label for label in allowed}
+        present = out[column].dropna()
+        canonical = present.map(lambda v: lookup.get(" ".join(str(v).split()).casefold()))
+        unknown = present[canonical.isna()]
+        if not unknown.empty:
+            raise DataQualityError(f"{table}.{column}: unexpected values {sorted(map(str, unknown.unique()))[:10]}")
+        changed = canonical != present
+        if changed.any():
+            log.add(
+                table,
+                f"Normalize {column} labels",
+                changed.sum(),
+                "Case/spacing variant mapped to its canonical category.",
+                [f"{old!r} -> {new}" for old, new in zip(present[changed], canonical[changed])],
+            )
+        out.loc[present.index, column] = canonical
+    return out
 
 
 def drop_verified_duplicates(df: pd.DataFrame, key: str | list[str], table: str, log: CleaningLog) -> pd.DataFrame:
@@ -140,17 +172,21 @@ def _normalize_id_column(df: pd.DataFrame, column: str, table: str, log: Cleanin
             table,
             f"Normalize {column}",
             changed.sum(),
-            "ReadMe 'Raw quality': some IDs contain whitespace/lowercase. Mapped to canonical A### form.",
+            "ReadMe 'Raw quality': some IDs are lowercase, unpadded or numeric. Mapped to canonical A### form.",
             examples,
         )
     return df.assign(**{column: normalized})
 
 
-def _strip_strings(df: pd.DataFrame) -> pd.DataFrame:
+def _strip_strings(df: pd.DataFrame, table: str, log: CleaningLog) -> pd.DataFrame:
     out = df.copy()
+    changed = 0
     for column in out.columns:
         if out[column].dtype == object or pd.api.types.is_string_dtype(out[column]):
-            out[column] = out[column].map(lambda v: v.strip() if isinstance(v, str) else v)
+            stripped = out[column].map(lambda v: v.strip() if isinstance(v, str) else v)
+            changed += int((stripped.fillna("\0") != out[column].fillna("\0")).sum())
+            out[column] = stripped
+    log.add(table, "Trim leading/trailing whitespace in text cells", changed, "ReadMe 'Raw quality': some IDs contain whitespace. Logged even when zero.")
     return out
 
 
@@ -160,7 +196,8 @@ def _strip_strings(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_assets(raw: pd.DataFrame, log: CleaningLog) -> tuple[pd.DataFrame, pd.DataFrame]:
-    df = _normalize_id_column(_strip_strings(raw), "asset_id", "Assets", log)
+    df = _normalize_id_column(_strip_strings(raw, "Assets", log), "asset_id", "Assets", log)
+    df = normalize_categories(df, "Assets", log)
 
     capacity = df["modeled_capacity_bbl_hr"].map(parse_capacity)
     had_units = df["modeled_capacity_bbl_hr"].map(lambda v: isinstance(v, str))
@@ -174,7 +211,7 @@ def clean_assets(raw: pd.DataFrame, log: CleaningLog) -> tuple[pd.DataFrame, pd.
         )
     df["modeled_capacity_bbl_hr"] = capacity
 
-    per_site = df.groupby("site_id")[SITE_FIELDS].nunique()
+    per_site = df.groupby("site_id")[SITE_FIELDS].nunique(dropna=False)
     inconsistent = per_site[(per_site > 1).any(axis=1)]
     if not inconsistent.empty:
         raise DataQualityError(f"Site fields differ within a site: {inconsistent.index.tolist()}")
@@ -191,8 +228,9 @@ def clean_assets(raw: pd.DataFrame, log: CleaningLog) -> tuple[pd.DataFrame, pd.
 
 
 def clean_events(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
-    df = _strip_strings(raw)
+    df = _strip_strings(raw, "Events", log)
     df = _normalize_id_column(df, "asset_id", "Events", log)
+    df = normalize_categories(df, "Events", log)
     df = drop_verified_duplicates(df, "event_id", "Events", log)
 
     stage_total = df[STAGES].sum(axis=1)
@@ -205,28 +243,32 @@ def clean_events(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
             "Events",
             "Recover missing stopped_hours from the five stages",
             missing.sum(),
-            "ReadMe 'Raw quality': recover durations from five stages. Dictionary: stopped_hours = sum of stages = end_utc - start_utc.",
+            "ReadMe 'Raw quality': recover durations from five stages. Dictionary: stopped_hours = sum of stages = end_utc - start_utc. "
+            "Only blank rows are filled; flagged stopped_hours_recovered.",
             df.loc[missing, "event_id"].tolist(),
         )
-    df["stopped_hours"] = stage_total.round(2)
+    df.loc[missing, "stopped_hours"] = stage_total[missing].round(2)
+    df["stopped_hours_recovered"] = missing
 
     pending = df["parts_usd"].isna()
     log.add(
         "Events",
         "Keep pending parts invoices as unknown (not zero)",
         pending.sum(),
-        "ReadMe 'Maintenance': pending parts invoices stay unknown, not zero. "
-        "known_cost_usd excludes them and is flagged cost_complete = False.",
+        "ReadMe 'Maintenance': pending parts invoices stay unknown, not zero. known_cost_usd is blank for these events; "
+        "known_cost_lower_bound_usd counts only the known parts (labor + contractor).",
         df.loc[pending, "event_id"].tolist(),
     )
-    df["known_cost_usd"] = df["labor_hours"] * df["labor_rate_usd_hr"] + df["parts_usd"].fillna(0) + df["contractor_usd"]
+    labor_and_contractor = df["labor_hours"] * df["labor_rate_usd_hr"] + df["contractor_usd"]
+    df["known_cost_usd"] = labor_and_contractor + df["parts_usd"]
+    df["known_cost_lower_bound_usd"] = labor_and_contractor + df["parts_usd"].fillna(0)
     df["cost_complete"] = ~pending
     df["month"] = df["start_utc"].dt.to_period("M").dt.to_timestamp()
     return df
 
 
 def clean_production(raw: pd.DataFrame, assets: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
-    df = _normalize_id_column(_strip_strings(raw), "asset_id", "Production", log)
+    df = _normalize_id_column(_strip_strings(raw, "Production", log), "asset_id", "Production", log)
     df = drop_verified_duplicates(df, ["asset_id", "month"], "Production", log)
 
     capacity = df["asset_id"].map(assets.set_index("asset_id")["modeled_capacity_bbl_hr"])
@@ -236,15 +278,17 @@ def clean_production(raw: pd.DataFrame, assets: pd.DataFrame, log: CleaningLog) 
             "Production",
             "Recover missing potential_oil_bbl = calendar_hours x capacity",
             missing.sum(),
-            "ReadMe 'Raw quality' and 'Production': potential = calendar_hours * capacity.",
+            "ReadMe 'Raw quality' and 'Production': potential = calendar_hours * capacity. Flagged potential_recovered.",
             [f"{a} {m:%Y-%m}" for a, m in zip(df.loc[missing, "asset_id"], df.loc[missing, "month"])],
         )
     df.loc[missing, "potential_oil_bbl"] = (df.loc[missing, "calendar_hours"] * capacity[missing]).round(2)
+    df["potential_recovered"] = missing
     return df
 
 
 def clean_readings(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
-    df = _strip_strings(raw)
+    df = _strip_strings(raw, "Readings", log)
+    df = normalize_categories(df, "Readings", log)
     df = drop_verified_duplicates(df, "reading_id", "Readings", log)
 
     provided = df["asset_id"].map(normalize_asset_id)
@@ -258,7 +302,7 @@ def clean_readings(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
         "Map legacy LEG-nnn tags to asset_id",
         legacy.sum(),
         "ReadMe 'Sensor limitations': legacy raw tags remain. Verified LEG-nnn -> Annn agrees with the supplied asset_id "
-        "for every row. Original asset_tag retained.",
+        "(the only mapping aid; the workbook has no TagMap tab) for every row. Original asset_tag retained.",
     )
     df["asset_id"] = provided
 
@@ -288,7 +332,7 @@ def clean_readings(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
         "Dictionary: Suspect is not a confirmed fault. Rows retained with their quality flag; analyses decide whether to use them.",
     )
 
-    df["ingest_lag_hours"] = (df["received_utc"] - df["observed_utc"]).dt.total_seconds() / 3600
+    df["ingest_lag_hours"] = ((df["received_utc"] - df["observed_utc"]).dt.total_seconds() / 3600).round(4)
     df["delayed_ingest"] = df["ingest_lag_hours"] > DELAYED_INGEST_HOURS
     log.add(
         "Readings",
@@ -300,21 +344,24 @@ def clean_readings(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
     return df
 
 
-def clean_hse(raw: pd.DataFrame, assets: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
-    df = _strip_strings(raw)
+def clean_hse(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
+    df = _strip_strings(raw, "HSE", log)
     df = _normalize_id_column(df, "asset_id", "HSE", log)
+    df = normalize_categories(df, "HSE", log)
     df = drop_verified_duplicates(df, "hse_id", "HSE", log)
 
     for column in ["due_date", "closed_date", "status_as_of"]:
         df[column] = pd.to_datetime(df[column])
 
     is_open = df["action_status"] == "Open"
+    critical = df["potential_severity"] == 5
     df["is_overdue"] = is_open & (df["due_date"] < df["status_as_of"])
-    df["blocks_pilot"] = is_open & (df["potential_severity"] == 5)
+    df["is_overdue_critical"] = df["is_overdue"] & critical
+    df["blocks_pilot"] = is_open & critical
     df["net_spill_bbl"] = df["spilled_oil_bbl"] - df["recovered_spill_bbl"]
     log.add(
         "HSE",
-        "Derive is_overdue, blocks_pilot, net_spill_bbl",
+        "Derive is_overdue, is_overdue_critical, blocks_pilot, net_spill_bbl",
         len(df),
         "ReadMe 'HSE decision gate' and 'HSE measures': open severity-5 actions block the site pilot; overdue is "
         "evaluated against status_as_of (2026-10-01); spill measure is spilled minus recovered.",
@@ -323,17 +370,26 @@ def clean_hse(raw: pd.DataFrame, assets: pd.DataFrame, log: CleaningLog) -> pd.D
 
 
 def clean_solutions(raw: pd.DataFrame, log: CleaningLog) -> pd.DataFrame:
-    df = _strip_strings(raw)
+    df = normalize_categories(_strip_strings(raw, "Solutions", log), "Solutions", log)
     blank = df["eligible_causes"].isna()
-    df["eligible_causes"] = df["eligible_causes"].fillna("None")
+    df["eligible_causes"] = df["eligible_causes"].fillna(NO_STANDALONE_REDUCTION)
     log.add(
         "Solutions",
-        "Label blank eligible_causes as 'None'",
+        f"Label blank eligible_causes as '{NO_STANDALONE_REDUCTION}'",
         blank.sum(),
-        "O2 and O6 have no standalone modeled reduction (benefit_rule); blank means no eligible causes.",
+        "O2 and O6 have no standalone modeled reduction (benefit_rule). An explicit token is used because pandas reads 'None' back as missing.",
         df.loc[blank, "option_id"].tolist(),
     )
     return df
+
+
+def add_site_gate(sites: pd.DataFrame, hse: pd.DataFrame) -> pd.DataFrame:
+    """Site-level HSE status: a site with any open severity-5 action cannot enter the pilot."""
+    blocking = hse[hse["blocks_pilot"]].groupby("site_id").size()
+    out = sites.copy()
+    out["open_sev5_actions"] = out["site_id"].map(blocking).fillna(0).astype(int)
+    out["pilot_blocked"] = out["open_sev5_actions"] > 0
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -353,7 +409,8 @@ def clean_all(raw: dict[str, pd.DataFrame] | None = None) -> CleanData:
     events = events.merge(assets[["asset_id", "site_id"]], on="asset_id", how="left", validate="many_to_one")
     production = clean_production(raw["Production"], assets, log)
     readings = clean_readings(raw["Readings"], log)
-    hse = clean_hse(raw["HSE"], assets, log)
+    hse = clean_hse(raw["HSE"], log)
+    sites = add_site_gate(sites, hse)
     solutions = clean_solutions(raw["Solutions"], log)
     return CleanData(
         assets=assets,

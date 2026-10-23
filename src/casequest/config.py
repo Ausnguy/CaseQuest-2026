@@ -27,3 +27,41 @@ SITE_FIELDS = [
 
 # Readings arriving more than this long after observation count as delayed.
 DELAYED_INGEST_HOURS = 1.0
+
+SCENARIO_YEAR = 2025
+NO_STANDALONE_REDUCTION = "No standalone reduction"
+
+# Allowed labels per categorical column. Case/spacing variants are mapped to these; anything else
+# stops the build, because safety logic (e.g. the HSE gate) depends on exact labels.
+CATEGORIES = {
+    "Assets": {
+        "asset_type": ["Transfer pump", "Lift pump", "Compressor"],
+        "criticality": ["High", "Medium", "Low"],
+    },
+    "Events": {
+        "event_type": ["Unplanned", "Planned"],
+        "cause": ["Bearing wear", "Seal leak", "Electrical trip", "Process upset", "Unknown", "Scheduled service"],
+        "work_type": ["Corrective", "Preventive"],
+        "cost_status": ["Complete", "Parts invoice pending"],
+    },
+    "Readings": {
+        "operating_state": ["Running", "Stopped"],
+        "quality": ["Valid", "Suspect", "Missing"],
+        "inspection_note": ["Routine inspection complete", "Operator noticed abnormal noise"],
+    },
+    "HSE": {
+        "action_status": ["Open", "Closed"],
+        "outcome": ["Control observation", "Near miss", "Contained spill"],
+        "hazard": [
+            "H2S monitoring",
+            "Energy isolation / LOTO",
+            "Pressurized line / line of fire",
+            "Tank vapor exposure",
+            "Hydrocarbon containment",
+            "Lifting / dropped objects",
+        ],
+    },
+    "Solutions": {
+        "billing_unit": ["Asset", "Site", "Organization"],
+    },
+}

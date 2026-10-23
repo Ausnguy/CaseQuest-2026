@@ -5,7 +5,7 @@ description = "CaseQuest 2026 - Lone Mesa Energy downtime analysis and prototype
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pandas>=2.2",
+    "pandas>=3.0",
     "openpyxl>=3.1",
     "streamlit>=1.40",
 ]
