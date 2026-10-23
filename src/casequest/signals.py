@@ -77,3 +77,34 @@ def random_alert_precision(data: CleanData, events: pd.DataFrame) -> float:
     pairs = r.merge(u[["asset_id", "start_utc"]], on="asset_id")
     inside = pairs[(pairs["observed_utc"] < pairs["start_utc"]) & (pairs["observed_utc"] >= pairs["start_utc"] - pd.Timedelta(days=WINDOW_DAYS))]
     return round(inside["index"].nunique() / len(r), 2)
+
+
+READINESS_MULTIPLE = 1.3  # vibration above 1.3x the asset's normal
+READINESS_LOOKBACK_DAYS = 7
+NOISE_NOTE = "Operator noticed abnormal noise"
+
+
+def readiness_flags(data: CleanData, as_of: pd.Timestamp) -> pd.DataFrame:
+    """Advisory 'pre-stage a bearing/seal kit' flags per asset, using only readings received by `as_of`.
+
+    This is decision support for the spare-parts planner. It claims no downtime reduction, never authorizes
+    work, and a qualified person reviews every flag. Suspect and Missing readings are ignored.
+    """
+    r = data.readings
+    window = r[(r["received_utc"] <= as_of) & (r["observed_utc"] > as_of - pd.Timedelta(days=READINESS_LOOKBACK_DAYS))]
+    vib_alert = vibration_alerts(data, READINESS_MULTIPLE).loc[window.index]
+    noise = window["inspection_note"].eq(NOISE_NOTE)
+    window = window.assign(vib_alert=vib_alert, noise=noise)
+    by_asset = window.groupby("asset_id").agg(
+        readings_received=("reading_id", "count"),
+        vibration_alerts=("vib_alert", "sum"),
+        noise_notes=("noise", "sum"),
+        max_vibration=("vibration_mm_s", "max"),
+        last_received=("received_utc", "max"),
+    )
+    out = data.assets.set_index("asset_id")[["site_id", "asset_type", "criticality", "vibration_normal_mm_s"]].join(by_asset)
+    out[["readings_received", "vibration_alerts", "noise_notes"]] = out[["readings_received", "vibration_alerts", "noise_notes"]].fillna(0).astype(int)
+    out["flag"] = (out["vibration_alerts"] > 0) | (out["noise_notes"] > 0)
+    out["data_gap"] = out["readings_received"] < READINESS_LOOKBACK_DAYS - 1
+    out["suggestion"] = out["flag"].map({True: "Pre-stage bearing/seal kit; planner to review", False: ""})
+    return out.reset_index()

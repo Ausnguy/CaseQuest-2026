@@ -84,3 +84,21 @@ def hse_summary(data: CleanData) -> dict:
         "net_spill_bbl": float(h["net_spill_bbl"].sum()),
         "outcomes": h["outcome"].value_counts().to_dict(),
     }
+
+
+def kpi_baselines(data: CleanData, unplanned: pd.DataFrame) -> pd.DataFrame:
+    """2025 baselines for the KPIs the recommendation will be measured on, per site."""
+    waits = unplanned.assign(waited=unplanned["parts_wait_hours"] > 0)
+    per_site = waits.groupby("site_id").agg(
+        unplanned_events=("event_id", "count"),
+        unplanned_downtime_hours=("stopped_hours", "sum"),
+        parts_wait_hours=("parts_wait_hours", "sum"),
+        events_with_parts_wait=("waited", "sum"),
+    )
+    per_site["parts_wait_hours_per_event"] = per_site["parts_wait_hours"] / per_site["unplanned_events"]
+    per_site["share_events_waiting_for_parts"] = per_site["events_with_parts_wait"] / per_site["unplanned_events"]
+    sites = data.sites.set_index("site_id")
+    per_site["spare_fill_pct"] = sites["spare_fill_pct"]
+    per_site["overdue_critical_hse_actions"] = data.hse[data.hse["is_overdue_critical"]].groupby("site_id").size().reindex(per_site.index, fill_value=0)
+    per_site["pilot_blocked"] = sites["pilot_blocked"]
+    return per_site.reset_index()

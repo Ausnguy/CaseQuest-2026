@@ -1,4 +1,4 @@
-# Phase 4: Solution Selection (decision pending)
+# Phase 4: Solution Selection and Recommendation
 
 **Date:** 2026-10-23
 **Inputs:**
@@ -66,10 +66,115 @@
 | $85/h extra-help rate is an internal rate | Labeled an assumption |
 | A's biggest risk: judges see "just inventory" and cap Tech at about 14/20 | Prototype must be a real decision console (see options below) |
 
-## 5. Decision needed
+## 5. Decision (made by the team, 2026-10-23)
 
-| Option | What we present | Pros | Cons |
+**Option 2: Critical spare parts (O4) as the single primary, a gate-first rollout, a sensor-aware parts-readiness feature in the app, and condition monitoring at Arroyo as a costed Phase 2.**
+
+> **Like I'm 5:** We give the company **one** medicine: keep the right spare parts on the shelf so broken machines don't sit waiting. We fix the overdue safety problems **first**, because some sites aren't allowed to start until those are done. Our app also has a helper that notices when a machine starts to rattle and says "maybe get its parts ready". A person always decides. Later, if the first medicine works, Arroyo can try the fancier sensor medicine.
+
+## 6. The recommendation
+
+### What
+- **O4, Critical spare parts program, at all 6 sites.**
+  - Includes the inventory audit and annual replenishment, per the Solutions sheet.
+  - No prerequisites.
+  - It shortens only the **parts-wait** stage, for **every** failure cause.
+
+### Rollout: gate first (`roadmap.gate_first_waves`)
+
+| Month | Wave | Sites | Why |
 |---|---|---|---|
-| **1. A-Gated (pure)** | O4 at all sites. Gate first: close the sev-5 actions, pilot at Canyon, then Arroyo, Mesa and Prairie. Condition monitoring is a one-line "future" mention. | Unanimous grader #1; zero rule risk | Lowest Tech ceiling |
-| **2. A-Gated + "sensor-aware parts readiness" (recommended)** | Same single primary (O4). The prototype uses the **existing** daily readings and operator notes as an *advisory* signal to pre-stage bearing and seal kits. O1 at Arroyo is shown as a **costed Phase 2 with a go/no-go gate**. No downtime benefit is claimed from sensors. | Keeps one primary; delivers your hybrid idea as a roadmap and app feature; lifts the Tech and Data story | Must word carefully so it isn't seen as a stealth second recommendation; backtest caveats must be stated |
-| **3. G hybrid** | O4 + O1 on 6 assets as joint recommendations | Highest tech ceiling | All graders flagged the two-primary rule risk; more cost and build; all O1 assets are gated |
+| 0 | HSE closure sprint | Fund and track all 11 overdue actions; **sev-5 first** at Mesa, Arroyo, Prairie | ReadMe: open sev-5 actions block the site pilot until the site HSE supervisor verifies closure |
+| 0 → 1 | Pilot | **Canyon (S05)** | Not blocked; mid-range spare fill (78%); 3 technicians, 180 project hours |
+| 2 | Wave 2 | Cedar (S01), Juniper (S03) | Not blocked; lowest return. Review continuation at month 9 |
+| after verification + 1 | Wave 3 | **Arroyo (S04)** | Largest prize: 387 h, 40% of parts-wait hours, 42% spare fill |
+| + 1 more month | Wave 4 | Mesa (S02), Prairie (S06) | After verified closure |
+
+### Benefit (MODELED, base fractions; not a promise)
+
+| Measure | Value |
+|---|---|
+| Steady-state avoided unplanned downtime | **968 h/yr** (14.7% of 2025 unplanned hours). Low–high: 565–1,210 h |
+| **Year 1** (depends on how fast closures are verified) | **666 h** if verified by month 3. Range **483 h** (month 6) to **788 h** (month 1) |
+| Modeled avoided contribution margin, steady state | about $842k/yr (ReadMe contribution formula). A modeled margin, not cash. No repair-cost savings claimed |
+| By site, steady state | Arroyo 387 · Mesa 196 · Prairie 149 · Canyon 117 · Cedar 66 · Juniper 53 h |
+
+### Cost
+
+| Line | Upfront | Annual |
+|---|---:|---:|
+| O4 × 6 sites | $168,000 | $18,000 |
+| **HSE backlog: 11 open actions** (needed regardless of the recommendation) | $59,500 | $1,500 |
+| … of which the **6 severity-5 actions that unlock the pilot** | $33,000 | $1,500 |
+| **Total** | **$227,500** | **$19,500** |
+
+- That is about $235 upfront per avoided hour (steady state).
+- No fixed spending cap applies (ReadMe).
+
+### Resources and training
+
+| Site | Required person-hours (O4 install 20 + HSE actions) | Available project hours | Shortfall |
+|---|---:|---:|---:|
+| Cedar | 28 | 210 | 0 |
+| Mesa | 44 | 170 | 0 |
+| Juniper | 20 | 220 | 0 |
+| **Arroyo** | 44 | 120 | 0 (but only 2 technicians, so schedule carefully) |
+| Canyon | 28 | 180 | 0 |
+| Prairie | 44 | 165 | 0 |
+
+- No digital-training prerequisite (O6) is required for O4.
+- *Assumption:* storekeeper and planner training on the parts console fits inside O4's 20 install hours per site. Site HSE supervisors own the verified closures.
+
+### KPIs: 2025 baseline (OBSERVED), tracked monthly
+
+| KPI | Arroyo | Mesa | Prairie | Canyon | Cedar | Juniper | Source of definition |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Parts-wait hours per unplanned event | 9.48 | 5.83 | 4.51 | 4.24 | 2.30 | 2.21 | NASA RCM §14.3 (time to repair includes parts delivery) |
+| Share of unplanned events that waited for parts | 56% | 38% | 29% | 22% | 12% | 10% | Our data (≈ 1 − spare fill) |
+| Spare fill % | 42 | 65 | 70 | 78 | 86 | 92 | Assets |
+| Overdue critical (sev-5) HSE actions | 2 | 2 | 2 | 0 | 0 | 0 | ReadMe "HSE measures" |
+
+- **Targets.** The modeled base case cuts parts-wait hours 60% at live sites. We track progress against that; we don't guarantee it.
+- **HSE target:** overdue critical actions = 0 before any blocked site goes live.
+- **Also tracked:**
+  - unplanned downtime hours
+  - planner override rate on readiness flags (NIST AI RMF)
+  - readiness-flag precision, reported as-is and not claimed in advance
+  - emergency-maintenance share, target < 10% (DOE FEMP Table 3.1.1)
+
+### App feature: sensor-aware parts readiness (decision support only)
+- **What it reads:** the **existing** daily readings and operator notes, received data only.
+- **When it flags:** any valid running reading in the last 7 days above 1.3× the asset's normal vibration, or an "abnormal noise" note. The flag suggests pre-staging a bearing/seal kit.
+- **Workload:** about 4 assets flagged per week across the fleet.
+- **Guardrails:**
+  - A planner approves, edits or rejects every flag, with a reason, and decisions are logged.
+  - A flag never authorizes work and never touches LOTO, permits or restart.
+  - Suspect and missing readings are ignored, and data gaps are shown.
+- **Claims:** no downtime reduction is claimed from this feature. In the case's own backtest the signal preceded every bearing and seal failure, but that is synthetic and *feasibility, not proof*.
+
+### Phase 2 (roadmap, costed, NOT part of the ask): condition monitoring at Arroyo
+
+| | Value |
+|---|---|
+| Scope | O1 on A010, A011, A012, plus required O2 platform, O6 training, Arroyo cleanup, Arroyo edge buffering (92.8% uptime) |
+| Incremental benefit (modeled, steady state) | **+188 h/yr** (bearing and seal causes only) |
+| Incremental cost | **+$129,740 upfront, +$35,300/yr** |
+| Time to commission | 5 months (O2 platform, then O1) |
+| Resources | Arroyo needs 164 h vs 120 available: **+44 h of help** (assumed $85/h) |
+| Go/no-go at month 6 of Phase 1 | (1) Arroyo's sev-5 actions verified closed; (2) O4 live at Arroyo with parts-wait per event falling; (3) readiness-flag precision and planner override rate acceptable on real data; (4) staffing for the 44 h gap confirmed |
+
+NASA notes that new predictive programs typically cost more for 2–3 years before saving. That's why this is a gated Phase 2 and not part of the ask.
+
+### Safety considerations
+- O4 never compresses detect, dispatch, repair or restart. LOTO verification, gas monitoring, no lone work near tanks, and controlled restart are untouched (29 CFR 1910.147; NIOSH/OSHA 2016-108).
+- **Protected repair time is never reduced.** The case model enforces this.
+- **No safety claims.** We claim no incident or injury reduction (ReadMe forbids it), and no spill benefit, since net uncontained spill is already 0.
+
+### Risks
+
+| Risk | Mitigation |
+|---|---|
+| HSE verification slips | First-year range is already shown (483–788 h). The pilot and unblocked sites still deliver about 236 h/yr |
+| Uniform 60% reduction is generous at Cedar/Juniper | Present the range; review those two at month 9 |
+| Judges see "just inventory" | The app is a real decision console: risk scoring, review queue, HSE lock, readiness flags, architecture |
+| Readiness flags over-trusted | Advisory only; overrides logged; precision measured on real data before any Phase 2 decision |
