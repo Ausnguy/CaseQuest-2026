@@ -1,0 +1,19 @@
+asset_id,site_id,asset_type,age_years,modeled_capacity_bbl_hr,criticality,vibration_normal_mm_s,temperature_normal_c,replacement_usd,site_name
+A001,S01,Transfer pump,9,22.0,High,2.7,62,110000,Cedar
+A002,S01,Lift pump,6,16.0,Medium,2.7,62,135000,Cedar
+A003,S01,Compressor,11,28.0,High,3.4,76,210000,Cedar
+A004,S02,Transfer pump,13,30.0,High,2.7,62,110000,Mesa
+A005,S02,Lift pump,10,22.0,Medium,2.7,62,135000,Mesa
+A006,S02,Compressor,7,20.0,High,3.4,76,210000,Mesa
+A007,S03,Transfer pump,4,24.0,High,2.7,62,110000,Juniper
+A008,S03,Lift pump,5,18.0,Medium,2.7,62,135000,Juniper
+A009,S03,Compressor,6,32.0,High,3.4,76,210000,Juniper
+A010,S04,Transfer pump,15,35.0,High,2.7,62,110000,Arroyo
+A011,S04,Lift pump,12,26.0,Medium,2.7,62,135000,Arroyo
+A012,S04,Compressor,14,30.0,High,3.4,76,210000,Arroyo
+A013,S05,Transfer pump,8,21.0,High,2.7,62,110000,Canyon
+A014,S05,Lift pump,6,18.0,Medium,2.7,62,135000,Canyon
+A015,S05,Compressor,9,25.0,High,3.4,76,210000,Canyon
+A016,S06,Transfer pump,10,27.0,High,2.7,62,110000,Prairie
+A017,S06,Lift pump,7,20.0,Medium,2.7,62,135000,Prairie
+A018,S06,Compressor,8,24.0,High,3.4,76,210000,Prairie
