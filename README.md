@@ -49,7 +49,7 @@ Docs, in reading order: `phase-1-discovery`, `phase-2-data-audit`, `phase-3-fact
 - **2025 replay** using only readings received by the chosen date, with readiness flags
 - **Rollout and business-case sliders** (reproduces 666 h year one and 968 h steady state)
 - **Guardrail self-test** and an append-only, exportable decision log
-- **Field work** (Manager role): order parts for an asset, then request an engineer timed to arrive as the parts do. Shared live with the engineer's phone app in `mobile/` through the dispatch API in `web/`
+- **Predicted failures and field work** (Manager role): the failure model's alerts, with one-click **Send engineer** that orders missing kits and times the engineer to arrive as they land. The 3D map shows the parts truck and the engineer driving out and back. Shared live with the engineer's phone app in `mobile/` through the dispatch API in `web/`
 - **Parvis**, a voice agent that briefs a plant manager, parts planner, HSE supervisor or executive from the data (rules engine, no LLM or API key). Whisper handles speech input and Kokoro provides an HD British male voice. It never lifts a hold or authorizes work.
 
 The live site above needs no setup. To run it locally instead, use a local server so the mic and voice models work (opening the file directly can block them):

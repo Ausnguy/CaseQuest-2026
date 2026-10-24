@@ -757,9 +757,36 @@ details.more>summary{color:var(--accent-700);font-weight:600}
 .bell .badge{background:var(--red);border-color:var(--paper);font-family:var(--font-mono)}
 @media(min-width:901px){.side{display:none}}
 
+/* ---------- field work (fieldwork.js) ---------- */
+.fw-read{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.fw-read span{font:500 11.5px/1 var(--font-mono);padding:5px 7px;border:1px solid var(--divider);color:var(--n800)}
+.fw-read span.hi{border-color:var(--amber);background:var(--amber-bg)}.fw-read b{font-weight:600;color:var(--ink)}
+.fw-steps{display:flex;gap:2px;list-style:none;margin:10px 0 4px;padding:0;counter-reset:s}
+.fw-steps li{flex:1;font:500 10px/1.2 var(--font-mono);letter-spacing:.03em;text-transform:uppercase;color:var(--n600);padding-top:6px;border-top:3px solid var(--n300)}
+.fw-steps li.done{border-color:var(--ink);color:var(--ink)}.fw-steps li.cur{border-color:var(--accent,#5980a6);color:var(--ink);font-weight:600}
+.fw-parts{margin:6px 0 2px}
+.fw-row{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px solid var(--divider);font-size:12.5px;line-height:1.4}
+.fw-row b{font-weight:600;text-align:right}.fw-r{text-align:right}
+.fw-ok{color:var(--green)}.fw-bad{color:var(--red)}.fw-amb{color:var(--amber-ink)}
+.fw-hold{margin-top:8px;padding:7px 9px;font-size:12.5px;background:var(--red-bg);border-left:3px solid var(--red)}
+.fw-plan{margin:10px 0 0;font-size:13px;color:var(--n800)}
+.fw-live{margin-top:10px;padding:8px 10px;border-left:3px solid #5980a6;background:rgba(89,128,166,.08);font-size:13px;font-weight:600}
+.fw-live.fw-done{border-left-color:var(--green);background:var(--green-bg)}
+.fw-insp{display:flex;flex-direction:column}.fw-insp .wc-act{margin-top:8px}
+.fw-ov{margin:4px 0 14px;padding:10px 12px;border:1px solid var(--amber);background:var(--paper)}
+.fw-ov>.mono{display:block;margin-bottom:4px;color:var(--amber-ink)}
+.fw-ovrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--divider)}
+.fw-ovname{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:transparent;border:0;padding:0;text-align:left;font-weight:400;font-size:12.5px;color:var(--n800)}
+.fw-ovname b{font-size:13px;color:var(--ink)}.fw-ovname .fw-live{margin:0;padding:0;border:0;background:none;font-weight:500;color:#41678c}
+.fw-ovmgr{margin-top:8px;width:100%}
+.fw-ov.bare{margin:0;padding:0;border:0;background:none}.fw-ov.bare .fw-ovrow:first-child{border-top:0}
+.fw-conn{font:500 10.5px/1 var(--font-mono);letter-spacing:.04em;margin-left:8px}
+#fwSide .mono{display:block;margin:10px 0 2px}
+#fwToast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;z-index:90;max-width:min(560px,calc(100vw - 32px));background:var(--ink);color:var(--paper);padding:10px 14px;font-size:13px;transition:opacity .2s,transform .2s;pointer-events:none}
+#fwToast.on{opacity:1;transform:translate(-50%,0)}
+
 /* ---------- map ---------- */
-.stage{top:var(--top);left:0;right:calc(var(--inspW) + var(--aiW));bottom:var(--tlH);background-color:var(--paper);
-  background-image:linear-gradient(rgba(29,31,32,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(29,31,32,.05) 1px,transparent 1px);background-size:32px 32px;background-position:-1px -1px}
+.stage{top:var(--top);left:0;right:calc(var(--inspW) + var(--aiW));bottom:var(--tlH);background-color:var(--paper)}
 .fcap{position:absolute;left:22px;top:16px;z-index:6;display:flex;align-items:baseline;gap:12px;pointer-events:none;white-space:nowrap}
 .fcap b{font:600 15px/1 var(--font-heading);letter-spacing:.1em}
 .fkey{position:absolute;left:22px;top:38px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:10px;color:var(--n800);background:var(--paper);border:1px solid var(--divider);padding:6px 10px}
@@ -1237,6 +1264,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
     <div class="page-head"><div><h1 tabindex="-1">What's going on at Lone Mesa</h1><p class="page-sub" id="ovEyebrow"></p></div>
       <button class="primary" data-ov="story:" title="A guided six-step walkthrough on the 3D map" style="display:inline-flex;align-items:center;gap:8px"><svg class="ico"><use href="#i-play"/></svg>Play the 2-minute story</button></div>
     <div class="headline" id="ovHeadline"></div>
+    <div class="panel" id="ovPredPanel"><div class="panel-h"><h2>Predicted failures</h2><span class="muted small">from the failure model · the manager sends an engineer</span></div><div id="ovPred"></div></div>
     <div class="panel"><div class="panel-h"><h2>Sites at a glance</h2><span class="muted small">click a site to see it on the map</span></div><div class="sites-grid" id="ovSites"></div></div>
     <div class="ov-grid">
       <div class="ov-main">
@@ -1529,6 +1557,52 @@ const labelFont=l=>l.mono?`${l.bold?'600':'500'} ${l.size}px "IBM Plex Mono",ui-
 const labels=[];
 function addText(p,text,o={}){const q=proj(p);labels.push({x:q[0],y:q[1],text,size:o.size||12,col:o.col||PAL.text,bold:o.bold,mono:o.mono,align:o.align||'center',bg:o.bg,d:q[2],pri:o.pri||0})}
 const ASSET_SHAPE={'Transfer pump':[1.4,0.9,1.1],'Lift pump':[0.9,1.7,0.9],'Compressor':[1.7,1.3,1.5]};
+// Machine models. `run` animates (beam rocks, fan turns, flow moves); `shake` jitters the frame the way a
+// worn bearing would; stopped or locked-out machines stand still. Returns the model's top height.
+const lift=(c,k)=>c.map(v=>Math.min(255,Math.round(v+(255-v)*k)));
+function drawAsset(a,ax,az,col,o,t){
+  const y0=0.28,tag='asset:'+a.id,sk={tag,stroke:o.sel?MAPC.accent:'rgba(29,31,32,.5)',lw:o.sel?2.2:1};
+  const jx=o.shake?0.035*Math.sin(t/23):0,x=ax+jx,lt=lift(col,0.35),dk=col.map(v=>Math.round(v*0.7));
+  const lc=`rgb(${dk.join(',')})`,ph=o.run?t/1000:0;
+  addBox(ax,y0,az,2.0,0.1,0.9,[206,206,209],{tag,stroke:'rgba(29,31,32,.3)'});
+  const y=y0+0.1;
+  if(a.type==='Lift pump'){
+    const th=ph*2.4,ang=0.24*Math.sin(th),P=[x-0.05,y+1.3],L=0.95,Rr=0.7;
+    const F=[P[0]+L*Math.cos(ang),P[1]+L*Math.sin(ang)],R=[P[0]-Rr*Math.cos(ang),P[1]-Rr*Math.sin(ang)];
+    addLine([x-0.3,y,az-0.28],[P[0],P[1],az],lc,3);addLine([x+0.2,y,az-0.28],[P[0],P[1],az],lc,3);
+    addLine([x-0.3,y,az+0.28],[P[0],P[1],az],lc,3);addLine([x+0.2,y,az+0.28],[P[0],P[1],az],lc,3);
+    addBox(x-0.62,y,az,0.42,0.4,0.42,col,sk);
+    const C=[x-0.62,y+0.5],K=[C[0]+0.26*Math.cos(th),C[1]+0.26*Math.sin(th)];
+    addBox(K[0],K[1]-0.12,az+0.26,0.3,0.24,0.1,dk,sk);
+    addLine([K[0],K[1],az],[R[0],R[1],az],lc,2.5);
+    addLine([R[0],R[1],az],[F[0],F[1],az],lc,7);
+    addBox(F[0]+0.08,F[1]-0.32,az,0.2,0.46,0.3,lt,sk);
+    addLine([F[0]+0.17,F[1]-0.32,az],[x+1.0+jx*0,y+0.32,az],lc,1.5);
+    addBox(x+1.0,y,az,0.2,0.32,0.2,[120,122,126],sk);
+    return 1.75;
+  }
+  if(a.type==='Transfer pump'){
+    addBox(x-0.45,y,az,0.8,0.5,0.5,col,sk);
+    addBox(x+0.05,y+0.08,az,0.2,0.34,0.34,lt,sk);
+    const cs=proj([x+0.05,y+0.25,az+0.18+0.0]),cq=ph*9;
+    items.push({t:'dot',x:cs[0]+Math.cos(cq)*cs[3]*0.09,y:cs[1]+Math.sin(cq)*cs[3]*0.09,r:Math.max(1.5,cs[3]*0.035),col:'rgba(29,31,32,.9)',d:cs[2]-0.3});
+    addBox(x+0.42,y,az,0.5,0.6,0.62,dk,sk);
+    const pipe='rgba(93,93,96,1)',pts=[[x+0.42,y+0.6,az],[x+0.42,y+1.0,az],[x+0.95,y+1.0,az],[x+0.95,y0,az]];
+    for(let k=0;k<3;k++)addLine(pts[k],pts[k+1],pipe,6);
+    addLine([x+0.67,y+0.3,az],[x+0.95,y+0.3,az],pipe,6);
+    if(o.run)for(let k=0;k<4;k++){const f=((ph*0.8)+k/4)%1,seg=f*3,i=Math.min(2,Math.floor(seg)),u=seg-i,a0=pts[i],a1=pts[i+1],s=proj([a0[0]+(a1[0]-a0[0])*u,a0[1]+(a1[1]-a0[1])*u,az]);items.push({t:'dot',x:s[0],y:s[1],r:Math.max(1.5,s[3]*0.045),col:'rgba(89,128,166,.95)',d:s[2]-0.2})}
+    return 1.05;
+  }
+  addBox(x-0.3,y,az,1.05,0.78,0.82,col,sk);
+  for(let k=0;k<4;k++)addLine([x-0.62+k*0.2,y+0.18,az+0.411],[x-0.62+k*0.2,y+0.62,az+0.411],lc,1);
+  addBox(x+0.55,y,az,0.6,1.08,0.82,lt,sk);
+  const hc=[x+0.55,y+1.09,az];
+  for(let k=0;k<10;k++){const a1=k/10*6.283,a2=(k+1)/10*6.283;addLine([hc[0]+0.28*Math.cos(a1),hc[1],hc[2]+0.28*Math.sin(a1)],[hc[0]+0.28*Math.cos(a2),hc[1],hc[2]+0.28*Math.sin(a2)],lc,1.2)}
+  for(let k=0;k<3;k++){const q=ph*7+k*2.094;addLine(hc,[hc[0]+0.26*Math.cos(q),hc[1],hc[2]+0.26*Math.sin(q)],lc,3)}
+  addLine([x-0.6,y+0.78,az-0.2],[x-0.6,y+1.3,az-0.2],'rgba(93,93,96,.95)',4);
+  if(o.run){const f=(ph*0.6)%1,s=proj([x-0.6,y+1.35+f*0.6,az-0.2]);items.push({t:'dot',x:s[0],y:s[1],r:Math.max(2,s[3]*(0.06+f*0.08)),col:`rgba(160,160,165,${0.55*(1-f)})`,d:s[2]-0.2})}
+  return 1.2;
+}
 function equipIcon(type){
   const c='#3B4352',bg='#FFFFFF';
   if(type==='Lift pump') return `<svg viewBox="0 0 64 80" width="56" height="70" fill="none" aria-hidden="true">
@@ -1578,12 +1652,13 @@ function scene(t){
     if(nW) addText([cx,3.1,cz-0.5],(nW>1?nW+' ':'')+'WAITING FOR PARTS',{size:11,col:MAPC.red,bold:1,pri:2});
     if(nS) addText([cx,nW?2.5:3.1,cz-0.5],(nS>1?nS+' ':'')+'STOPPED',{size:11,col:MAPC.red,bold:1,pri:2});
     D.assets.filter(a=>a.site===sid).forEach((a,i)=>{
-      const [w,h,d]=ASSET_SHAPE[a.type],ax=cx-2.2+i*2.2,az=cz-0.5;
-      const st=stoppedNow(a.id,S.day),fl=flags[a.id];
+      const d=1,ax=cx-2.2+i*2.2,az=cz-0.5;
+      const st=stoppedNow(a.id,S.day),fw=window.FW?FW.assetState(a.id):{},fl=fw.repaired?{...flags[a.id],flag:false}:flags[a.id];
       let col=MAPC.runA;
-      if(st) col=st.pw>0?MAPC.waitA:MAPC.stopA; else if(fl.flag) col=MAPC.warnA;
+      if(st) col=st.pw>0?MAPC.waitA:MAPC.stopA; else if(fw.predicted||fl.flag) col=MAPC.warnA;
       const isSel=S.sel&&S.sel.type==='asset'&&S.sel.id===a.id;
-      addBox(ax,0.28,az,w,h,d,col,{tag:'asset:'+a.id,stroke:isSel?MAPC.accent:'rgba(29,31,32,.45)',lw:isSel?2.5:1});
+      const h=drawAsset(a,ax,az,col,{sel:isSel,run:!st&&!fw.lockedOut,shake:!st&&!fw.lockedOut&&(fw.predicted||fl.flag)},t);
+      if(fw.label)addText([ax,0.28+h+0.75,az],fw.label,{size:10,col:fw.labelCol||MAPC.amber,bold:1,pri:2,mono:1});
       const top=proj([ax,0.28+h+0.2,az]);
       assetScreen[a.id]={x:top[0],y:top[1],f:top[3]};
       if(fl.flag&&!st){
@@ -1616,6 +1691,7 @@ function scene(t){
     }
     addText([cx,0.1,cz-3.7],s.name.toUpperCase(),{size:16,col:sel?MAPC.accent:MAPC.ink,bold:1,pri:4});
   });
+  if(window.FW)FW.scene3d(t);
 }
 function draw(t){
   ctx.clearRect(0,0,W,H);
@@ -1631,6 +1707,8 @@ function draw(t){
     }else if(it.t==='ring'){
       ctx.beginPath();ctx.arc(it.x,it.y,Math.max(3,it.r),0,7);ctx.strokeStyle=it.col;ctx.lineWidth=2;ctx.stroke();
       ctx.beginPath();ctx.arc(it.x,it.y,Math.max(1.5,it.r*0.35),0,7);ctx.fillStyle=it.col;ctx.fill();
+    }else if(it.t==='dot'){
+      ctx.beginPath();ctx.arc(it.x,it.y,it.r,0,7);ctx.fillStyle=it.col;ctx.fill();
     }
   });
   placeLabels().sort((a,b)=>b.d-a.d).forEach(l=>{
@@ -2704,6 +2782,7 @@ function doDecide(b){
 }
 function handleAction(b){
   const act=b.dataset.act;
+  if(act&&act.startsWith('fw')&&window.FW){FW.handle(b);return true}
   if(act==='fillEv'){const f=b.closest('.vform'),n=f.querySelector('.f-note'),w=f.querySelector('.f-wit');n.value=b.dataset.ev;if(!w.value.trim())w.value='Operations lead (demo)';n.focus();return true}
   if(act==='verify'){doVerify(b.closest('.vform'));return true}
   if(act==='decide'){doDecide(b);return true}
@@ -2763,6 +2842,7 @@ function inspOverview(){
     return `<div class="act"><time>${shortDay(e.s).toUpperCase()}</time><i style="background:${e.pw>0?C_RED:C_INK}"></i><span>${siteBy[a.site].name} ${a.type.toLowerCase()} ${e.a} stopped (${esc(e.c.toLowerCase())})${e.pw>0?', waited for parts':''}.</span></div>`});
   return `<div class="iv">
     <div class="iv-h"><span class="mono">FIELD OVERVIEW · SELECT A SITE OR ASSET</span><h2>Lone Mesa field</h2><p class="iv-lead">${head}</p></div>
+    ${window.FW?FW.overviewBlock():''}
     <div class="kgrid">
       <div><b>${fmt(p.tot)} h</b><span>unplanned downtime, 2025</span></div>
       <div><b>${p.ev.length}</b><span>unplanned stops, 2025</span></div>
@@ -2847,6 +2927,7 @@ function assetView(aid){
         <p>Signals: ${flagEvidence(fl)}. Recommendation on file: <b>have a bearing/seal kit ready.</b> Advisory only; it never authorizes work.</p>
         <span class="mono" style="margin-top:4px">INTERVENTION DECISION · PLANNER</span>${decide}`:''}
       ${!st&&!fl.flag?`<p>Running. No early-warning flag or stoppage as of ${prettyDay(S.day)}.</p>`:''}
+      ${window.FW?FW.assetBlock(aid):''}
       <span class="mono" style="margin-top:6px">VIBRATION · LAST 60 DAYS</span>
       <canvas id="aChart" height="150"></canvas>
       <p class="muted small">Vibration ÷ normal, readings received by the replay day only. Dashed line = 1.3× flag level. Red ticks = unplanned stops.</p>
@@ -3099,6 +3180,7 @@ function renderOverview(){
   const fl=allFlags(S.day),flagged=D.assets.filter(a=>fl[a.id].flag&&!stoppedNow(a.id,S.day));
   const unl=unlockedH(),tot=sumSteady(),n=stopped.length,w=waiting.length;
   $('#ovEyebrow').textContent=`Six sites, as of ${day}.`;
+  if(window.FW)$('#ovPred').innerHTML=FW.overviewBlock(true);
   // headline
   const say=holds.length?`${holds.length} of 6 sites can't get spare parts yet. Overdue safety checks are holding ${lst(holds.map(s=>siteBy[s].name))}.`
     :'All six sites are cleared, so every site can stock spare parts.';
@@ -3218,6 +3300,7 @@ function workModel(){
   D.assets.filter(a=>fl[a.id].flag&&!stoppedNow(a.id,S.day)&&!decidedFlag(a.id))
     .sort((a,b)=>(a.crit==='High'?0:1)-(b.crit==='High'?0:1))
     .forEach(a=>(stat(a.site)==='HOLD'?blocked:now).push({k:'f:'+a.id,type:'flag',a,f:fl[a.id],sid:a.site}));
+  if(window.FW)FW.addWork(now,blocked);
   return {now,blocked,done:S.log.slice().reverse()};
 }
 const cardId=k=>'wc-'+k.replace(':','-');
@@ -3261,30 +3344,31 @@ function doneCard(l){
     <div class="wc-meta"><span>Reason: ${esc(l.reason)}</span>${l.kit?`<span>Kit: ${esc(l.kit)}</span>`:''}</div></div>`;
 }
 function renderWorkBadge(){const n=workModel().now.length||'';$$('#workBadge,#workBadge2').forEach(e=>e.textContent=n)}
-const ownerOf=it=>it.type==='gate'?'Site HSE supervisor':'Planner';
+const ownerOf=it=>it.type==='gate'?'Site HSE supervisor':it.type==='predict'?'Manager':'Planner';
 $('#wkFilter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;UI.wkMine=b.dataset.f==='mine';renderWork()});
 function renderWork(){
   const all=workModel(),mine=UI.wkMine,m=mine?{...all,now:all.now.filter(it=>ownerOf(it)===S.role),blocked:all.blocked.filter(it=>ownerOf(it)===S.role)}:all;
   $$('#wkFilter button').forEach(b=>{const on=(b.dataset.f==='mine')===!!mine;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  const mgr=mine&&S.role==='Manager';
+  const mgr=mine&&S.role==='Manager'&&!m.now.length;
   $('#wkEyebrow').textContent=`As of ${prettyDay(S.day)}, acting as ${S.role==='Site HSE supervisor'?'HSE supervisor':S.role}.`;
   $('#cntNow').textContent=m.now.length;$('#cntBlocked').textContent=m.blocked.length;$('#cntDone').textContent=m.done.length;
-  $('#colNow').innerHTML=m.now.length?m.now.map(it=>it.type==='gate'?gateCard(it):flagCard(it)).join('')
+  $('#colNow').innerHTML=m.now.length?m.now.map(it=>it.type==='gate'?gateCard(it):it.type==='predict'?FW.card(it):flagCard(it)).join('')
     :`<div class="col-empty">${mgr?'Managers don’t own tasks here. Switch to “Everyone’s work” to watch progress.':mine&&all.now.length?`Nothing for the ${S.role==='Site HSE supervisor'?'HSE supervisor':'planner'} right now. ${nOf(all.now.length,'task waits','tasks wait')} on someone else.`:'Nothing to do right now. Every site is cleared and every flag has a decision.'}</div>`;
-  $('#colBlocked').innerHTML=m.blocked.length?m.blocked.map(flagCard).join(''):`<div class="col-empty">Nothing is stuck behind a safety hold.</div>`;
+  $('#colBlocked').innerHTML=m.blocked.length?m.blocked.map(it=>it.type==='predict'?FW.card(it):flagCard(it)).join(''):`<div class="col-empty">Nothing is stuck behind a safety hold.</div>`;
   $('#board').classList.toggle('no-done',!m.done.length);
   $('#colDone').innerHTML=m.done.length?m.done.slice(0,30).map(doneCard).join(''):`<div class="col-empty">Nothing yet. Finished work lands here.</div>`;
   const gN=all.now.filter(x=>x.type==='gate').length,fN=all.now.filter(x=>x.type==='flag').length,bN=all.blocked.length;
   const who=[['Site HSE supervisor','hse','HS',gN?`${nOf(gN,'safety check','safety checks')} to verify`:'Nothing to verify'],
     ['Planner','pl','PL',(fN?`${nOf(fN,'flag','flags')} to decide`:'No flags to decide')+(bN?` (${bN} more behind holds)`:'')],
-    ['Manager','','MG','Watches progress. Can’t verify or approve.']];
+    ['Manager','','MG',(()=>{const pN=[...all.now,...all.blocked].filter(x=>x.type==='predict').length;return pN?`${nOf(pN,'predicted failure','predicted failures')}: order parts, send engineers`:'Orders parts and sends engineers. Can’t verify or approve.'})()]];
   $('#wkWho').innerHTML=who.map(([r,c,av,txt])=>`<button class="who ${S.role===r?'me':''}" data-wk="role" data-role="${r}" aria-pressed="${S.role===r}" title="Act as ${r}"><span class="av ${c}">${av}</span><span><b>${r==='Site HSE supervisor'?'HSE supervisor':r}${S.role===r?' · you':''}</b><span>${txt}</span></span></button>`).join('');
-  const crit=D.gates.filter(g=>g.block),ver=crit.filter(g=>S.verified[g.id]).length,unl=unlockedH(),tot=sumSteady(),el=SITE_ORDER.filter(s=>stat(s)==='ELIGIBLE').length,dec=S.log.filter(l=>l.asset).length;
+  const crit=D.gates.filter(g=>g.block),ver=crit.filter(g=>S.verified[g.id]).length,unl=unlockedH(),tot=sumSteady(),el=SITE_ORDER.filter(s=>stat(s)==='ELIGIBLE').length,dec=S.log.filter(l=>l.asset&&!l.fw).length;
   $('#wkProgress').innerHTML=`<div class="prog"><span>Safety checks verified</span><b>${ver} of ${crit.length}</b></div><div class="pbar"><i style="width:${ver/crit.length*100}%"></i></div>
     <div class="prog"><span>Sites cleared</span><b>${el} of 6</b></div><div class="pbar"><i style="width:${el/6*100}%"></i></div>
     <div class="prog"><span>Prize unlocked ${tagM}</span><b>${fmt(unl)} of ${fmt(tot)} h/yr</b></div><div class="pbar"><i style="width:${unl/tot*100}%"></i></div>
     <div class="prog"><span>Planner decisions logged</span><b>${dec}</b></div>`;
   $$('#workBadge,#workBadge2').forEach(e=>e.textContent=all.now.length||'');
+  if(window.FW&&!$('#fwPanel'))$('.wk-side').insertAdjacentHTML('beforeend',FW.side());
 }
 function flashCard(k){const el=document.getElementById(cardId(k));if(!el)return;el.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'center'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
 $('#pg-work').addEventListener('click',e=>{
@@ -3614,5 +3698,6 @@ function renderAll(){
 window.addEventListener("resize",()=>{resize3d();drawSpark();drawSiteCharts();if(S.sel&&S.sel.type==='asset')drawAssetChart()});
 resize3d();frameTargets(true);setRole(S.role);setDay(S.day);renderAll();setPlayIcon();setMode(UI.mode);go(location.hash.replace(/^#\/?/,''));requestAnimationFrame(loop);
 </script>
+<script src="fieldwork.js"></script>
 </body>
 </html>
