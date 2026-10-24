@@ -62,7 +62,7 @@ Every site fits its project-hour budget. **Arroyo is the tight one**: two techni
 
 - **Annual avoided unplanned downtime:** 968 hours at full implementation (14.7% of the 6,599 hours), range 565 to 1,210 (35% to 75% parts-wait reduction).
 - **Assumptions:** the base 60% parts-wait reduction applies to all unplanned events at live sites; stage hours are original × (1 − reduction); protected repair time is untouched; one-month lead time per site; benefit begins the month after a site goes live.
-- **Margin:** about $842k a year, valued at about $870 per avoided hour using the ReadMe contribution formula. A modeled margin, not cash. No repair-cost savings are claimed (maintenance cost data is incomplete: pending invoices stay unknown, not zero).
+- **Margin:** about $842k a year, valued at about $870 per avoided hour using the ReadMe contribution formula. A modeled margin, not cash. No repair-cost savings are claimed (14 of 385 work orders have pending parts invoices, which stay unknown, not zero, and historical maintenance is not automatically avoided).
 - **First year is lower than steady state:** 666 hours if closures are verified by month 3 (range 483 at month 6 to 788 at month 1; low-to-high reduction case 388 to 832).
 
 | Site | Steady-state h/yr | Modeled margin | Upfront (O4 + site HSE) | Annual | Payback at steady state |
