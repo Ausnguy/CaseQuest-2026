@@ -69,16 +69,17 @@ function Now({ state, job, now, kmLeft, legDone }: { state: DispatchState; job: 
     sub = shake?.status === 'unavailable' ? 'No motion sensor on this phone. Use auto drive.' : auto ? 'Auto driving. Shake to go faster.' : `Shake your phone to drive. Each shake is ${SHAKE_KM} km.`;
     tone = C.primary;
   } else if (job.status === 'on-site') {
-    head = partsIn ? 'On site' : `Parts in ${countdown(parts!.arriveAt - now)}`;
-    sub = partsIn ? 'Starting the repair.' : 'You are early. The repair starts on its own when the parts arrive.';
+    head = partsIn ? 'Ready to repair' : `Parts in ${countdown(parts!.arriveAt - now)}`;
+    sub = partsIn ? 'Parts and kits are on site. Start when you begin work.' : 'You are early. Start the repair once the parts arrive.';
     tone = C.amber;
   } else if (job.status === 'working') {
-    head = `Repairing · ${countdown(job.workStartAt! + WORK_S * 1000 - now)}`;
-    sub = 'Machine locked out. The manager sees the repair live.';
+    const left = job.workStartAt! + WORK_S * 1000 - now;
+    head = left > 0 ? `Repairing · ${countdown(left)}` : 'Repairing';
+    sub = left > 0 ? 'Estimated time left. Mark it repaired when you are done.' : 'Mark it repaired when you are done.';
     tone = C.amber;
   } else if (job.status === 'done') {
     head = 'Repair done';
-    sub = 'Pack up and head back to the base.';
+    sub = 'Pack up and head back to the base when you are ready.';
     tone = C.green;
   }
 
@@ -90,6 +91,12 @@ function Now({ state, job, now, kmLeft, legDone }: { state: DispatchState; job: 
       <View style={{ gap: 8, marginTop: 12 }}>
         {(job.status === 'en-route' || job.status === 'leaving') && <Meter value={legDone} />}
         {job.status === 'working' && <Meter value={(now - job.workStartAt!) / (WORK_S * 1000)} color={C.amber} />}
+        {job.status === 'on-site' && (
+          <Btn label="Start repair" primary disabled={busy || !partsIn} onPress={() => act({ type: 'startWork', jobId: job.id, engineerId: ME })} />
+        )}
+        {job.status === 'working' && (
+          <Btn label="Mark repaired" primary={now >= job.workStartAt! + WORK_S * 1000} disabled={busy} onPress={() => act({ type: 'finishWork', jobId: job.id, engineerId: ME })} />
+        )}
         {job.status === 'scheduled' && (
           <Btn label={due ? 'Set off' : 'Set off early'} primary={due} disabled={busy} onPress={() => act({ type: 'depart', jobId: job.id, engineerId: ME })} />
         )}

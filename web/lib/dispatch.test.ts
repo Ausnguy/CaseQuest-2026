@@ -35,7 +35,7 @@ describe('parts first, engineer timed to the parts', () => {
     expect(s.jobs[0].leaveAt).toBe(T0 + 40_000);
   });
 
-  it('does not start the repair until the parts are on site', () => {
+  it('never starts the repair itself; the engineer can only start once the parts are on site', () => {
     let s = run(initialState(), { type: 'orderParts', asset: 'A001', kit: 'Bearing kit' }, T0);
     s = run(s, { type: 'requestEngineer', asset: 'A001', engineerId: PHONE_ENGINEER, partsId: s.parts[0].id, timing: 'now', note: '', hseHold: null }, T0);
     s = run(s, { type: 'depart', jobId: s.jobs[0].id, engineerId: PHONE_ENGINEER }, T0);
@@ -46,10 +46,14 @@ describe('parts first, engineer timed to the parts', () => {
     expect(atSite.engineers[0].at).toBe('S01');
 
     const partsIn = s.parts[0].arriveAt;
-    const working = materialize(s, partsIn + 1);
-    expect(working.jobs[0].status).toBe('working');
-    expect(working.jobs[0].workStartAt).toBe(partsIn);
-    expect(materialize(s, partsIn + WORK_S * 1000).jobs[0].status).toBe('done');
+    expect(materialize(s, partsIn + 60_000).jobs[0].status).toBe('on-site');
+    const start = { type: 'startWork', jobId: s.jobs[0].id, engineerId: PHONE_ENGINEER } as const;
+    expect(apply(materialize(s, partsIn - 1), start, partsIn - 1)).toMatchObject({ ok: false, error: expect.stringMatching(/not arrived/) });
+    s = run(s, start, partsIn + 1);
+    expect(s.jobs[0]).toMatchObject({ status: 'working', workStartAt: partsIn + 1 });
+    expect(materialize(s, partsIn + WORK_S * 10_000).jobs[0].status).toBe('working');
+    s = run(s, { type: 'finishWork', jobId: s.jobs[0].id, engineerId: PHONE_ENGINEER }, partsIn + WORK_S * 1000);
+    expect(s.jobs[0].status).toBe('done');
   });
 });
 
@@ -95,10 +99,12 @@ describe('engineer on the phone', () => {
     let s = onRoad();
     // Cedar is about 11.3 km from the base.
     for (let i = 0; i < 2; i++) s = run(s, { type: 'travel', engineerId: PHONE_ENGINEER, km: 6 }, T0 + i * 1000);
-    expect(s.jobs[0].status).toBe('working');
+    expect(s.jobs[0].status).toBe('on-site');
     expect(apply(s, { type: 'travel', engineerId: PHONE_ENGINEER, km: 1 }, T0 + 2000).ok).toBe(false);
-    const done = s.jobs[0].workStartAt! + WORK_S * 1000;
-    expect(() => run(s, { type: 'leave', jobId: s.jobs[0].id, engineerId: PHONE_ENGINEER }, done - 1)).toThrow(/not finished/);
+    expect(() => run(s, { type: 'leave', jobId: s.jobs[0].id, engineerId: PHONE_ENGINEER }, T0 + 2000)).toThrow(/not finished/);
+    s = run(s, { type: 'startWork', jobId: s.jobs[0].id, engineerId: PHONE_ENGINEER }, T0 + 2000);
+    const done = T0 + 2000 + WORK_S * 1000;
+    s = run(s, { type: 'finishWork', jobId: s.jobs[0].id, engineerId: PHONE_ENGINEER }, done);
     s = run(s, { type: 'leave', jobId: s.jobs[0].id, engineerId: PHONE_ENGINEER }, done);
     s = run(s, { type: 'autoTravel', engineerId: PHONE_ENGINEER, on: true }, done);
     const back = materialize(s, done + 60_000);

@@ -67,8 +67,8 @@
     switch (j.status) {
       case 'scheduled': return t >= j.leaveAt ? `${who} is due to leave the base now` : `${who} leaves the base in ${dur(j.leaveAt - t)}${p ? ', timed to arrive with the parts' : ''}`;
       case 'en-route': return `${who} driving to site, ${(j.leg.km - legDone(j.leg, t)).toFixed(1)} km to go`;
-      case 'on-site': return p && t < p.arriveAt ? `${who} on site, parts land in ${dur(p.arriveAt - t)}` : `${who} on site`;
-      case 'working': return `${who} repairing, ${dur(j.workStartAt + FW.cfg.workS * 1000 - t)} left`;
+      case 'on-site': return p && t < p.arriveAt ? `${who} on site, parts land in ${dur(p.arriveAt - t)}` : `${who} on site, about to start the repair`;
+      case 'working': { const left = j.workStartAt + FW.cfg.workS * 1000 - t; return left > 0 ? `${who} repairing, about ${dur(left)} left` : `${who} finishing the repair`; }
       case 'done': return `Repaired. ${who} packing up`;
       case 'leaving': return `Repaired. ${who} heading back to base`;
       default: return '';
@@ -80,8 +80,7 @@
   FW.assetState = (aid) => {
     if (!FW.state) return {};
     const j = liveJob(aid), plan = planFor(aid);
-    // The engineer's own map label says what is happening while a job is live.
-    if (j?.status === 'working') return { lockedOut: true };
+    // The engineer's own map label says what is happening while a job is live. Nothing here changes the machine.
     if (j && (j.status === 'done' || j.status === 'leaving')) return { repaired: true, label: 'REPAIRED', labelCol: 'rgb(30,127,79)' };
     if (j) return { predicted: !!plan };
     if (doneJob(aid)) return { repaired: true };
@@ -195,6 +194,8 @@
 
   // Order what the site shelf lacks, then book the engineer timed to land with it.
   async function send(aid) {
+    // Only a manager sends work. The model alerts; it never books anyone by itself.
+    if (!isMgr()) { toast('Only the manager can send an engineer.'); return; }
     if (FW.sending.has(aid)) return;
     FW.sending.add(aid); refresh(true);
     try {
@@ -258,10 +259,13 @@
     if (e.at && POS[e.at]) return { p: siteSpot(e.at) };
     return { p: e.pos };
   }
+  // Ground level, or the pad's top when the vehicle is inside a site's pad.
+  const groundAt = (x, z) => (Object.values(POS).some(([cx, cz]) => Math.abs(x - cx) < 3.7 && Math.abs(z - cz) < 3.2) ? 0.28 : 0.02);
   function vehicle(x, z, col, t, lights) {
-    addBox(x, 0.04, z, 0.75, 0.32, 0.5, col, { stroke: 'rgba(29,31,32,.6)' });
-    addBox(x + 0.12, 0.36, z, 0.4, 0.22, 0.46, col.map((v) => Math.min(255, v + 60)), { stroke: 'rgba(29,31,32,.6)' });
-    if (lights) { const s = proj([x + 0.12, 0.7, z]); items.push({ t: 'dot', x: s[0], y: s[1], r: Math.max(2, s[3] * 0.07), col: Math.floor(t / 300) % 2 ? 'rgba(255,170,40,.95)' : 'rgba(255,170,40,.25)', d: s[2] - 0.5 }); }
+    const y = groundAt(x, z);
+    addBox(x, y, z, 0.75, 0.32, 0.5, col, { stroke: 'rgba(29,31,32,.6)' });
+    addBox(x + 0.12, y + 0.32, z, 0.4, 0.22, 0.46, col.map((v) => Math.min(255, v + 60)), { stroke: 'rgba(29,31,32,.6)' });
+    if (lights) { const s = proj([x + 0.12, y + 0.66, z]); items.push({ t: 'dot', x: s[0], y: s[1], r: Math.max(2, s[3] * 0.07), col: Math.floor(t / 300) % 2 ? 'rgba(255,170,40,.95)' : 'rgba(255,170,40,.25)', d: s[2] - 0.5 }); }
   }
   FW.scene3d = (t) => {
     addBox(0, 0, 0, 2.2, 0.55, 1.4, [226, 226, 229], { stroke: 'rgba(29,31,32,.45)' });
@@ -274,14 +278,14 @@
     for (const p of FW.state.parts.filter((x) => tt < x.arriveAt)) {
       const f = Math.min(1, Math.max(0, (tt - p.orderedAt) / (p.arriveAt - p.orderedAt))), to = siteSpot(p.site);
       const x = WAREHOUSE[0] + (to[0] - WAREHOUSE[0]) * f, z = WAREHOUSE[1] + (to[1] - WAREHOUSE[1]) * f;
-      addLine([x, 0.03, z], [to[0], 0.03, to[1]], 'rgba(168,114,34,.8)', 1.6, [4, 4]);
+      addLine([x, 0.3, z], [to[0], 0.3, to[1]], 'rgba(168,114,34,.8)', 1.6, [4, 4], 1);
       vehicle(x, z, TRUCK, t, true);
-      addText([x, 1.05, z], `${p.kit.toUpperCase()} · ${dur(p.arriveAt - tt)}`, { size: 10, col: MAPC.amber, bold: 1, mono: 1, pri: 3 });
+      addText([x, 1.3, z], `${p.kit.toUpperCase()} · ${dur(p.arriveAt - tt)}`, { size: 10, col: MAPC.amber, bold: 1, mono: 1, pri: 3 });
     }
     for (const e of FW.state.engineers) {
       const g = engTarget(e, tt), d = FW.disp[e.id] || (FW.disp[e.id] = g.p.slice());
       d[0] += (g.p[0] - d[0]) * 0.12; d[1] += (g.p[1] - d[1]) * 0.12;
-      if (g.to) addLine([d[0], 0.03, d[1]], [g.to[0], 0.03, g.to[1]], 'rgba(89,128,166,.9)', 2, [6, 4]);
+      if (g.to) addLine([d[0], 0.3, d[1]], [g.to[0], 0.3, g.to[1]], 'rgba(89,128,166,.9)', 2, [6, 4], 1);
       vehicle(d[0], d[1], ENG, t, !!g.to);
       if (g.onSite) {
         const [wx, wz] = assetSpot(g.j.asset), bob = g.j.status === 'working' ? 0.05 * Math.abs(Math.sin(t / 160)) : 0;

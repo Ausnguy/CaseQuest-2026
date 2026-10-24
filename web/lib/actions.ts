@@ -24,6 +24,8 @@ export const actionSchema: z.ZodType<Action> = z.discriminatedUnion('type', [
   // A phone batches its shakes; more than this in one call is not a person shaking a phone.
   z.object({ type: z.literal('travel'), engineerId: id, km: z.number().positive().max(6) }),
   z.object({ type: z.literal('autoTravel'), engineerId: id, on: z.boolean() }),
+  z.object({ type: z.literal('startWork'), jobId: id, engineerId: id }),
+  z.object({ type: z.literal('finishWork'), jobId: id, engineerId: id }),
   z.object({ type: z.literal('leave'), jobId: id, engineerId: id }),
   z.object({ type: z.literal('reset') }),
 ]);

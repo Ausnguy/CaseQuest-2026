@@ -133,6 +133,13 @@ function notify(state: DispatchState, now: number) {
     Vibration.vibrate([0, 400, 200, 400]);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
   }
+  const parts = job.partsId ? state.parts.find((p) => p.id === job.partsId) : undefined;
+  const readyKey = `${job.id}:ready`;
+  if (job.status === 'on-site' && (!parts || now >= parts.arriveAt) && !seen.has(readyKey)) {
+    seen.add(readyKey);
+    useStore.setState({ banner: { key: readyKey, tone: 'go', title: 'Parts on site', body: 'Everything is here. Tap Start repair when you begin.' } });
+    Vibration.vibrate([0, 300, 150, 300]);
+  }
   const goKey = `${job.id}:go`;
   if (job.status === 'scheduled' && now >= job.leaveAt && !seen.has(goKey)) {
     seen.add(goKey);

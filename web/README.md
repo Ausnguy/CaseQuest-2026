@@ -16,7 +16,7 @@ Vercel Functions have no WebSockets, so the console polls every 2 s and the phon
 2. The manager clicks **Send engineer** (Overview, the map's field overview, the asset inspector or the Work board). Kits missing from the shelf are ordered first; each site's lead time is its observed 2025 median parts wait, played at 3 s per hour.
 3. Dispatch books the engineer to leave so they arrive as the parts land. The 3D map shows the parts truck leaving the warehouse and the engineer driving out and back.
 4. The phone buzzes with the job, then again when it is time to leave. The engineer shakes the phone to drive (0.5 km per shake) or uses auto drive.
-5. The repair starts by itself once the engineer and the parts are both on site, takes 20 s, then the engineer leaves for the base.
+5. On site, the engineer taps **Start repair** once the parts are there and **Mark repaired** when done (about 20 s in the demo), then **Leave site**. Dispatch never starts, stops or changes a machine, and nothing is sent without the manager: the model only alerts.
 
 ## Local
 

@@ -172,13 +172,15 @@ export function materialize(input: DispatchState, now: number): DispatchState {
           }
           job.leg = null;
         }
-      } else if (job.status === 'on-site' && job.arrivedAt !== null) {
+      // The phone engineer starts and finishes the repair themselves ('startWork', 'finishWork'); dispatch never
+      // acts on a machine. Stand-in engineers are simulated people, so they follow the same steps on their own.
+      } else if (job.status === 'on-site' && job.arrivedAt !== null && !eng.phone) {
         const start = Math.max(job.arrivedAt, parts ? parts.arriveAt : job.arrivedAt);
         if (now >= start) {
           job.status = 'working';
           job.workStartAt = start;
         }
-      } else if (job.status === 'working' && job.workStartAt !== null) {
+      } else if (job.status === 'working' && job.workStartAt !== null && !eng.phone) {
         const end = job.workStartAt + WORK_S * 1000;
         if (now >= end) {
           job.status = 'done';
@@ -204,6 +206,8 @@ export type Action =
   | { type: 'depart'; jobId: string; engineerId: string }
   | { type: 'travel'; engineerId: string; km: number }
   | { type: 'autoTravel'; engineerId: string; on: boolean }
+  | { type: 'startWork'; jobId: string; engineerId: string }
+  | { type: 'finishWork'; jobId: string; engineerId: string }
   | { type: 'leave'; jobId: string; engineerId: string }
   | { type: 'reset' };
 
@@ -295,6 +299,26 @@ export function apply(input: DispatchState, a: Action, now: number): Result {
       if (leg.autoSince !== null) leg.autoSince = now;
       if (a.type === 'travel') leg.doneKm = Math.min(leg.km, leg.doneKm + a.km);
       else leg.autoSince = a.on ? now : null;
+      break;
+    }
+    case 'startWork': {
+      const job = s.jobs.find((j) => j.id === a.jobId);
+      if (!job || job.engineerId !== a.engineerId) return fail('That job is not assigned to you.');
+      if (job.status !== 'on-site') return fail('You are not on site for this job.');
+      const parts = job.partsId ? s.parts.find((p) => p.id === job.partsId) : null;
+      if (parts && now < parts.arriveAt) return fail('The parts have not arrived yet.');
+      job.status = 'working';
+      job.workStartAt = now;
+      addLog(s, now, s.engineers.find((e) => e.id === a.engineerId)!.name, `Started repair on ${job.asset}`);
+      break;
+    }
+    case 'finishWork': {
+      const job = s.jobs.find((j) => j.id === a.jobId);
+      if (!job || job.engineerId !== a.engineerId) return fail('That job is not assigned to you.');
+      if (job.status !== 'working') return fail('The repair has not started.');
+      job.status = 'done';
+      job.doneAt = now;
+      addLog(s, now, s.engineers.find((e) => e.id === a.engineerId)!.name, `Repaired ${job.asset}`);
       break;
     }
     case 'leave': {

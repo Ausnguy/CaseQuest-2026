@@ -1541,10 +1541,12 @@ function addBox(cx,y0,cz,w,h,dd,col,o={}){
     const toCam=[-cc[0],-cc[1],-cam.dist-cc[2]];
     if(nc[0]*toCam[0]+nc[1]*toCam[1]+nc[2]*toCam[2]<=0) return;
     const pp=wp.map(proj);
-    items.push({t:'poly',pts:pp,d:cam.dist+cc[2],fill:rgb(col,f.sh,a),stroke:o.stroke||'rgba(17,20,24,.22)',lw:o.lw||1,tag:o.tag||null});
+    items.push({t:'poly',pts:pp,d:cam.dist+cc[2],fill:rgb(col,f.sh,a),stroke:o.stroke||'rgba(17,20,24,.22)',lw:o.lw||1,tag:o.tag||null,layer:o.layer??2});
   });
 }
-function addLine(p,q,col,lw,dash){const a=proj(p),b=proj(q);items.push({t:'line',a,b,d:Math.min(a[2],b[2])-0.05,col,lw,dash})}
+// Painter's order is per layer, then far to near: -1 ground lines, 0 site pads, 1 machine skids, 2 everything standing.
+// Sorting big flat faces by their centre alone let a pad paint over the machines on it from some angles.
+function addLine(p,q,col,lw,dash,layer=2){const a=proj(p),b=proj(q);items.push({t:'line',a,b,d:Math.min(a[2],b[2])-0.05,col,lw,dash,layer})}
 function addWire(cx,y0,cz,w,h,dd,col,lw,dash){
   const x0=cx-w/2,x1=cx+w/2,z0=cz-dd/2,z1=cz+dd/2,y1=y0+h;
   const c=[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]];
@@ -1558,13 +1560,13 @@ const labels=[];
 function addText(p,text,o={}){const q=proj(p);labels.push({x:q[0],y:q[1],text,size:o.size||12,col:o.col||PAL.text,bold:o.bold,mono:o.mono,align:o.align||'center',bg:o.bg,d:q[2],pri:o.pri||0})}
 const ASSET_SHAPE={'Transfer pump':[1.4,0.9,1.1],'Lift pump':[0.9,1.7,0.9],'Compressor':[1.7,1.3,1.5]};
 // Machine models. `run` animates (beam rocks, fan turns, flow moves); `shake` jitters the frame the way a
-// worn bearing would; stopped or locked-out machines stand still. Returns the model's top height.
+// worn bearing would; machines recorded as stopped in the 2025 data stand still. Returns the model's top height.
 const lift=(c,k)=>c.map(v=>Math.min(255,Math.round(v+(255-v)*k)));
 function drawAsset(a,ax,az,col,o,t){
   const y0=0.28,tag='asset:'+a.id,sk={tag,stroke:o.sel?MAPC.accent:'rgba(29,31,32,.5)',lw:o.sel?2.2:1};
   const jx=o.shake?0.035*Math.sin(t/23):0,x=ax+jx,lt=lift(col,0.35),dk=col.map(v=>Math.round(v*0.7));
   const lc=`rgb(${dk.join(',')})`,ph=o.run?t/1000:0;
-  addBox(ax,y0,az,2.0,0.1,0.9,[206,206,209],{tag,stroke:'rgba(29,31,32,.3)'});
+  addBox(ax,y0,az,2.0,0.1,0.9,[206,206,209],{tag,stroke:'rgba(29,31,32,.3)',layer:1});
   const y=y0+0.1;
   if(a.type==='Lift pump'){
     const th=ph*2.4,ang=0.24*Math.sin(th),P=[x-0.05,y+1.3],L=0.95,Rr=0.7;
@@ -1634,17 +1636,17 @@ function scene(t){
   items=[];picks=[];labels.length=0;assetScreen={};
   const flags=allFlags(S.day);
   // ground grid
-  for(let g=-18;g<=18;g+=3){addLine([g,0,-15],[g,0,15],'rgba(29,31,32,.08)',1);addLine([-18,0,g*0.83],[18,0,g*0.83],'rgba(29,31,32,.08)',1)}
+  for(let g=-18;g<=18;g+=3){addLine([g,0,-15],[g,0,15],'rgba(29,31,32,.08)',1,null,-1);addLine([-18,0,g*0.83],[18,0,g*0.83],'rgba(29,31,32,.08)',1,null,-1)}
   // pipeline links
   [['S01','S02'],['S02','S03'],['S04','S05'],['S05','S06'],['S01','S04'],['S02','S05'],['S03','S06']].forEach(([a,b])=>{
-    addLine([POS[a][0],0.02,POS[a][1]],[POS[b][0],0.02,POS[b][1]],'rgba(152,152,155,.9)',1.5,[5,4]);
+    addLine([POS[a][0],0.02,POS[a][1]],[POS[b][0],0.02,POS[b][1]],'rgba(152,152,155,.9)',1.5,[5,4],-1);
   });
   SITE_ORDER.forEach(sid=>{
     const [cx,cz]=POS[sid],s=siteBy[sid],hold=stat(sid)==='HOLD';
     const target=hold?1:0;vis[sid]+=(target-vis[sid])*0.06;towerVis[sid]+=((hold?0.3:1)-towerVis[sid])*0.06;
     const sel=(S.sel&&S.sel.type==='site'&&S.sel.id===sid)||S.hl.includes(sid);
     const padCol=hold?[248,232,230]:[236,236,238];
-    addBox(cx,0,cz,7.4,0.28,6.4,padCol,{tag:'site:'+sid,stroke:sel?MAPC.accent:hold?MAPC.red:'rgba(29,31,32,.35)',lw:sel?2.5:hold?1.6:1});
+    addBox(cx,0,cz,7.4,0.28,6.4,padCol,{layer:0,tag:'site:'+sid,stroke:sel?MAPC.accent:hold?MAPC.red:'rgba(29,31,32,.35)',lw:sel?2.5:hold?1.6:1});
     // assets
     const types=['Transfer pump','Lift pump','Compressor'];
     // one status label per site and state, so two waiting machines don't stack two identical labels
@@ -1657,7 +1659,7 @@ function scene(t){
       let col=MAPC.runA;
       if(st) col=st.pw>0?MAPC.waitA:MAPC.stopA; else if(fw.predicted||fl.flag) col=MAPC.warnA;
       const isSel=S.sel&&S.sel.type==='asset'&&S.sel.id===a.id;
-      const h=drawAsset(a,ax,az,col,{sel:isSel,run:!st&&!fw.lockedOut,shake:!st&&!fw.lockedOut&&(fw.predicted||fl.flag)},t);
+      const h=drawAsset(a,ax,az,col,{sel:isSel,run:!st,shake:!st&&(fw.predicted||fl.flag)},t);
       if(fw.label)addText([ax,0.28+h+0.75,az],fw.label,{size:10,col:fw.labelCol||MAPC.amber,bold:1,pri:2,mono:1});
       const top=proj([ax,0.28+h+0.2,az]);
       assetScreen[a.id]={x:top[0],y:top[1],f:top[3]};
@@ -1696,7 +1698,7 @@ function scene(t){
 function draw(t){
   ctx.clearRect(0,0,W,H);
   scene(t);
-  items.sort((a,b)=>b.d-a.d);
+  items.sort((a,b)=>(a.layer??2)-(b.layer??2)||b.d-a.d);
   items.forEach(it=>{
     if(it.t==='poly'){
       ctx.beginPath();it.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();
@@ -1785,19 +1787,38 @@ function problemFacts(){
   const ev=D.events,tot=ev.reduce((a,e)=>a+e.h,0),pwT=ev.reduce((a,e)=>a+e.pw,0);
   return {ev,tot,pwT,share:Math.round(pwT/tot*100)};
 }
-function drawAssetChart(){
+// 60-day vibration for the selected asset: every received reading is a point, consecutive readings are joined,
+// gaps (no valid reading) are bridged with a faint dashed line so lone points never vanish. Hover reads a day.
+let aChartHover=null;
+function drawAssetChart(hx=aChartHover){
   const c=$('#aChart');if(!c||!S.sel||S.sel.type!=='asset')return;
-  const w=c.clientWidth||340,h=150,dpr=window.devicePixelRatio||1;c.width=w*dpr;c.height=h*dpr;const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
-  const aid=S.sel.id,ser=D.series[aid],d1=S.day,d0=Math.max(0,d1-59),n=d1-d0;
-  const X=i=>6+(i-d0)/Math.max(n,1)*(w-12),Y=v=>h-14-(v-0.7)/(2.1-0.7)*(h-24);
-  g.strokeStyle=PAL.flag;g.setLineDash([5,4]);g.beginPath();g.moveTo(6,Y(1.3));g.lineTo(w-6,Y(1.3));g.stroke();g.setLineDash([]);
-  g.strokeStyle=PAL.line;g.beginPath();g.moveTo(6,Y(1));g.lineTo(w-6,Y(1));g.stroke();
-  g.strokeStyle=PAL.info;g.lineWidth=1.6;g.beginPath();let st=false;
-  for(let i=d0;i<=d1;i++){if(ser.r[i]>d1||ser.v[i]===null){st=false;continue}const x=X(i),y=Y(Math.min(2.1,ser.v[i]));if(!st){g.moveTo(x,y);st=true}else g.lineTo(x,y)}
-  g.stroke();
-  D.events.filter(e=>e.a===aid&&e.s>=d0&&e.s<=d1+1).forEach(e=>{g.strokeStyle=PAL.brand;g.lineWidth=2;g.beginPath();g.moveTo(X(e.s),h-14);g.lineTo(X(e.s),h-2);g.stroke()});
-  g.fillStyle=PAL.muted;g.font='10px sans-serif';g.fillText(dayStr(d0).slice(5),6,10);g.textAlign='right';g.fillText(dayStr(d1).slice(5),w-6,10);
+  const w=c.clientWidth||340,h=170,dpr=window.devicePixelRatio||1;c.width=w*dpr;c.height=h*dpr;const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+  const aid=S.sel.id,ser=D.series[aid],d1=S.day,d0=Math.max(0,d1-59),n=Math.max(1,d1-d0);
+  const pts=[];for(let i=d0;i<=d1;i++)if(ser.r[i]<=d1&&ser.v[i]!==null)pts.push([i,ser.v[i]]);
+  const vmax=pts.reduce((m,p)=>Math.max(m,p[1]),0),hi=Math.max(2,Math.ceil((vmax+0.15)*2)/2),lo=0.5;
+  const L=34,R=8,T=10,B=22,X=i=>L+(i-d0)/n*(w-L-R),Y=v=>T+(hi-v)/(hi-lo)*(h-T-B);
+  g.font='500 10px "IBM Plex Mono",ui-monospace,monospace';g.textBaseline='middle';
+  for(let v=lo;v<=hi+1e-9;v+=0.5){g.strokeStyle='rgba(29,31,32,.09)';g.lineWidth=1;g.beginPath();g.moveTo(L,Y(v));g.lineTo(w-R,Y(v));g.stroke();g.fillStyle='#7a7a7d';g.textAlign='right';g.fillText(v.toFixed(1)+'×',L-5,Y(v))}
+  g.strokeStyle=MAPC.amber;g.setLineDash([5,4]);g.lineWidth=1.2;g.beginPath();g.moveTo(L,Y(1.3));g.lineTo(w-R,Y(1.3));g.stroke();g.setLineDash([]);
+  g.fillStyle=MAPC.amber;g.textAlign='right';g.textBaseline='bottom';g.fillText('flag 1.3×',w-R,Y(1.3)-2);
+  const stops=D.events.filter(e=>e.a===aid&&e.s>=d0&&e.s<=d1+1);
+  stops.forEach(e=>{const x=X(Math.min(d1,e.s));g.fillStyle='rgba(183,40,42,.10)';g.fillRect(x,T,Math.max(2,(Math.min(d1+1,e.e)-e.s)/n*(w-L-R)),h-T-B);g.fillStyle=MAPC.red;g.fillRect(x-1,h-B-6,2,6)});
+  for(let k=1;k<pts.length;k++){const [a,va]=pts[k-1],[b,vb]=pts[k];g.beginPath();g.moveTo(X(a),Y(va));g.lineTo(X(b),Y(vb));
+    if(b-a>1){g.strokeStyle='rgba(65,103,140,.45)';g.setLineDash([3,3]);g.lineWidth=1}else{g.strokeStyle='#41678c';g.setLineDash([]);g.lineWidth=2}g.stroke()}
+  g.setLineDash([]);
+  pts.forEach(([i,v])=>{const hot=v>1.3;g.beginPath();g.arc(X(i),Y(v),hot?3.5:2.5,0,7);g.fillStyle=hot?MAPC.amber:'#41678c';g.fill();g.lineWidth=1.5;g.strokeStyle='#f2f2f3';g.stroke()});
+  g.fillStyle='#7a7a7d';g.textBaseline='top';g.textAlign='left';g.fillText(shortDay(d0),L,h-B+6);g.textAlign='center';g.fillText(shortDay(Math.round((d0+d1)/2)),X(Math.round((d0+d1)/2)),h-B+6);g.textAlign='right';g.fillText(shortDay(d1),w-R,h-B+6);
+  if(hx!=null&&hx>=L&&hx<=w-R){
+    const i=Math.round(d0+(hx-L)/(w-L-R)*n),x=X(i),got=ser.r[i]<=d1,v=ser.v[i],st=stops.find(e=>e.s<=i+1&&e.e>=i);
+    g.strokeStyle='rgba(29,31,32,.35)';g.lineWidth=1;g.beginPath();g.moveTo(x,T);g.lineTo(x,h-B);g.stroke();
+    const lines=[shortDay(i),!got?'not received yet':v===null?'no valid reading':v.toFixed(2)+'× normal'];if(ser.n[i]&&got)lines.push('noise note');if(st)lines.push('stopped · '+st.c.toLowerCase());
+    g.font='500 11px "Barlow","Segoe UI",sans-serif';const tw=Math.max(...lines.map(s=>g.measureText(s).width))+14,th=lines.length*15+8,tx=Math.min(w-R-tw,Math.max(L,x+8)),ty=T+2;
+    g.fillStyle='rgba(29,31,32,.92)';g.fillRect(tx,ty,tw,th);g.fillStyle='#f2f2f3';g.textAlign='left';g.textBaseline='top';lines.forEach((s,k)=>g.fillText(s,tx+7,ty+5+k*15));
+    if(got&&v!==null){g.beginPath();g.arc(x,Y(v),4.5,0,7);g.strokeStyle='#1d1f20';g.lineWidth=1.5;g.stroke()}
+  }
 }
+document.addEventListener('pointermove',e=>{if(e.target&&e.target.id==='aChart'){const r=e.target.getBoundingClientRect();aChartHover=e.clientX-r.left;drawAssetChart()}});
+document.addEventListener('pointerout',e=>{if(e.target&&e.target.id==='aChart'){aChartHover=null;drawAssetChart()}});
 $('#exportLog').addEventListener('click',()=>{
   const blob=new Blob([JSON.stringify(S.log,null,2)],{type:'application/json'}),a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='decision-log.json';a.click();
@@ -2929,8 +2950,8 @@ function assetView(aid){
       ${!st&&!fl.flag?`<p>Running. No early-warning flag or stoppage as of ${prettyDay(S.day)}.</p>`:''}
       ${window.FW?FW.assetBlock(aid):''}
       <span class="mono" style="margin-top:6px">VIBRATION · LAST 60 DAYS</span>
-      <canvas id="aChart" height="150"></canvas>
-      <p class="muted small">Vibration ÷ normal, readings received by the replay day only. Dashed line = 1.3× flag level. Red ticks = unplanned stops.</p>
+      <canvas id="aChart" height="170" role="img" aria-label="Vibration over the last 60 days, relative to normal"></canvas>
+      <p class="muted small">Vibration ÷ normal, readings received by the replay day only. Amber dots are above the 1.3× flag level; faint dashes bridge days with no valid reading; red bands are unplanned stops. Hover to read a day.</p>
       <details class="more"><summary>Evidence: last 7 days (received readings only)</summary><div><table><tr><th>Day</th><th class="n">Vibration</th><th>Note</th></tr>${rows.join('')}</table>${fl.gap?'<div class="banner">Data gap: fewer than 6 of the last 7 readings have been received.</div>':''}</div></details>
       ${dec.length?`<span class="mono" style="margin-top:6px">DECISIONS ON THIS ASSET</span>${dec.map(l=>`<div class="small">${l.ts.slice(0,16).replace('T',' ')} · ${esc(l.role)} · <b>${esc(l.action)}</b> · ${esc(l.reason||'')}</div>`).join('')}`:''}
     </div>`;
