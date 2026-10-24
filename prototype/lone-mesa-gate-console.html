@@ -84,6 +84,11 @@ ul.tight{margin:6px 0;padding-left:18px}ul.tight li{margin:3px 0}
 @keyframes pulse{50%{box-shadow:0 0 0 6px #f8717133}}
 #vgFoot{display:flex;gap:6px;padding:0 10px 8px;font-size:11px;flex-wrap:wrap}#vgFoot button,#vgFoot select{font-size:11px;padding:2px 8px}#vgFoot select{flex:1;min-width:0}
 @media(max-width:520px){#vg{right:8px;bottom:90px}}
+#fwMap{width:100%;height:auto;display:block;background:radial-gradient(ellipse at 50% 40%,#13203c,#0a111f 75%);border:1px solid var(--line);border-radius:10px}
+.fwRow{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}.fwRow:last-child{border-bottom:0}
+.fwRow b{font-variant-numeric:tabular-nums}
+.fwConn{font-size:11px;font-weight:600}.fwConn.ok{color:var(--green)}.fwConn.bad{color:var(--red)}
+.fwPlan{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;margin-top:8px}
 </style>
 </head>
 <body>
@@ -101,6 +106,7 @@ ul.tight{margin:6px 0;padding-left:18px}ul.tight li{margin:3px 0}
   <button data-tab="roll">Rollout &amp; business case</button>
   <button data-tab="hse">HSE &amp; responsible use</button>
   <button data-tab="plan">Implementation &amp; KPIs</button>
+  <button data-tab="work">Field work</button>
 </nav>
 <main>
 
@@ -201,6 +207,22 @@ ul.tight{margin:6px 0;padding-left:18px}ul.tight li{margin:3px 0}
   </div>
 </section>
 
+<section class="tab" id="tab-work">
+  <div class="hero">
+    <b class="big">Parts first, engineer on time</b>
+    <div class="muted small">The manager orders parts for an asset, then requests an engineer. Dispatch tells the engineer when to leave so they reach the site as the parts land, not before. The engineer's phone shows the same jobs live. Timings are compressed for the demo.</div>
+  </div>
+  <div class="two">
+    <div class="card"><h3>Field map <span class="fwConn" id="fwConnMap"></span></h3><svg id="fwMap" viewBox="-13 -9.6 31 19.2" role="img" aria-label="Sites, maintenance base and engineers"></svg>
+      <div class="muted small" style="margin-top:6px">Squares are sites (red = HSE HOLD), the diamond is the maintenance base, dots are engineers. Dashed lines are trips in progress.</div></div>
+    <div class="card"><h3>Engineers</h3><div id="fwEngs"></div></div>
+    <div class="card"><h3>Jobs</h3><div id="fwJobs"></div></div>
+    <div class="card"><h3>Parts orders</h3><div id="fwPartsTbl"></div></div>
+    <div class="card" style="grid-column:1/-1"><h3>Dispatch log <span class="muted small">shared with the engineer's phone</span></h3>
+      <div class="row" style="margin:0 0 6px"><button id="fwReset" title="Clears all orders and jobs for everyone">Reset dispatch</button><span id="fwResetMsg" class="small bad"></span></div>
+      <div id="fwLog"></div></div>
+  </div>
+</section>
 <section class="tab" id="tab-plan">
   <div class="two">
     <div class="card"><h3>Implementation steps</h3><div id="steps"></div></div>
@@ -288,7 +310,7 @@ function stoppedNow(aid,day){const t=day+0.5;return D.events.find(e=>e.a===aid&&
 function allFlags(day){const o={};D.assets.forEach(a=>o[a.id]=flagFor(D.series[a.id],day));return o}
 
 /* ---------- tabs / role ---------- */
-$('#nav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$$('#nav button').forEach(x=>x.classList.toggle('on',x===b));$$('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+b.dataset.tab));if(b.dataset.tab==='map')resize3d();if(b.dataset.tab==='why')renderWhy();if(b.dataset.tab==='roll')renderRoll()});
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$$('#nav button').forEach(x=>x.classList.toggle('on',x===b));$$('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+b.dataset.tab));if(b.dataset.tab==='map')resize3d();if(b.dataset.tab==='why')renderWhy();if(b.dataset.tab==='roll')renderRoll();if(b.dataset.tab==='work')fwRender()});
 $('#role').addEventListener('change',e=>{S.role=e.target.value;renderPanel()});
 $('#resetBtn').addEventListener('click',()=>{S.verified={};S.log=[];save();renderAll()});
 
@@ -569,6 +591,7 @@ function assetPanel(aid){
     ${fl.gap?'<div class="banner">Data gap: fewer than 6 of the last 7 readings have been received.</div>':''}
     ${fl.flag?`<div class="banner teal"><b>Suggestion:</b> pre-stage a bearing/seal kit for ${aid}; planner to review. ${fl.alerts} vibration alert${fl.alerts==1?'':'s'}, ${fl.noise} noise note${fl.noise==1?'':'s'}. Advisory only. It never authorizes work.</div>`:'<div class="muted small">No flag. Nothing to pre-stage.</div>'}
     ${fl.flag?decisionForm(aid,status):''}
+    ${fwAssetBlock(aid)}
     ${dec.length?`<h4>Decisions on this asset</h4>${dec.map(l=>`<div class="small">${l.ts.slice(0,16).replace('T',' ')} · ${l.role} · <b>${l.action}</b> · ${esc(l.reason||'')}</div>`).join('')}`:''}`;
 }
 function decisionForm(aid,status){
@@ -1253,6 +1276,152 @@ setDay=function(d){
   prevFlags=fl;prevStopped=st;
 };
 window.parvis=window.vigil={ask,interpret,transcribe,loadWhisper,loadHD,speak,micToggle,blobToF32};
+
+/* ======================= FIELD WORK (shared dispatch API on Vercel) ======================= */
+const FW_PROD='https://casequest-2026.vercel.app';
+const FW_API=(()=>{const q=new URLSearchParams(location.search).get('api');if(q)return q.replace(/\/$/,'');return /\.vercel\.app$/.test(location.hostname)?'':FW_PROD})()+'/api';
+const FW={state:null,cfg:{autoKmPerS:0.5,shakeKm:0.5,workS:20},off:0,err:null,ticks:0};
+const fwNow=()=>Date.now()+FW.off;
+const fwClock=t=>new Date(t-FW.off).toLocaleTimeString('en-GB',{hour12:false});
+const fwDur=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
+const FW_BASE=[0,0];
+const fwSitePos=sid=>{const p=POS[sid];return p?[p[0],p[1]]:FW_BASE};
+const fwDist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+const fwActive=j=>j.status!=='closed'&&j.status!=='cancelled';
+const fwLegDone=(l,now)=>Math.min(l.km,l.doneKm+(l.autoSince===null?0:Math.max(0,now-l.autoSince)/1000*FW.cfg.autoKmPerS));
+function fwWhere(e){if(e.at==='BASE')return 'at maintenance base';if(e.at&&siteBy[e.at])return 'on site at '+siteBy[e.at].name;return e.jobId?'on the road':'off site'}
+function fwJobText(j,now){
+  const st=FW.state,e=st.engineers.find(x=>x.id===j.engineerId),p=j.partsId?st.parts.find(x=>x.id===j.partsId):null;
+  switch(j.status){
+    case 'scheduled': return now>=j.leaveAt?`Due to leave now${e&&e.phone?', waiting for the engineer to set off':''}`:`Leaves in ${fwDur(j.leaveAt-now)} (${fwClock(j.leaveAt)})`;
+    case 'en-route': return `On the way, ${(j.leg.km-fwLegDone(j.leg,now)).toFixed(1)} km left`;
+    case 'on-site': return p&&now<p.arriveAt?`On site, parts in ${fwDur(p.arriveAt-now)}`:'On site';
+    case 'working': return `Repairing, ${fwDur(j.workStartAt+FW.cfg.workS*1000-now)} left`;
+    case 'done': return 'Repaired, engineer packing up';
+    case 'leaving': return 'Repaired, heading back to base';
+    case 'closed': return 'Repaired and closed';
+    default: return 'Cancelled';
+  }
+}
+function fwGap(j){const p=j.partsId&&FW.state.parts.find(x=>x.id===j.partsId);if(!p||j.arrivedAt===null)return '';const g=Math.round((p.arriveAt-j.arrivedAt)/1000);
+  return Math.abs(g)<=3?'<span class="ok">arrived with the parts</span>':g>0?`<span class="bad">waited ${g} s for parts</span>`:`<span class="muted">parts waited ${-g} s</span>`}
+async function fwFetch(path,opt={}){
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),6000);
+  try{
+    const r=await fetch(FW_API+path,{...opt,signal:ctl.signal,headers:opt.body?{'content-type':'application/json'}:{}});
+    const b=await r.json().catch(()=>({}));
+    if(b.state){FW.off=b.now-Date.now();FW.state=b.state;if(b.config)FW.cfg=b.config}
+    return {ok:r.ok,...b};
+  }finally{clearTimeout(tm)}
+}
+async function fwPoll(){
+  if(document.hidden)return;
+  const first=!FW.state;
+  try{const r=await fwFetch('/state');FW.err=r.ok?null:(r.error||'Dispatch server error')}catch(e){FW.err='Dispatch server unreachable'}
+  if(first&&FW.state&&S.sel&&S.sel.type==='asset')renderPanel();
+  fwRender();
+}
+async function fwAct(a,msgSel){
+  try{
+    const r=await fwFetch('/action',{method:'POST',body:JSON.stringify(a)});
+    if(!r.ok){if(msgSel)$(msgSel).textContent=r.error||'Dispatch refused the request.';return false}
+    return true;
+  }catch(e){if(msgSel)$(msgSel).textContent='Dispatch server unreachable. Nothing was sent.';return false}
+}
+function fwPlanText(aid){
+  const st=FW.state;if(!st||!$('#fwEng'))return '';
+  const e=st.engineers.find(x=>x.id===$('#fwEng').value),p=st.parts.find(x=>x.id===$('#fwPartsSel').value),timing=$('#fwTiming').value,now=fwNow();
+  if(!e)return '';
+  if(e.jobId)return `<span class="bad">${esc(e.name)} already has a job.</span>`;
+  const travel=fwDist(e.pos,fwSitePos(assetBy[aid].site))/FW.cfg.autoKmPerS*1000;
+  if(!p)return `${esc(e.name)} is ${fwWhere(e)}, about ${fwDur(travel)} away. No parts on order: they leave now.`;
+  const sendNowArrive=now+travel,partsIn=p.arriveAt;
+  if(timing==='now')return `Send now: arrives ${fwClock(sendNowArrive)}${partsIn>sendNowArrive?`, then <b class="bad">waits ${fwDur(partsIn-sendNowArrive)}</b> for the parts`:', parts already there'}.`;
+  const leave=Math.max(now,partsIn-travel);
+  return `Leaves ${leave<=now+1000?'now':`in <b>${fwDur(leave-now)}</b> (${fwClock(leave)})`}, arrives ${fwClock(leave+travel)} as the parts land at ${fwClock(partsIn)}.${partsIn>sendNowArrive?` Saves <b class="ok">${fwDur(partsIn-sendNowArrive)}</b> of idle time on site.`:''}`;
+}
+function fwAssetBlock(aid){
+  const a=assetBy[aid],s=siteBy[a.site],st=FW.state;
+  const head=`<h4>Field work <span class="fwConn" id="fwConnPanel"></span></h4><div id="fwLive"></div>`;
+  if(S.role!=='Manager')return head+`<div class="banner">Switch role to <b>Manager</b> to order parts or request an engineer.</div>`;
+  if(!st)return head+`<div class="muted small">${FW.err?esc(FW.err):'Connecting to dispatch…'}</div>`;
+  const hz=D.gates.filter(g=>g.site===a.site&&g.block&&!S.verified[g.id]).map(g=>g.hazard);
+  const free=st.parts.filter(p=>p.asset===aid&&!st.jobs.some(j=>j.partsId===p.id&&fwActive(j)));
+  const fl=flagFor(D.series[aid],S.day);
+  return head+`
+    ${hz.length?`<div class="banner red">${s.name} is on HSE HOLD (${esc(hz.join(', '))}). The engineer's phone shows these open actions on the job.</div>`:''}
+    <label>Parts kit</label><input type="text" id="fwKit" maxlength="80" value="Bearing/seal kit for ${esc(a.type)}">
+    <div class="row"><button class="primary" data-fw="order" data-asset="${aid}">1 · Order parts</button></div>
+    <label>Engineer</label><select id="fwEng">${st.engineers.map(e=>`<option value="${e.id}" ${e.jobId?'disabled':''}>${esc(e.name)} · ${fwWhere(e)}${e.jobId?' · busy':''}</option>`).join('')}</select>
+    <label>Parts for this job</label><select id="fwPartsSel"><option value="">No parts needed</option>${free.map((p,i)=>`<option value="${p.id}" ${i===free.length-1?'selected':''}>${p.id} · ${esc(p.kit)}</option>`).join('')}</select>
+    <label>Timing</label><select id="fwTiming"><option value="with-parts">Arrive when the parts arrive</option><option value="now">Send now</option></select>
+    <label>What to check</label><input type="text" id="fwNote" maxlength="200" value="${fl.flag?'Vibration above 1.3× normal: check bearing and seal':''}" placeholder="Shown on the engineer's phone">
+    <div class="fwPlan" id="fwPlan">${fwPlanText(aid)}</div>
+    <div class="row"><button class="primary" data-fw="request" data-asset="${aid}">2 · Request engineer</button></div>
+    <div id="fwMsg" class="small bad" style="margin-top:6px"></div>`;
+}
+function fwLiveHtml(aid){
+  const st=FW.state;if(!st)return '';const now=fwNow();
+  const parts=st.parts.filter(p=>p.asset===aid).slice(-3),jobs=st.jobs.filter(j=>j.asset===aid&&(fwActive(j)||now-(j.closedAt||0)<120000)).slice(-2);
+  if(!parts.length&&!jobs.length)return '<div class="muted small">No parts on order and no engineer requested for this asset.</div>';
+  return parts.map(p=>`<div class="fwRow"><span>${p.id} · ${esc(p.kit)}</span><b>${now<p.arriveAt?`arrives in ${fwDur(p.arriveAt-now)}`:'<span class="ok">on site</span>'}</b></div>`).join('')+
+    jobs.map(j=>{const e=st.engineers.find(x=>x.id===j.engineerId);return `<div class="fwRow"><span>${j.id} · ${esc(e?e.name:j.engineerId)}<br><span class="muted small">${fwJobText(j,now)} ${fwGap(j)}</span></span>${fwActive(j)&&S.role==='Manager'&&j.status!=='leaving'?`<button data-fw="cancel" data-job="${j.id}">Cancel</button>`:''}</div>`}).join('');
+}
+function fwConnHtml(){return FW.err?`<span class="fwConn bad">● ${esc(FW.err)}</span>`:FW.state?'<span class="fwConn ok">● live</span>':'<span class="fwConn">connecting…</span>'}
+function fwMapSvg(){
+  const st=FW.state,now=fwNow();let o='';
+  SITE_ORDER.forEach(sid=>{const[x,y]=fwSitePos(sid),hold=stat(sid)==='HOLD';o+=`<rect x="${x-1.6}" y="${y-1.1}" width="3.2" height="2.2" rx=".3" fill="${hold?'#4a1d24':'#12392f'}" stroke="${hold?'#f87171':'#2dd4bf'}" stroke-width=".08"/><text x="${x}" y="${y+2}" font-size=".85" fill="#92a3c4" text-anchor="middle">${siteBy[sid].name}</text>`});
+  o+=`<rect x="-.8" y="-.8" width="1.6" height="1.6" transform="rotate(45)" fill="#2b2150" stroke="#a78bfa" stroke-width=".08"/><text x="0" y="1.9" font-size=".75" fill="#a78bfa" text-anchor="middle">Base</text>`;
+  o+=`<text x="15" y="1.9" font-size=".75" fill="#92a3c4" text-anchor="middle">Off site</text>`;
+  if(st){
+    st.jobs.filter(j=>j.leg&&fwActive(j)).forEach(j=>{o+=`<line x1="${j.leg.from[0]}" y1="${j.leg.from[1]}" x2="${j.leg.to[0]}" y2="${j.leg.to[1]}" stroke="#60a5fa" stroke-width=".12" stroke-dasharray=".5 .35"/>`});
+    st.parts.filter(p=>now<p.arriveAt).forEach(p=>{const[x,y]=fwSitePos(p.site);o+=`<circle cx="${x+1.3}" cy="${y-1}" r=".38" fill="#fbbf24"><title>${p.id} in transit</title></circle>`});
+    st.engineers.forEach((e,i)=>{const[x,y]=e.pos;o+=`<circle cx="${x}" cy="${y}" r=".95" fill="${e.phone?'#2dd4bf':'#60a5fa'}" opacity=".18"/><circle cx="${x}" cy="${y}" r=".45" fill="${e.phone?'#2dd4bf':'#60a5fa'}" stroke="#0a111f" stroke-width=".1"/><text x="${x}" y="${y-.75}" font-size=".7" fill="#e8eefb" text-anchor="middle">${esc(e.name.split(' ')[1]||e.id)}</text>`});
+  }
+  return o;
+}
+function fwRender(){
+  const st=FW.state,now=fwNow();
+  ['#fwConnMap','#fwConnPanel'].forEach(s=>{const el=$(s);if(el)el.innerHTML=fwConnHtml()});
+  if(S.sel&&S.sel.type==='asset'){const l=$('#fwLive');if(l)l.innerHTML=fwLiveHtml(S.sel.id);const p=$('#fwPlan');if(p)p.innerHTML=fwPlanText(S.sel.id)}
+  if(!$('#tab-work').classList.contains('on'))return;
+  $('#fwMap').innerHTML=fwMapSvg();
+  if(!st){['#fwEngs','#fwJobs','#fwPartsTbl','#fwLog'].forEach(s=>$(s).innerHTML=`<div class="muted small">${FW.err?esc(FW.err):'Connecting…'}</div>`);return}
+  $('#fwEngs').innerHTML=st.engineers.map(e=>{const j=e.jobId&&st.jobs.find(x=>x.id===e.jobId);return `<div class="fwRow"><span><b>${esc(e.name)}</b><br><span class="muted small">${fwWhere(e)}</span></span><span class="small" style="text-align:right">${j?`${j.id} · ${j.asset}<br><span class="muted">${fwJobText(j,now)}</span>`:'<span class="muted">free</span>'}</span></div>`}).join('');
+  const jobs=st.jobs.slice().reverse().slice(0,8);
+  $('#fwJobs').innerHTML=jobs.length?jobs.map(j=>{const e=st.engineers.find(x=>x.id===j.engineerId);return `<div class="fwRow"><span><b>${j.id}</b> · ${j.asset} · ${esc(siteBy[j.site]?.name||'')}<br><span class="muted small">${esc(e?e.name:'')}${j.partsId?' · parts '+j.partsId:''}</span></span><span class="small" style="text-align:right">${fwJobText(j,now)}<br>${fwGap(j)}</span></div>`}).join(''):'<div class="muted small">No jobs yet. Click an asset on the 3D map as Manager to order parts and request an engineer.</div>';
+  const parts=st.parts.slice().reverse().slice(0,8);
+  $('#fwPartsTbl').innerHTML=parts.length?parts.map(p=>`<div class="fwRow"><span><b>${p.id}</b> · ${p.asset} · ${esc(siteBy[p.site]?.name||'')}<br><span class="muted small">${esc(p.kit)}</span></span><b>${now<p.arriveAt?`in ${fwDur(p.arriveAt-now)}`:'<span class="ok">on site</span>'}</b></div>`).join(''):'<div class="muted small">No parts on order.</div>';
+  $('#fwLog').innerHTML=st.log.length?`<table><tr><th>Time</th><th>Who</th><th>What</th></tr>${st.log.slice().reverse().slice(0,15).map(l=>`<tr><td class="small">${fwClock(l.t)}</td><td>${esc(l.who)}</td><td>${esc(l.text)}</td></tr>`).join('')}</table>`:'<div class="muted small">Nothing yet.</div>';
+}
+$('#panel').addEventListener('change',e=>{if(e.target.closest('#fwEng,#fwPartsSel,#fwTiming')&&S.sel)$('#fwPlan').innerHTML=fwPlanText(S.sel.id)});
+$('#panel').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-fw]');if(!b||b.disabled)return;
+  if(S.role!=='Manager'){const m=$('#fwMsg');if(m)m.textContent='Only the Manager can do this.';return}
+  b.disabled=true;
+  const aid=b.dataset.asset,a=aid&&assetBy[aid];
+  if(b.dataset.fw==='order'){
+    const kit=$('#fwKit').value.trim();
+    if(kit.length<3){$('#fwMsg').textContent='Name the parts kit.';b.disabled=false;return}
+    if(await fwAct({type:'orderParts',asset:aid,kit},'#fwMsg')){addLog({action:'Ordered parts',asset:aid,site:a.site,reason:kit});renderPanel()}
+  }else if(b.dataset.fw==='request'){
+    const hz=D.gates.filter(g=>g.site===a.site&&g.block&&!S.verified[g.id]).map(g=>`${g.id} ${g.hazard}`);
+    const act={type:'requestEngineer',asset:aid,engineerId:$('#fwEng').value,partsId:$('#fwPartsSel').value||null,timing:$('#fwTiming').value,note:$('#fwNote').value.trim(),hseHold:hz.length?hz.join('; '):null};
+    if(await fwAct(act,'#fwMsg')){const e=FW.state.engineers.find(x=>x.id===act.engineerId);addLog({action:'Requested engineer',asset:aid,site:a.site,reason:`${e?e.name:act.engineerId}${act.partsId?', timed to '+act.partsId:''}${act.note?': '+act.note:''}`});renderPanel()}
+  }else if(b.dataset.fw==='cancel'){
+    if(await fwAct({type:'cancelJob',jobId:b.dataset.job},'#fwMsg')){const j=FW.state.jobs.find(x=>x.id===b.dataset.job);addLog({action:'Cancelled job',asset:j?.asset,site:j?.site,reason:b.dataset.job})}
+  }
+  b.disabled=false;fwRender();
+});
+$('#fwReset').addEventListener('click',async()=>{
+  if(S.role!=='Manager'){$('#fwResetMsg').textContent='Only the Manager can reset dispatch.';return}
+  if(!confirm('Clear every parts order and job for everyone, including the engineer phone?'))return;
+  if(await fwAct({type:'reset'},'#fwResetMsg')){$('#fwResetMsg').textContent='';addLog({action:'Reset dispatch',reason:'Cleared all orders and jobs'})}
+  fwRender();
+});
+setInterval(()=>{FW.ticks++;if(FW.ticks%2===0)fwPoll();else fwRender()},1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)fwPoll()});
+fwPoll();
 
 /* ---------- boot ---------- */
 function renderAll(){

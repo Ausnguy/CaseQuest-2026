@@ -31,6 +31,8 @@ Full reasoning, including how three blind AI grader agents ranked eight strategi
 | `tests/` | Automated tests for cleaning rules, dataset integrity, analysis and the recommendation |
 | `docs/` | Phase write-ups, cleaning log, reconciliation checks, fact pack, external research, team plan |
 | `prototype/` | Standalone 3D Gate Console with the Parvis voice agent (single HTML file) |
+| `web/` | Vercel hosting for the console plus the shared dispatch API (parts orders, engineer jobs) |
+| `mobile/` | Expo app for the field engineer's phone, talks to the dispatch API |
 
 Docs, in reading order: `phase-1-discovery`, `phase-2-data-audit`, `phase-3-fact-pack`, `phase-4-solution-selection`, `phase-5-product-design`, plus `cleaning-log`, `reconciliation`, `research-external`, `grader-reports` and `team-plan`.
 
