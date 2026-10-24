@@ -346,7 +346,7 @@ body.page-map.insp-open .toasts{right:calc(var(--inspW) + 32px)}
 @keyframes unlock{0%{transform:scale(.6) rotate(-12deg)}60%{transform:scale(1.25)}100%{transform:none}}
 
 /* ---------- sidebar + pages ---------- */
-.side{position:fixed;z-index:42;top:0;left:0;bottom:0;width:var(--sideW);background:#111418;color:#C9CDD4;display:flex;flex-direction:column;border-top:3px solid var(--brand)}
+.side{position:fixed;z-index:42;top:0;left:0;bottom:0;width:var(--sideW);background:#111418;color:#C9CDD4;display:flex;flex-direction:column;border-top:3px solid var(--brand);overflow-y:auto;scrollbar-width:thin}
 .side-brand{display:flex;align-items:center;gap:10px;padding:14px 16px 18px}
 .side-name b{display:block;color:#fff;font-size:17px;font-weight:800;letter-spacing:.2px}
 .side-name span{display:block;font-size:11px;color:#8A909C}
@@ -358,6 +358,10 @@ body.page-map.insp-open .toasts{right:calc(var(--inspW) + 32px)}
 .side-nav a .ico{width:18px;height:18px}
 .nav-badge{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--brand);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center}
 .nav-badge:empty{display:none}
+.side-brief{padding:18px 10px 0;display:flex;flex-direction:column;gap:1px}
+.side-brief button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:0;color:#C9CDD4;padding:6px 10px;border-radius:8px;font-weight:500;font-size:13px}
+.side-brief button:hover:not(:disabled){background:rgba(255,255,255,.06);color:#fff}
+.side-brief .ico{width:15px;height:15px;color:#8A909C}
 .side-roles{padding:18px 10px 0}
 .side-lbl{display:block;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A909C;padding:0 10px 6px}
 #sideRoles{display:flex;flex-direction:column;gap:4px}
@@ -490,7 +494,7 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 @media(max-width:1380px){.board{grid-template-columns:repeat(3,minmax(0,1fr))}.wk-side{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:16px}.crumbs span{display:none}}
 @media(max-width:1100px){
   :root{--sideW:68px}
-  .side-name,.side-nav a span,.side-foot,.side-roles{display:none}
+  .side-name,.side-nav a span,.side-foot,.side-roles,.side-brief{display:none}
   .side-brand{justify-content:center;padding:14px 0 18px}
   .side-nav a{justify-content:center}
   .nav-badge{position:absolute;top:2px;right:4px;min-width:16px;height:16px;font-size:9px;padding:0 4px}
@@ -548,7 +552,7 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
     <symbol id="i-orbit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
     <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
     <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
-    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5M9 12h7M9 16h5"/></symbol>
     <symbol id="i-speaker" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
     <symbol id="i-screen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></symbol>
@@ -578,6 +582,13 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
     <a href="#/overview" data-page="overview"><svg class="ico"><use href="#i-home"/></svg><span>Overview</span></a>
     <a href="#/map" data-page="map"><svg class="ico"><use href="#i-cube"/></svg><span>Map</span></a>
     <a href="#/work" data-page="work"><svg class="ico"><use href="#i-list"/></svg><span>Work</span><b class="nav-badge" id="workBadge"></b></a>
+  </div>
+  <div class="side-brief">
+    <span class="side-lbl">Briefings</span>
+    <button data-sheet-open="why"><svg class="ico"><use href="#i-book"/></svg>Why this problem</button>
+    <button data-sheet-open="roll"><svg class="ico"><use href="#i-book"/></svg>Business case</button>
+    <button data-sheet-open="hse"><svg class="ico"><use href="#i-book"/></svg>Safety &amp; guardrails</button>
+    <button data-sheet-open="plan"><svg class="ico"><use href="#i-book"/></svg>Plan &amp; KPIs</button>
   </div>
   <div class="side-roles">
     <span class="side-lbl">Acting as</span>
@@ -2297,6 +2308,7 @@ function go(p){
   if(was!==p){const pg=$('#pg-'+p);if(pg)pg.scrollTop=0}
 }
 function nav(p){go(p);if(location.hash!=='#/'+p)location.hash='#/'+p}
+$('#side').addEventListener('click',e=>{const b=e.target.closest('[data-sheet-open]');if(b)openSheet(b.dataset.sheetOpen)});
 window.addEventListener('hashchange',()=>{const p=location.hash.replace(/^#\/?/,'');if(p!==UI.page)go(p)});
 function showOnMap(kind,id){nav('map');if(UI.mode!=='explore')setMode('explore');kind==='site'?selectSite(id):selectAsset(id)}
 function updateDateChip(){$('#dateLbl').textContent=prettyDay(S.day);$('#dayBack').disabled=S.day<=6;$('#dayFwd').disabled=S.day>=364}
