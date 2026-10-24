@@ -1001,8 +1001,21 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
 .sd-tip{background:var(--paper);border:1px solid var(--ink)}
 .sd-legend button.off{text-decoration:none;opacity:.4}
 
+/* ---------- field work (dispatch) ---------- */
+body.page-field #pg-field{display:block}
+#fwMap{width:100%;height:auto;display:block;border:1px solid var(--divider);background-color:var(--paper);background-image:linear-gradient(rgba(29,31,32,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(29,31,32,.05) 1px,transparent 1px);background-size:24px 24px}
+.fwRow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--divider);font-size:13px;line-height:1.4}
+.fwRow:last-child{border-bottom:0}.fwRow b{font-variant-numeric:tabular-nums}
+.fwRow button{font-size:12px;padding:4px 9px;flex:0 0 auto}
+.fwConn{font:500 10px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--n700)}
+.fwConn.ok{color:var(--green)}.fwConn.bad{color:var(--red)}
+.fwPlan{border:1px dashed var(--n600);padding:8px 10px;font-size:12px;line-height:1.45;margin-top:10px}
+.fw-form label{font-family:var(--font-mono);font-weight:500;font-size:10px;letter-spacing:.06em;color:var(--n700);margin:10px 0 4px}
+.fw-form .row{margin-top:8px}
+.fw-sec{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:6px}
+
 /* ---------- smaller screens ---------- */
-@media(max-width:1599px){.hbrand small{display:none}.cmdk span,.cmdk kbd{display:none}#roleSeg .nm{display:none}#roleSeg .ab{display:inline}}
+@media(max-width:1599px){.hnav a,.hnav button{padding:8px 6px;font-size:13px}.hbrand small{display:none}.cmdk span,.cmdk kbd{display:none}#roleSeg .nm{display:none}#roleSeg .ab{display:inline}}
 @media(max-width:1299px){.prize>.mono,.role-wrap>.mono{display:none}.prize{grid-template-columns:auto 90px}.hdiv{display:none}.hnav a,.hnav button{padding:8px 6px;font-size:13px}}
 @media(max-width:1100px){
   :root,body.ai-open{--aiW:0px;--inspW:380px}
@@ -1075,6 +1088,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
     <a href="#/overview" data-page="overview"><svg class="ico"><use href="#i-home"/></svg><span>Overview</span></a>
     <a href="#/map" data-page="map"><svg class="ico"><use href="#i-cube"/></svg><span>Map</span></a>
     <a href="#/work" data-page="work"><svg class="ico"><use href="#i-list"/></svg><span>Work</span><b class="nav-badge" id="workBadge2"></b></a>
+    <a href="#/field" data-page="field"><svg class="ico"><use href="#i-pin"/></svg><span>Field</span></a>
     <button class="side-more" data-sheet-open="why" aria-label="Briefings"><svg class="ico"><use href="#i-book"/></svg><span>Briefings</span></button>
   </div>
   <div class="side-brief">
@@ -1118,6 +1132,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
     <a href="#/map" data-page="map">Map</a>
     <a href="#/overview" data-page="overview">Overview</a>
     <a href="#/work" data-page="work">Work<b class="nav-badge" id="workBadge"></b></a>
+    <a href="#/field" data-page="field">Field work</a>
     <a href="#/site/S04" data-page="site" id="navTrends">Trends</a>
     <button data-sheet-open="why">Briefings</button>
   </nav>
@@ -1266,6 +1281,24 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
         <div class="panel"><div class="panel-h"><h2>Progress</h2></div><div id="wkProgress"></div></div>
       </aside>
     </div>
+  </div>
+</section>
+
+<section class="page" id="pg-field" aria-label="Field work">
+  <div class="page-inner wide">
+    <div class="page-head"><div><h1 tabindex="-1">Parts first, engineer on time</h1><p class="page-sub">The manager orders parts for an asset, then requests an engineer. Dispatch tells the engineer when to leave so they reach the site as the parts land, not before. The engineer's phone shows the same jobs live. Timings are compressed for the demo.</p></div><span class="fwConn" id="fwConnPage"></span></div>
+    <div class="sd-grid">
+      <div class="panel"><div class="panel-h"><h2>Field map</h2><span class="muted small">live from dispatch</span></div>
+        <svg id="fwMap" viewBox="-13 -9.6 31 19.2" role="img" aria-label="Sites, maintenance base and engineers"></svg>
+        <p class="foot-note" style="margin:8px 0 0">Squares are sites (red = safety hold), the diamond is the maintenance base, dots are engineers. Dashed lines are trips in progress, amber dots are parts in transit.</p></div>
+      <div class="panel"><div class="panel-h"><h2>Engineers</h2></div><div id="fwEngs"></div></div>
+      <div class="panel"><div class="panel-h"><h2>Jobs</h2></div><div id="fwJobs"></div></div>
+      <div class="panel"><div class="panel-h"><h2>Parts orders</h2></div><div id="fwPartsTbl"></div></div>
+    </div>
+    <div class="panel"><div class="panel-h"><h2>Dispatch log</h2><span class="muted small">shared with the engineer's phone</span></div>
+      <div class="row" style="margin:0 0 8px"><button id="fwReset" title="Clears all orders and jobs for everyone">Reset dispatch</button><span id="fwResetMsg" class="small bad"></span></div>
+      <div id="fwLog"></div></div>
+    <p class="foot-note">To order parts or request an engineer, act as Manager and open an asset on the Map.</p>
   </div>
 </section>
 
@@ -2581,7 +2614,9 @@ function onDay(){
   const f=allFlags(S.day),nf=Object.values(f).filter(x=>x.flag).length,st=D.assets.filter(a=>stoppedNow(a.id,S.day)).length;
   $('#dayLbl').textContent=prettyDay(S.day);$('#dayStats').textContent=`${st} stopped · ${nf} flagged`;
   // the docked inspector shows the overview when nothing is selected, so it follows the replay day too
-  if(UI.page==='map'&&!dlgOpen())renderInsp();
+  // don't rebuild the inspector under someone typing in the field-work form
+  const ae=document.activeElement,typing=ae&&$('#inspBody').contains(ae)&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName);
+  if(UI.page==='map'&&!dlgOpen()&&!typing)renderInsp();
   renderTimeline();renderAI(false);
   updateDateChip();renderWorkBadge();schedulePageRender();
 }
@@ -2847,6 +2882,7 @@ function assetView(aid){
         <p>Signals: ${flagEvidence(fl)}. Recommendation on file: <b>have a bearing/seal kit ready.</b> Advisory only; it never authorizes work.</p>
         <span class="mono" style="margin-top:4px">INTERVENTION DECISION · PLANNER</span>${decide}`:''}
       ${!st&&!fl.flag?`<p>Running. No early-warning flag or stoppage as of ${prettyDay(S.day)}.</p>`:''}
+      ${fwAssetBlock(aid)}
       <span class="mono" style="margin-top:6px">VIBRATION · LAST 60 DAYS</span>
       <canvas id="aChart" height="150"></canvas>
       <p class="muted small">Vibration ÷ normal, readings received by the replay day only. Dashed line = 1.3× flag level. Red ticks = unplanned stops.</p>
@@ -3032,7 +3068,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ======================= pages: router + date ======================= */
-const PAGES={overview:'Overview',map:'Map',work:'Work',site:'Site'};
+const PAGES={overview:'Overview',map:'Map',work:'Work',field:'Field work',site:'Site'};
 function go(p){
   p=p||'';
   if(p.startsWith('site/')){const sid=p.slice(5).toUpperCase();if(siteBy[sid]){p='site';if(UI.siteId!==sid){UI.sd.pick=null;UI.sd.hide={}}UI.siteId=sid}else{p='map';history.replaceState(null,'','#/map')}}
@@ -3049,6 +3085,7 @@ function go(p){
   if(p==='overview')renderOverview();
   if(p==='work')renderWork();
   if(p==='site')renderSite();
+  if(p==='field')fwRender();
   if(was!==UI.route){const pg=$('#pg-'+p);if(pg)pg.scrollTop=0}
 }
 function nav(p){go(p);if(location.hash!=='#/'+UI.route)location.hash='#/'+UI.route}
@@ -3551,6 +3588,155 @@ $('#pg-site').addEventListener('change',e=>{
   if(id==='sdUpTo'){UI.sd.upTo=e.target.checked;UI.sd.pick=null;renderSite();return}
   if(id==='sdCmpA'||id==='sdCmpB'){UI.sd[id==='sdCmpA'?'cmpA':'cmpB']=e.target.value;$('#sdCmp').innerHTML=sdCompare(UI.siteId)}
 });
+
+/* ======================= Field work: parts and engineer dispatch (shared API on Vercel) ======================= */
+// Same dispatch API as the engineer's phone app (web/ and mobile/). Only the Manager orders parts or requests an engineer.
+const FW_PROD='https://casequest-2026.vercel.app';
+const FW_API=(()=>{const q=new URLSearchParams(location.search).get('api');if(q)return q.replace(/\/$/,'');return /\.vercel\.app$/.test(location.hostname)?'':FW_PROD})()+'/api';
+const FW={state:null,cfg:{autoKmPerS:0.5,shakeKm:0.5,workS:20},off:0,err:null,ticks:0};
+const fwNow=()=>Date.now()+FW.off;
+const fwClock=t=>new Date(t-FW.off).toLocaleTimeString('en-GB',{hour12:false});
+const fwDur=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
+const FW_BASE=[0,0];
+const fwSitePos=sid=>{const p=POS[sid];return p?[p[0],p[1]]:FW_BASE};
+const fwDist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+const fwActive=j=>j.status!=='closed'&&j.status!=='cancelled';
+const fwLegDone=(l,now)=>Math.min(l.km,l.doneKm+(l.autoSince===null?0:Math.max(0,now-l.autoSince)/1000*FW.cfg.autoKmPerS));
+function fwWhere(e){if(e.at==='BASE')return 'at maintenance base';if(e.at&&siteBy[e.at])return 'on site at '+siteBy[e.at].name;return e.jobId?'on the road':'off site'}
+function fwJobText(j,now){
+  const st=FW.state,e=st.engineers.find(x=>x.id===j.engineerId),p=j.partsId?st.parts.find(x=>x.id===j.partsId):null;
+  switch(j.status){
+    case 'scheduled': return now>=j.leaveAt?`Due to leave now${e&&e.phone?', waiting for the engineer to set off':''}`:`Leaves in ${fwDur(j.leaveAt-now)} (${fwClock(j.leaveAt)})`;
+    case 'en-route': return `On the way, ${(j.leg.km-fwLegDone(j.leg,now)).toFixed(1)} km left`;
+    case 'on-site': return p&&now<p.arriveAt?`On site, parts in ${fwDur(p.arriveAt-now)}`:'On site';
+    case 'working': return `Repairing, ${fwDur(j.workStartAt+FW.cfg.workS*1000-now)} left`;
+    case 'done': return 'Repaired, engineer packing up';
+    case 'leaving': return 'Repaired, heading back to base';
+    case 'closed': return 'Repaired and closed';
+    default: return 'Cancelled';
+  }
+}
+function fwGap(j){const p=j.partsId&&FW.state.parts.find(x=>x.id===j.partsId);if(!p||j.arrivedAt===null)return '';const g=Math.round((p.arriveAt-j.arrivedAt)/1000);
+  return Math.abs(g)<=3?'<span class="ok">arrived with the parts</span>':g>0?`<span class="bad">waited ${g} s for parts</span>`:`<span class="muted">parts waited ${-g} s</span>`}
+async function fwFetch(path,opt={}){
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),6000);
+  try{
+    const r=await fetch(FW_API+path,{...opt,signal:ctl.signal,headers:opt.body?{'content-type':'application/json'}:{}});
+    const b=await r.json().catch(()=>({}));
+    if(b.state){FW.off=b.now-Date.now();FW.state=b.state;if(b.config)FW.cfg=b.config}
+    return {ok:r.ok,...b};
+  }finally{clearTimeout(tm)}
+}
+async function fwPoll(){
+  if(document.hidden)return;
+  const first=!FW.state;
+  try{const r=await fwFetch('/state');FW.err=r.ok?null:(r.error||'Dispatch server error')}catch(e){FW.err='Dispatch server unreachable'}
+  if(first&&FW.state&&S.sel&&S.sel.type==='asset'&&UI.page==='map')renderInsp();
+  fwRender();
+}
+async function fwAct(a,msgSel){
+  try{
+    const r=await fwFetch('/action',{method:'POST',body:JSON.stringify(a)});
+    if(!r.ok){if(msgSel)$(msgSel).textContent=r.error||'Dispatch refused the request.';return false}
+    return true;
+  }catch(e){if(msgSel)$(msgSel).textContent='Dispatch server unreachable. Nothing was sent.';return false}
+}
+function fwPlanText(aid){
+  const st=FW.state;if(!st||!$('#fwEng'))return '';
+  const e=st.engineers.find(x=>x.id===$('#fwEng').value),p=st.parts.find(x=>x.id===$('#fwPartsSel').value),timing=$('#fwTiming').value,now=fwNow();
+  if(!e)return '';
+  if(e.jobId)return `<span class="bad">${esc(e.name)} already has a job.</span>`;
+  const travel=fwDist(e.pos,fwSitePos(assetBy[aid].site))/FW.cfg.autoKmPerS*1000;
+  if(!p)return `${esc(e.name)} is ${fwWhere(e)}, about ${fwDur(travel)} away. No parts on order: they leave now.`;
+  const sendNowArrive=now+travel,partsIn=p.arriveAt;
+  if(timing==='now')return `Send now: arrives ${fwClock(sendNowArrive)}${partsIn>sendNowArrive?`, then <b class="bad">waits ${fwDur(partsIn-sendNowArrive)}</b> for the parts`:', parts already there'}.`;
+  const leave=Math.max(now,partsIn-travel);
+  return `Leaves ${leave<=now+1000?'now':`in <b>${fwDur(leave-now)}</b> (${fwClock(leave)})`}, arrives ${fwClock(leave+travel)} as the parts land at ${fwClock(partsIn)}.${partsIn>sendNowArrive?` Saves <b class="ok">${fwDur(partsIn-sendNowArrive)}</b> of idle time on site.`:''}`;
+}
+function fwAssetBlock(aid){
+  const a=assetBy[aid],s=siteBy[a.site],st=FW.state;
+  const head=`<div class="fw-sec"><span class="mono">FIELD WORK · PARTS AND ENGINEER</span><span class="${fwConnCls()}" id="fwConnPanel">${esc(fwConnText())}</span></div><div id="fwLive">${fwLiveHtml(aid)}</div>`;
+  if(S.role!=='Manager')return head+`<p class="muted small">Switch to <b>Manager</b> to order parts or request an engineer.</p>`;
+  if(!st)return head+`<p class="muted small">${FW.err?esc(FW.err):'Connecting to dispatch…'}</p>`;
+  const hz=D.gates.filter(g=>g.site===a.site&&g.block&&!S.verified[g.id]).map(g=>g.hazard);
+  const free=st.parts.filter(p=>p.asset===aid&&!st.jobs.some(j=>j.partsId===p.id&&fwActive(j)));
+  const fl=flagFor(D.series[aid],S.day);
+  return head+`<div class="fw-form">
+    ${hz.length?`<div class="banner red">${s.name} is on safety hold (${esc(hz.join(', '))}). The engineer's phone shows these open actions on the job.</div>`:''}
+    <label>Parts kit</label><input type="text" id="fwKit" maxlength="80" value="Bearing/seal kit for ${esc(a.type)}">
+    <div class="row"><button class="primary" data-fw="order" data-asset="${aid}">1 · Order parts</button></div>
+    <label>Engineer</label><select id="fwEng">${st.engineers.map(e=>`<option value="${e.id}" ${e.jobId?'disabled':''}>${esc(e.name)} · ${fwWhere(e)}${e.jobId?' · busy':''}</option>`).join('')}</select>
+    <label>Parts for this job</label><select id="fwPartsSel"><option value="">No parts needed</option>${free.map((p,i)=>`<option value="${p.id}" ${i===free.length-1?'selected':''}>${p.id} · ${esc(p.kit)}</option>`).join('')}</select>
+    <label>Timing</label><select id="fwTiming"><option value="with-parts">Arrive when the parts arrive</option><option value="now">Send now</option></select>
+    <label>What to check</label><input type="text" id="fwNote" maxlength="200" value="${fl.flag?'Vibration above 1.3× normal: check bearing and seal':''}" placeholder="Shown on the engineer's phone">
+    <div class="fwPlan" id="fwPlan">${fwPlanText(aid)}</div>
+    <div class="row"><button class="primary" data-fw="request" data-asset="${aid}">2 · Request engineer</button></div>
+    <div id="fwMsg" class="small bad" style="margin-top:6px"></div></div>`;
+}
+function fwLiveHtml(aid){
+  const st=FW.state;if(!st)return '';const now=fwNow();
+  const parts=st.parts.filter(p=>p.asset===aid).slice(-3),jobs=st.jobs.filter(j=>j.asset===aid&&(fwActive(j)||now-(j.closedAt||0)<120000)).slice(-2);
+  if(!parts.length&&!jobs.length)return '<p class="muted small">No parts on order and no engineer requested for this asset.</p>';
+  return parts.map(p=>`<div class="fwRow"><span>${p.id} · ${esc(p.kit)}</span><b>${now<p.arriveAt?`arrives in ${fwDur(p.arriveAt-now)}`:'<span class="ok">on site</span>'}</b></div>`).join('')+
+    jobs.map(j=>{const e=st.engineers.find(x=>x.id===j.engineerId);return `<div class="fwRow"><span>${j.id} · ${esc(e?e.name:j.engineerId)}<br><span class="muted small">${fwJobText(j,now)} ${fwGap(j)}</span></span>${fwActive(j)&&S.role==='Manager'&&j.status!=='leaving'?`<button data-fw="cancel" data-job="${j.id}">Cancel</button>`:''}</div>`}).join('');
+}
+const fwConnText=()=>FW.err?'● '+FW.err:FW.state?'● live':'connecting…';
+const fwConnCls=()=>'fwConn'+(FW.err?' bad':FW.state?' ok':'');
+function fwMapSvg(){
+  const st=FW.state,now=fwNow(),INK='#1d1f20',RED='rgb(183,40,42)',ACC='#5980a6',AMB='rgb(168,114,34)';let o='';
+  SITE_ORDER.forEach(sid=>{const[x,y]=fwSitePos(sid),hold=stat(sid)==='HOLD';
+    o+=`<rect x="${x-1.6}" y="${y-1.1}" width="3.2" height="2.2" fill="${hold?'#f6e1df':'#e9e9ea'}" stroke="${hold?RED:INK}" stroke-width="${hold?.1:.06}"/><text x="${x}" y="${y+2}" font-size=".8" font-family="Barlow Condensed,sans-serif" font-weight="600" letter-spacing=".08" fill="${hold?RED:INK}" text-anchor="middle">${siteBy[sid].name.toUpperCase()}</text>`});
+  o+=`<rect x="-.8" y="-.8" width="1.6" height="1.6" transform="rotate(45)" fill="#f2f2f3" stroke="${ACC}" stroke-width=".1"/><text x="0" y="1.9" font-size=".7" font-family="IBM Plex Mono,monospace" fill="${ACC}" text-anchor="middle">BASE</text>`;
+  o+=`<text x="15" y="1.9" font-size=".7" font-family="IBM Plex Mono,monospace" fill="#5d5d60" text-anchor="middle">OFF SITE</text>`;
+  if(st){
+    st.jobs.filter(j=>j.leg&&fwActive(j)).forEach(j=>{o+=`<line x1="${j.leg.from[0]}" y1="${j.leg.from[1]}" x2="${j.leg.to[0]}" y2="${j.leg.to[1]}" stroke="${ACC}" stroke-width=".12" stroke-dasharray=".5 .35"/>`});
+    st.parts.filter(p=>now<p.arriveAt).forEach(p=>{const[x,y]=fwSitePos(p.site);o+=`<circle cx="${x+1.3}" cy="${y-1}" r=".38" fill="${AMB}"><title>${p.id} in transit</title></circle>`});
+    st.engineers.forEach(e=>{const[x,y]=e.pos,c=e.phone?INK:ACC;o+=`<circle cx="${x}" cy="${y}" r=".95" fill="${c}" opacity=".12"/><circle cx="${x}" cy="${y}" r=".45" fill="${c}" stroke="#f2f2f3" stroke-width=".1"/><text x="${x}" y="${y-.75}" font-size=".7" font-family="Barlow,sans-serif" fill="${INK}" text-anchor="middle">${esc(e.name.split(' ')[1]||e.id)}</text>`});
+  }
+  return o;
+}
+function fwRender(){
+  const st=FW.state,now=fwNow();
+  ['#fwConnPage','#fwConnPanel'].forEach(s=>{const el=$(s);if(el){el.className=fwConnCls();el.textContent=fwConnText()}});
+  if(UI.page==='map'&&S.sel&&S.sel.type==='asset'){const l=$('#fwLive');if(l)l.innerHTML=fwLiveHtml(S.sel.id);const p=$('#fwPlan');if(p)p.innerHTML=fwPlanText(S.sel.id)}
+  if(UI.page!=='field')return;
+  $('#fwMap').innerHTML=fwMapSvg();
+  if(!st){['#fwEngs','#fwJobs','#fwPartsTbl','#fwLog'].forEach(s=>$(s).innerHTML=`<p class="muted small">${FW.err?esc(FW.err):'Connecting…'}</p>`);return}
+  $('#fwEngs').innerHTML=st.engineers.map(e=>{const j=e.jobId&&st.jobs.find(x=>x.id===e.jobId);return `<div class="fwRow"><span><b>${esc(e.name)}</b><br><span class="muted small">${fwWhere(e)}</span></span><span class="small" style="text-align:right">${j?`${j.id} · ${j.asset}<br><span class="muted">${fwJobText(j,now)}</span>`:'<span class="muted">free</span>'}</span></div>`}).join('');
+  const jobs=st.jobs.slice().reverse().slice(0,8);
+  $('#fwJobs').innerHTML=jobs.length?jobs.map(j=>{const e=st.engineers.find(x=>x.id===j.engineerId);return `<div class="fwRow"><span><b>${j.id}</b> · ${j.asset} · ${esc(siteBy[j.site]?.name||'')}<br><span class="muted small">${esc(e?e.name:'')}${j.partsId?' · parts '+j.partsId:''}</span></span><span class="small" style="text-align:right">${fwJobText(j,now)}<br>${fwGap(j)}</span></div>`}).join(''):'<p class="muted small">No jobs yet.</p>';
+  const parts=st.parts.slice().reverse().slice(0,8);
+  $('#fwPartsTbl').innerHTML=parts.length?parts.map(p=>`<div class="fwRow"><span><b>${p.id}</b> · ${p.asset} · ${esc(siteBy[p.site]?.name||'')}<br><span class="muted small">${esc(p.kit)}</span></span><b>${now<p.arriveAt?`in ${fwDur(p.arriveAt-now)}`:'<span class="ok">on site</span>'}</b></div>`).join(''):'<p class="muted small">No parts on order.</p>';
+  $('#fwLog').innerHTML=st.log.length?`<table><tr><th>Time</th><th>Who</th><th>What</th></tr>${st.log.slice().reverse().slice(0,15).map(l=>`<tr><td class="small">${fwClock(l.t)}</td><td>${esc(l.who)}</td><td>${esc(l.text)}</td></tr>`).join('')}</table>`:'<p class="muted small">Nothing yet.</p>';
+}
+$('#inspBody').addEventListener('change',e=>{if(e.target.closest('#fwEng,#fwPartsSel,#fwTiming')&&S.sel){const p=$('#fwPlan');if(p)p.innerHTML=fwPlanText(S.sel.id)}});
+$('#inspBody').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-fw]');if(!b||b.disabled)return;
+  if(S.role!=='Manager'){const m=$('#fwMsg');if(m)m.textContent='Only the Manager can do this.';return}
+  b.disabled=true;
+  const aid=b.dataset.asset,a=aid&&assetBy[aid];
+  if(b.dataset.fw==='order'){
+    const kit=$('#fwKit').value.trim();
+    if(kit.length<3){$('#fwMsg').textContent='Name the parts kit.';b.disabled=false;return}
+    if(await fwAct({type:'orderParts',asset:aid,kit},'#fwMsg')){addLog({action:'Ordered parts',asset:aid,site:a.site,reason:kit});renderInsp()}
+  }else if(b.dataset.fw==='request'){
+    const hz=D.gates.filter(g=>g.site===a.site&&g.block&&!S.verified[g.id]).map(g=>`${g.id} ${g.hazard}`);
+    const act={type:'requestEngineer',asset:aid,engineerId:$('#fwEng').value,partsId:$('#fwPartsSel').value||null,timing:$('#fwTiming').value,note:$('#fwNote').value.trim(),hseHold:hz.length?hz.join('; '):null};
+    if(await fwAct(act,'#fwMsg')){const e=FW.state.engineers.find(x=>x.id===act.engineerId);addLog({action:'Requested engineer',asset:aid,site:a.site,reason:`${e?e.name:act.engineerId}${act.partsId?', timed to '+act.partsId:''}${act.note?': '+act.note:''}`});renderInsp()}
+  }else if(b.dataset.fw==='cancel'){
+    if(await fwAct({type:'cancelJob',jobId:b.dataset.job},'#fwMsg')){const j=FW.state.jobs.find(x=>x.id===b.dataset.job);addLog({action:'Cancelled job',asset:j?.asset,site:j?.site,reason:b.dataset.job})}
+  }
+  b.disabled=false;fwRender();
+});
+$('#fwReset').addEventListener('click',async()=>{
+  if(S.role!=='Manager'){$('#fwResetMsg').textContent='Only the Manager can reset dispatch.';return}
+  if(!confirm('Clear every parts order and job for everyone, including the engineer phone?'))return;
+  if(await fwAct({type:'reset'},'#fwResetMsg')){$('#fwResetMsg').textContent='';addLog({action:'Reset dispatch',reason:'Cleared all orders and jobs'})}
+  fwRender();
+});
+setInterval(()=>{FW.ticks++;if(FW.ticks%2===0)fwPoll();else fwRender()},1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)fwPoll()});
+fwPoll();
 
 /* ======================= Parvis analysis column ======================= */
 // Answers come from the same engine as the Ctrl K palette (interpret), so the column adds no new figures.
