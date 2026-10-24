@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111418">
 <title>Parvius</title>
 <style>
 :root{
@@ -17,7 +18,7 @@
   --glass:rgba(255,255,255,.88);
   --shadow:0 1px 2px rgba(17,20,24,.06),0 1px 1px rgba(17,20,24,.03);
   --shadow-lg:0 12px 32px rgba(17,20,24,.12),0 2px 6px rgba(17,20,24,.06);
-  --ease:cubic-bezier(.2,.8,.2,1);
+  --ease:cubic-bezier(.23,1,.32,1);
   --top:60px;--dockH:84px;--railW:360px;--inspW:410px;--gap:16px;--sideW:224px;--tabH:0px;
   color-scheme:light}
 *{box-sizing:border-box}
@@ -26,7 +27,8 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system
 button,select,input,textarea{font:inherit;color:var(--text)}
 select,input[type=text],input[type=date],textarea{background:#fff;border:1px solid var(--line2);border-radius:8px;padding:7px 10px;width:100%}
 textarea{min-height:60px;resize:vertical}
-button{cursor:pointer;background:#fff;border:1px solid var(--line2);border-radius:8px;padding:7px 12px;font-weight:600;transition:background .15s,border-color .15s,transform .15s var(--ease)}
+button{cursor:pointer;background:#fff;border:1px solid var(--line2);border-radius:8px;padding:7px 12px;font-weight:600;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .15s,border-color .15s,transform .14s var(--ease)}
+h1,h2,h3,.say{text-wrap:balance}
 button:hover:not(:disabled){border-color:var(--text)}
 button:active:not(:disabled){transform:scale(.97)}
 button:disabled{opacity:.4;cursor:not-allowed}
@@ -93,12 +95,14 @@ body.insp-open .mapctl{right:calc(var(--inspW) + var(--gap)*2)}
 .legend-pop{position:absolute;top:calc(var(--gap) + 42px);right:var(--gap);z-index:6;padding:10px 12px;font-size:12px;color:var(--muted);display:none;flex-direction:column;gap:5px;transition:right .3s var(--ease)}
 body.insp-open .legend-pop{right:calc(var(--inspW) + var(--gap)*2)}
 .legend-pop.on{display:flex}
+.legend-keys{margin-top:4px;padding-top:8px;border-top:1px solid var(--line);line-height:2;max-width:250px}
+.mapctl #legendBtn span{font-size:12px}
 .legend-pop i,.legend.static i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
 .sw-asset{background:#707C94}.sw-flag{background:var(--flag-c)}.sw-stop{background:var(--brand)}.sw-wait{background:var(--magenta)}
 .sw-hold{background:transparent!important;border:2px solid var(--brand)}.sw-elig{background:var(--ok)}.sw-shelf{background:#2E9660}
 
 /* ---------- story rail ---------- */
-.rail{position:absolute;z-index:10;top:var(--gap);left:var(--gap);bottom:calc(var(--dockH) + var(--gap)*2);width:var(--railW);display:flex;flex-direction:column;overflow:hidden;transition:transform .35s var(--ease),opacity .25s}
+.rail{position:absolute;z-index:10;top:var(--gap);left:var(--gap);bottom:calc(var(--dockH) + var(--gap)*2);width:var(--railW);display:flex;flex-direction:column;overflow:hidden;transition:transform .28s var(--ease),opacity .2s}
 body.mode-explore .rail{transform:translateX(calc(-100% - 40px));opacity:0;pointer-events:none}
 .rail-head{display:flex;align-items:center;gap:8px;padding:14px 16px 10px}
 .rail-head .eyebrow{flex:1}
@@ -180,7 +184,8 @@ body.presenter .rail{bottom:var(--gap)}
 .scrub-meta span{font-size:11px;color:var(--muted)}
 
 /* ---------- inspector ---------- */
-.insp{position:absolute;z-index:14;top:var(--gap);right:var(--gap);bottom:calc(var(--dockH) + var(--gap)*2);width:var(--inspW);display:flex;flex-direction:column;overflow:hidden;transform:translateX(calc(100% + 40px));opacity:0;transition:transform .35s var(--ease),opacity .25s;pointer-events:none}
+.insp{position:absolute;z-index:14;top:var(--gap);right:var(--gap);bottom:calc(var(--dockH) + var(--gap)*2);width:var(--inspW);display:flex;flex-direction:column;overflow:hidden;transform:translateX(calc(100% + 40px));opacity:0;transition:transform .28s var(--ease),opacity .2s;pointer-events:none}
+.insp-body,.sheet-body,.pal-body,.pop-body,.beats{overscroll-behavior:contain}
 body.insp-open .insp{transform:none;opacity:1;pointer-events:auto}
 body.presenter .insp{bottom:var(--gap)}
 .insp-bar{display:flex;align-items:center;gap:8px;padding:10px 10px 0 16px}
@@ -295,9 +300,10 @@ ul.tight{margin:6px 0;padding-left:18px}ul.tight li{margin:4px 0}
 .sheet-intro p{margin:4px 0 0;color:var(--muted);max-width:720px}
 
 /* ---------- palette (PARVIS) ---------- */
-#vg{position:fixed;z-index:61;left:50%;top:11vh;width:min(700px,calc(100vw - 24px));max-height:76vh;transform:translateX(-50%) translateY(-8px) scale(.98);opacity:0;pointer-events:none;display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 30px 80px rgba(17,20,24,.3),0 0 0 1px rgba(17,20,24,.06);overflow:hidden;transition:transform .22s var(--ease),opacity .18s}
-#vg.on{transform:translateX(-50%);opacity:1;pointer-events:auto}
-.pal-scrim{z-index:60;background:rgba(17,20,24,.14);backdrop-filter:none}
+#vg{position:fixed;z-index:61;left:50%;top:11vh;width:min(700px,calc(100vw - 24px));max-height:76vh;transform:translateX(-50%);opacity:0;pointer-events:none;display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:0 30px 80px rgba(17,20,24,.3),0 0 0 1px rgba(17,20,24,.06);overflow:hidden}
+/* opened from the keyboard many times a day: no open/close animation */
+#vg.on{opacity:1;pointer-events:auto}
+.pal-scrim{z-index:60;background:rgba(17,20,24,.14);backdrop-filter:none;transition:none}
 .pal-in{display:flex;align-items:center;gap:8px;padding:12px 12px 12px 16px;border-bottom:1px solid var(--line)}
 .pal-in .ico{color:var(--muted);width:18px;height:18px}
 #vgIn{border:0;padding:8px 0;font-size:17px;flex:1;outline:none;background:transparent}
@@ -327,22 +333,24 @@ ul.tight{margin:6px 0;padding-left:18px}ul.tight li{margin:4px 0}
 .pal-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line);background:var(--panel2);font-size:11px;color:var(--muted)}
 .pal-foot canvas{width:22px;height:22px}
 #vgStatus{font-weight:700;color:var(--brand-ink);min-width:80px}
-#vgRoles{display:flex;gap:4px;flex-wrap:wrap}
+#vgRoles{display:none}
+#vgVoice{display:inline-flex;align-items:center;gap:4px}#vgVoice .ico{width:13px;height:13px}
 #vgRoles button,.pal-foot>button,.pal-foot select{font-size:11px;padding:3px 8px;border-radius:99px;width:auto}
 #vgRoles button.on{background:var(--text);color:#fff;border-color:var(--text)}
 .pal-foot .spacer{flex:1}
 
 /* ---------- bell popover / toasts ---------- */
 .pop{position:fixed;z-index:45;top:calc(var(--top) + 8px);right:16px;width:min(560px,calc(100vw - 32px));max-height:70vh;display:none;flex-direction:column;background:#fff;border-radius:14px;box-shadow:var(--shadow-lg),0 0 0 1px rgba(17,20,24,.06);overflow:hidden}
-.pop.on{display:flex;animation:rise .2s var(--ease)}
+.pop.on{display:flex;animation:popin .18s var(--ease);transform-origin:top right}
+@keyframes popin{from{opacity:0;transform:scale(.97)}}
 .pop-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
 .pop-head b{flex:1}
 .pop-head button{font-size:12px;padding:5px 10px}
 .pop-body{overflow:auto;padding:4px 10px 10px}
 .toasts{position:fixed;z-index:70;right:16px;bottom:calc(var(--dockH) + 32px);display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
 body.page-map.insp-open .toasts{right:calc(var(--inspW) + 32px)}
-.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;max-width:380px;background:var(--text);color:#fff;border-radius:12px;padding:10px 12px 10px 14px;box-shadow:var(--shadow-lg);font-size:13px;animation:toastin .35s var(--ease)}
-.toast.out{animation:toastout .25s ease forwards}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;max-width:380px;background:var(--text);color:#fff;border-radius:12px;padding:10px 12px 10px 14px;box-shadow:var(--shadow-lg);font-size:13px;animation:toastin .26s var(--ease)}
+.toast.out{animation:toastout .16s ease-out forwards}
 .toast .ico{width:18px;height:18px}
 .toast.good{background:var(--ok)}
 .toast.big{padding:14px 16px;font-size:14px}
@@ -370,6 +378,11 @@ body.page-map.insp-open .toasts{right:calc(var(--inspW) + 32px)}
 .side-brief button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:0;color:#C9CDD4;padding:6px 10px;border-radius:8px;font-weight:500;font-size:13px}
 .side-brief button:hover:not(:disabled){background:rgba(255,255,255,.06);color:#fff}
 .side-brief .ico{width:15px;height:15px;color:#8A909C}
+.side-brief kbd{margin-left:auto;background:transparent;border-color:rgba(255,255,255,.16);color:#9AA0AB;font-size:10px;padding:2px 5px}
+.side-hint{display:block;font-size:11px;line-height:1.4;color:#9AA0AB;padding:0 10px 8px}
+.side-more{display:none;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:#C9CDD4;background:transparent;border:0;font-weight:600;font-size:14px}
+.side-more:hover:not(:disabled){background:rgba(255,255,255,.06);color:#fff}
+.side-more .ico{width:18px;height:18px}
 .side-roles{padding:18px 10px 0}
 .side-lbl{display:block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A909C;padding:0 10px 6px}
 #sideRoles{display:flex;flex-direction:column;gap:4px}
@@ -391,7 +404,7 @@ body.page-map.insp-open .toasts{right:calc(var(--inspW) + 32px)}
 .datechip button.on{background:var(--text);color:#fff}
 body:not(.page-map) .stage,body:not(.page-map) #modeSeg{display:none}
 .page{position:fixed;top:var(--top);left:var(--sideW);right:0;bottom:var(--tabH);overflow:auto;display:none;background:var(--bg)}
-body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:rise .3s var(--ease)}
+body.page-overview #pg-overview,body.page-work #pg-work{display:block}
 .page-inner{max-width:1240px;margin:0 auto;padding:24px 24px 48px}
 .page-inner.wide{max-width:1560px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
@@ -411,12 +424,22 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 .headline .say{font-size:22px;line-height:1.35;font-weight:700;letter-spacing:-.3px;margin:0 0 6px;max-width:980px}
 .headline .say2{font-size:16px;color:var(--muted);margin:0 0 16px;max-width:980px}
 .headline .say2 b{color:var(--text)}
-.hl-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.hl-tiles div{background:var(--panel2);border-radius:10px;padding:12px 14px}
+.hl-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.7fr);gap:10px}
+.hl-tiles>button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:var(--panel2);border:1px solid transparent;border-radius:10px;padding:12px 14px;font-weight:400}
+.hl-tiles>button:hover:not(:disabled){border-color:var(--line2)}
 .hl-tiles b{display:block;font-size:30px;font-weight:800;letter-spacing:-.6px;line-height:1.05;font-variant-numeric:tabular-nums}
+.hl-tiles b small{font-size:14px;font-weight:600;letter-spacing:0;color:var(--muted)}
 .hl-tiles span{font-size:12px;color:var(--muted)}
 .hl-tiles .hot{background:var(--brand-tint)}.hl-tiles .hot b{color:var(--brand)}
 .hl-tiles .good{background:var(--ok-tint)}.hl-tiles .good b{color:var(--ok)}
+.prize-tile{background:#fff!important;border-color:var(--line)!important}
+.prize-tile:hover:not(:disabled){border-color:var(--line2)!important}
+.pt-bar{display:flex;gap:3px;height:10px;width:100%;margin:8px 0 4px}
+.pt-bar i{display:block;height:100%;border-radius:3px;background:#DDE1E6;transition:background .4s var(--ease)}
+.pt-bar i.on{background:var(--ok)}
+.pt-key{font-size:12px}
+.glow{animation:glow 1.6s var(--ease)}
+@keyframes glow{25%{box-shadow:0 0 0 3px rgba(30,127,79,.35)}}
 .sites-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 .scard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:500;min-width:0}
 .scard.hold{background:var(--brand-tint);border-color:var(--brand-line)}
@@ -444,8 +467,10 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 .empty .ico{color:var(--ok);width:18px;height:18px}
 .spark-wrap{display:flex;align-items:center;gap:8px;margin:6px 0 4px;font-size:11px;color:var(--faint)}
 .spark{flex:0 0 auto;background:var(--panel2);border-radius:6px}
-.feed li[data-ov]{cursor:pointer;border-radius:6px}.feed li[data-ov]:hover{background:var(--panel2)}
-.feed li[data-ov]:focus-visible{outline-offset:0}
+.feed li.go{display:block;padding:0}
+.feed-row{display:grid;grid-template-columns:52px 1fr;gap:8px;width:calc(100% + 8px);margin:0 -4px;padding:8px 4px;text-align:left;background:transparent;border:0;border-radius:6px;font-weight:400;font-size:13px;line-height:1.45}
+.feed-row:hover:not(:disabled){background:var(--panel2)}
+.feed-row:focus-visible{outline-offset:0}
 .caption{font-size:13px;color:var(--muted);margin:0 0 12px}
 .caption b{color:var(--text)}
 .hrow{display:grid;grid-template-columns:90px minmax(0,1fr) 64px;gap:10px;align-items:center;margin:7px 0;font-size:13px}
@@ -471,6 +496,7 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 .wc-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
 .prio{font-size:11px;font-weight:800;padding:2px 6px;border-radius:4px;background:var(--panel2);color:var(--muted)}
 .prio.p1{background:var(--brand);color:#fff}.prio.p2{background:var(--flag-c);color:#3A2600}
+.prio{cursor:help}
 .wc-top b{font-size:13px}
 .wc-top .site{font-size:12px;font-weight:700;color:var(--info);background:none;border:0;padding:0 2px;min-height:24px}
 .wc-top .site:hover{text-decoration:underline}
@@ -493,9 +519,12 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 .who{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
 .who:first-child{border-top:0}
 .who .av{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;background:var(--muted)}
-.who[role=button]{cursor:pointer;border-radius:8px}.who[role=button]:hover{background:var(--panel2)}
+button.who{width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;font-weight:400;padding:8px 0}
+button.who:first-child{border-top:0}
+button.who:hover:not(:disabled){background:var(--panel2);border-color:var(--line)}
+button.who.me{background:var(--panel2);border-radius:8px;padding:8px;margin:0 -8px;width:calc(100% + 16px)}
 .who .av.hse{background:var(--brand)}.who .av.pl{background:var(--text)}
-.who b{display:block}.who span{color:var(--muted)}
+.who b{display:block;color:var(--text)}.who span{color:var(--muted)}.who span span{display:block}
 .who.me{background:var(--panel2);margin:0 -8px;padding:8px;border-radius:8px}
 .prog{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
 .prog:first-child{border-top:0}
@@ -511,6 +540,7 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
   .side-name,.side-nav a span,.side-foot,.side-roles,.side-brief{display:none}
   .side-brand{justify-content:center;padding:14px 0 18px}
   .side-nav a{justify-content:center}
+  .side-more{display:flex;justify-content:center}.side-more span{display:none}
   .nav-badge{position:absolute;top:2px;right:4px;min-width:16px;height:16px;font-size:9px;padding:0 4px}
   .role-wrap{display:flex!important}.role-wrap .nm{display:none}
   .ov-grid{grid-template-columns:1fr}.ov-side{position:static}
@@ -537,15 +567,27 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
   .side-nav{flex-direction:row;flex:1;padding:6px;justify-content:space-around}
   .side-nav a{flex-direction:column;gap:2px;font-size:11px;padding:6px 16px}
   .side-nav a span{display:block}
+  .side-more{flex-direction:column;gap:2px;font-size:11px;padding:6px 12px}.side-more span{display:block}
   .side-nav a.on::before{display:none}
   .board,.wk-side{grid-template-columns:1fr}
-  .hl-tiles{grid-template-columns:1fr 1fr}
+  .hl-tiles{grid-template-columns:1fr 1fr 1fr}.prize-tile{grid-column:1/-1}
+  .hl-tiles b{font-size:24px}
   .crumbs{display:none}
   .page-inner{padding:16px 14px 32px}
   .headline .say{font-size:19px}
   .toasts{bottom:calc(var(--tabH) + 16px)}
 }
-@media(max-width:620px){body.page-map #dayBack,body.page-map #dayFwd{display:none}.board.no-done{grid-template-columns:1fr}.datechip>span .eyebrow{display:none}.dock .sites{display:none}.dock-div{display:none}.role-wrap .seg button span.nm{display:none}.prize{display:none}.brand b{display:none}#modeSeg .nm{display:none}.topbar{gap:8px;padding:0 10px}}
+/* the dock owns replay on the map, so the top-bar play button would be a second, identical control */
+body.page-map #play2{display:none}
+/* touch: 44px targets for every standalone control (inline text links stay inline) */
+@media(max-width:620px),(pointer:coarse){
+  button:not(.linkbtn):not(.site):not(.pal-item):not(.dots button):not(.wc-wait button){min-height:44px}
+  .datechip button,.bell,#vgFab,#roleSeg button,.mapctl button,#narrateBtn,#presentBtn,#vgMic{min-width:44px}
+  .seg button{padding:5px 12px}
+  .dots button{height:32px}.dots button::before{top:14px}
+  .wc-top .site{min-height:32px}
+}
+@media(max-width:620px){#modeSeg{display:none}body.page-map #dayBack,body.page-map #dayFwd{display:none}.board.no-done{grid-template-columns:1fr}.datechip>span .eyebrow{display:none}.dock .sites{display:none}.dock-div{display:none}.role-wrap .seg button span.nm{display:none}.prize{display:none}.brand b{display:none}#modeSeg .nm{display:none}.topbar{gap:8px;padding:0 10px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -591,22 +633,24 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
       <path d="M12.5 14.5V12a3.5 3.5 0 0 1 6.6-1.6" stroke="#E31B23" stroke-width="2" fill="none" stroke-linecap="round"/>
       <rect x="11" y="14.5" width="10" height="8" rx="1.6" fill="#E31B23"/><circle cx="16" cy="18.3" r="1.3" fill="#fff"/>
     </svg>
-    <div class="side-name"><b>Parvius</b><span>Lone Mesa operations</span></div>
+    <div class="side-name"><b translate="no">Parvius</b><span>Lone Mesa operations</span></div>
   </div>
   <div class="side-nav">
     <a href="#/overview" data-page="overview"><svg class="ico"><use href="#i-home"/></svg><span>Overview</span></a>
     <a href="#/map" data-page="map"><svg class="ico"><use href="#i-cube"/></svg><span>Map</span></a>
     <a href="#/work" data-page="work"><svg class="ico"><use href="#i-list"/></svg><span>Work</span><b class="nav-badge" id="workBadge"></b></a>
+    <button class="side-more" data-sheet-open="why" aria-label="Briefings"><svg class="ico"><use href="#i-book"/></svg><span>Briefings</span></button>
   </div>
   <div class="side-brief">
     <span class="side-lbl">Briefings</span>
-    <button data-sheet-open="why"><svg class="ico"><use href="#i-book"/></svg>Why this problem</button>
-    <button data-sheet-open="roll"><svg class="ico"><use href="#i-book"/></svg>Business case</button>
-    <button data-sheet-open="hse"><svg class="ico"><use href="#i-book"/></svg>Safety &amp; guardrails</button>
-    <button data-sheet-open="plan"><svg class="ico"><use href="#i-book"/></svg>Plan &amp; KPIs</button>
+    <button data-sheet-open="why"><svg class="ico"><use href="#i-book"/></svg>Why this problem<kbd>1</kbd></button>
+    <button data-sheet-open="roll"><svg class="ico"><use href="#i-book"/></svg>Business case<kbd>2</kbd></button>
+    <button data-sheet-open="hse"><svg class="ico"><use href="#i-book"/></svg>Safety &amp; guardrails<kbd>3</kbd></button>
+    <button data-sheet-open="plan"><svg class="ico"><use href="#i-book"/></svg>Plan &amp; KPIs<kbd>4</kbd></button>
   </div>
   <div class="side-roles">
     <span class="side-lbl">Acting as</span>
+    <span class="side-hint">A demo switch: see what each role is allowed to do.</span>
     <div id="sideRoles" role="radiogroup" aria-label="Acting as">
       <button data-role="Site HSE supervisor" role="radio"><span class="av hse">HS</span><span><b>HSE supervisor</b><small>verifies safety checks</small></span></button>
       <button data-role="Planner" role="radio"><span class="av pl">PL</span><span><b>Planner</b><small>decides which parts to stage</small></span></button>
@@ -628,13 +672,13 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
     <div class="prize-bar" id="prizeBar"></div>
   </div>
   <div class="spacer"></div>
-  <button class="cmdk" id="vgFab" title="Ask Parvis or jump anywhere (Ctrl+K)"><canvas id="vgFabOrb" width="56" height="56"></canvas><span>Ask Parvis or jump to…</span><kbd>Ctrl K</kbd></button>
+  <button class="cmdk" id="vgFab" title="Ask Parvis or jump anywhere (Ctrl+K or /)"><canvas id="vgFabOrb" width="56" height="56"></canvas><span>Ask Parvis or jump to…</span><kbd>Ctrl K</kbd></button>
   <div class="role-wrap" style="display:flex;align-items:center;gap:8px">
     <span class="seg-lbl">Acting as</span>
     <div class="seg" id="roleSeg" role="radiogroup" aria-label="Acting as">
-      <button data-role="Planner" role="radio"><span class="av">PL</span><span class="nm">Planner</span></button>
-      <button data-role="Site HSE supervisor" role="radio"><span class="av hse">HS</span><span class="nm">HSE supervisor</span></button>
-      <button data-role="Manager" role="radio"><span class="av">MG</span><span class="nm">Manager</span></button>
+      <button data-role="Planner" role="radio" title="Act as Planner"><span class="av">PL</span><span class="nm">Planner</span></button>
+      <button data-role="Site HSE supervisor" role="radio" title="Act as HSE supervisor"><span class="av hse">HS</span><span class="nm">HSE supervisor</span></button>
+      <button data-role="Manager" role="radio" title="Act as Manager"><span class="av">MG</span><span class="nm">Manager</span></button>
     </div>
   </div>
   <div class="seg" id="modeSeg" aria-label="Mode">
@@ -651,24 +695,24 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 
   <div class="mapctl">
     <button id="orbit" title="Auto-rotate"><svg class="ico"><use href="#i-orbit"/></svg><span>Orbit: off</span></button>
-    <button id="resetCam" title="Reset view"><svg class="ico"><use href="#i-target"/></svg></button>
-    <button id="legendBtn" title="Legend"><svg class="ico"><use href="#i-layers"/></svg></button>
+    <button id="resetCam" title="Reset view" aria-label="Reset view"><svg class="ico"><use href="#i-target"/></svg></button>
+    <button id="legendBtn" title="What the colors and shapes mean"><svg class="ico"><use href="#i-layers"/></svg><span>Legend</span></button>
   </div>
   <div class="legend-pop glass" id="legendPop">
     <span><i class="sw-hold"></i>Safety hold cage</span>
-    <span><i class="sw-elig"></i>Prize tower · avoided h/yr</span>
+    <span><i class="sw-elig"></i>Prize tower · avoided hours a year</span>
     <span><i class="sw-shelf"></i>Shelf cubes · spare fill %</span>
     <span><i class="sw-asset"></i>Asset OK</span>
     <span><i class="sw-flag"></i>Readiness flag</span>
     <span><i class="sw-stop"></i>Stopped</span>
-    <span><i class="sw-wait"></i>Stopped, waiting for parts</span>
+    <span><i class="sw-wait"></i>Stopped, waiting for parts</span><span class="legend-keys">Keys: <kbd>←</kbd> <kbd>→</kbd> story steps · <kbd>P</kbd> present · <kbd>N</kbd> narrate · <kbd>1</kbd>–<kbd>4</kbd> briefings · <kbd>/</kbd> ask Parvis</span>
   </div>
 
   <aside class="rail glass" id="rail" aria-label="Story">
     <div class="rail-head">
       <span class="eyebrow" id="railCount">The story · 1 of 6</span>
-      <button id="narrateBtn" class="ghost" title="Parvis narrates each beat (N)"><svg class="ico"><use href="#i-speaker"/></svg></button>
-      <button id="presentBtn" class="ghost" title="Presenter mode (P)"><svg class="ico"><use href="#i-screen"/></svg></button>
+      <button id="narrateBtn" class="ghost" title="Parvis narrates each beat (N)" aria-label="Narrate"><svg class="ico"><use href="#i-speaker"/></svg></button>
+      <button id="presentBtn" class="ghost" title="Presenter mode (P)" aria-label="Presenter mode"><svg class="ico"><use href="#i-screen"/></svg></button>
     </div>
     <div class="dots" id="dots"></div>
     <div class="beats" id="beats"></div>
@@ -803,11 +847,11 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
         <div class="rule-hero"><b>R1 · HOLD has no override.</b><span>A site with any unverified severity-5 action stays on HOLD. No button lifts it except a verified closure.</span></div>
         <div class="rules">
           <details><summary><span class="rid">R2</span>Separation of duties</summary><div>Only the Site HSE supervisor records closures. Planners cannot, Managers only view.</div></details>
-          <details><summary><span class="rid">R3</span>Closure needs evidence</summary><div>Name, date no later than today, evidence note.</div></details>
+          <details><summary><span class="rid">R3</span>Closure needs evidence</summary><div>Supervisor name, a witness, a date no later than today, and an evidence note.</div></details>
           <details><summary><span class="rid">R4</span>Clean signals only</summary><div>Flags use readings received by the chosen date, Valid and Running only. Operator noise notes count as human observation.</div></details>
           <details><summary><span class="rid">R5</span>Append-only log</summary><div>Entries are frozen; nothing edits or deletes them.</div></details>
-          <details><summary><span class="rid">R7</span>Fails closed</summary><div>If data does not load, every site shows HOLD.</div></details>
-          <details><summary><span class="rid">R9</span>Advisory only</summary><div>Nothing here authorizes maintenance, LOTO, permits, restart or any write to plant control systems.</div></details>
+          <details><summary><span class="rid">R6</span>Fails closed</summary><div>If data does not load, every site shows safety hold.</div></details>
+          <details><summary><span class="rid">R7</span>Advisory only</summary><div>Nothing here authorizes maintenance, LOTO, permits, restart or any write to plant control systems.</div></details>
         </div>
         <div class="row"><button class="primary" id="selfTest">Run guardrail self-test</button></div>
         <div id="testOut" class="small" style="margin-top:8px"></div></div>
@@ -854,7 +898,7 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
     <div id="vgRoles"></div>
     <span class="spacer"></span>
     <button id="vgVoice"></button><select id="vgVoiceSel" title="Voice"></select>
-    <button id="vgPrep" title="Download the speech models now so mic and voice work smoothly later">Prepare voices (~370 MB)</button>
+    <button id="vgPrep" class="ghost" title="Download the speech models now so mic and voice work smoothly later">Download HD voices (370 MB)</button>
     <button id="vgClose" class="ghost" aria-label="Close">Esc</button>
   </div>
 </div>
@@ -1030,6 +1074,10 @@ function scene(t){
     addBox(cx,0,cz,7.4,0.28,6.4,padCol,{tag:'site:'+sid,stroke:sel?PAL.brand:'rgba(17,20,24,.25)',lw:sel?2.5:1});
     // assets
     const types=['Transfer pump','Lift pump','Compressor'];
+    // one status label per site and state, so two waiting machines don't stack two identical labels
+    const stops=D.assets.filter(a=>a.site===sid).map(a=>stoppedNow(a.id,S.day)).filter(Boolean),nW=stops.filter(e=>e.pw>0).length,nS=stops.length-nW;
+    if(nW) addText([cx,3.1,cz-0.5],(nW>1?nW+' ':'')+'WAITING FOR PARTS',{size:10,col:PAL.magenta,bold:1,pri:2});
+    if(nS) addText([cx,nW?2.5:3.1,cz-0.5],(nS>1?nS+' ':'')+'STOPPED',{size:10,col:PAL.brand,bold:1,pri:2});
     D.assets.filter(a=>a.site===sid).forEach((a,i)=>{
       const [w,h,d]=ASSET_SHAPE[a.type],ax=cx-2.2+i*2.2,az=cz-0.5;
       const st=stoppedNow(a.id,S.day),fl=flags[a.id];
@@ -1044,7 +1092,6 @@ function scene(t){
         items.push({t:'ring',x:top[0],y:top[1]-8*top[3]/30,r:(5+pulse*4)*top[3]/34,col:PAL.flag,d:top[2]-3});
       }
       if(S.hl.includes(a.id)){const pu=0.5+0.5*Math.sin(t/200);items.push({t:'ring',x:top[0],y:top[1]-8*top[3]/30,r:(9+pu*5)*top[3]/34,col:PAL.text,d:top[2]-3})}
-      if(st) addText([ax,0.28+h+0.6,az],st.pw>0?'WAITING FOR PARTS':'STOPPED',{size:10,col:st.pw>0?PAL.magenta:PAL.brand,bold:1,pri:2});
       if(cam.dist<40||isSel) addText([ax,0.1,az+d/2+0.5],a.id,{size:10,col:PAL.muted});
     });
     // shelf cubes = spare fill
@@ -1301,7 +1348,7 @@ $('#selfTest').addEventListener('click',()=>{
   t('R4 · An operator noise note flags even without valid vibration',flagFor({v:[1.0,1.0,1.0,1.0,1.0,1.0,null],n:[0,0,0,0,0,0,1],r:[0,1,2,3,4,5,6]},6).flag);
   const e=Object.freeze({a:1});let changed=false;try{e.a=2;changed=e.a!==1}catch(x){changed=false}
   t('R5 · Log entries cannot be edited',!changed&&S.log.every(l=>Object.isFrozen(l)));
-  t('R7 · Data failure fails closed (every site HOLD)',SITE_ORDER.every(s=>siteStatus(s,Object.fromEntries(D.gates.map(g=>[g.id,1])),false)==='HOLD'));
+  t('R6 · Data failure fails closed (every site HOLD)',SITE_ORDER.every(s=>siteStatus(s,Object.fromEntries(D.gates.map(g=>[g.id,1])),false)==='HOLD'));
   $('#testOut').innerHTML=res.map(r=>`<div class="${r[1]?'ok':'bad'}">${r[1]?'✔':'✘'} ${r[0]}</div>`).join('')+`<div style="margin-top:6px"><b>${res.filter(r=>r[1]).length} of ${res.length} passed</b></div>`;
 });
 
@@ -1332,7 +1379,8 @@ function renderPlan(){
 /* =================== PARVIS · voice agent =================== */
 const SK={pm:'Plant manager',sc:'Parts planner',hse:'HSE supervisor',exec:'Executive'};
 let agRole='auto',voiceOn=true,agState='idle',agAmp=0,agLast={site:null,asset:null};
-try{const o=JSON.parse(localStorage.getItem('parvis-prefs')||'{}');if(o.role)agRole=o.role;if(o.voice===false)voiceOn=false}catch(e){}
+// Parvis always answers for the role in "Acting as", so there is one role switch in the product, not two
+try{const o=JSON.parse(localStorage.getItem('parvis-prefs')||'{}');if(o.voice===false)voiceOn=false}catch(e){}
 function agSave(){try{localStorage.setItem('parvis-prefs',JSON.stringify({role:agRole,voice:voiceOn,hd:hdVoice}))}catch(e){}}
 function curSK(){return agRole!=='auto'?agRole:(S.role==='Planner'?'sc':S.role==='Site HSE supervisor'?'hse':'pm')}
 const mUsd=n=>{if(n>=1e6)return '$'+(n/1e6).toFixed(1)+' million';if(n>=1000){const k=n<250000?Math.round(n/500)/2:Math.round(n/1000);return '$'+k+' thousand'}return '$'+Math.round(n)};
@@ -1368,7 +1416,7 @@ function aBrief(sk){
   const arroyo=siteBy.S04;
   if(sk==='pm'){
     res.say=`Plant status as of ${f.dn}: ${down}. ${f.flagged.length} more carry readiness flags, ${flHold.length} of them at sites on safety hold. ${f.holds.length} of six sites are on hold, which locks ${100-f.unlPct} percent of the avoided-downtime prize. The biggest exposure is Arroyo, where ${Math.round(arroyo.waited*100)} percent of breakdowns wait for parts, about ${Math.round(arroyo.avgWait)} hours each. My advice: have the planner review flags at ${flOk.length?lst([...new Set(flOk.map(id=>siteBy[assetBy[id].site].name))]):'cleared sites when they appear'}, and get the critical safety actions verified, because each month of delay costs about ${Math.round(f.lossPerMonth)} avoided hours, roughly ${mUsd(f.lossPerMonth*VPH)}.`;
-    res.card=tiles([[f.stopped.length,'down now'],[f.flagged.length,'flagged'],[f.holds.length+' of 6','on HSE hold'],[Math.round(f.lossPerMonth)+' h','lost per month of gate delay']])+basis(`${tagO} readings, events to ${f.dn}; ${tagM} delay cost at ~$${Math.round(VPH)}/h`);
+    res.card=tiles([[f.stopped.length,'down now'],[f.flagged.length,'flagged'],[f.holds.length+' of 6','on safety hold'],[Math.round(f.lossPerMonth)+' h','lost per month of gate delay']])+basis(`${tagO} readings, events to ${f.dn}; ${tagM} delay cost at ~$${Math.round(VPH)}/h`);
     res.follow=['What should we do?','Tell me about Arroyo','What is blocking the sites?'];
   }else if(sk==='sc'){
     const lows=[...D.sites].sort((a,b)=>a.spare-b.spare).slice(0,3).map(s=>`${s.name} at ${s.spare} percent`);
@@ -1593,7 +1641,7 @@ function ask(q,viaVoice){
 msgs.addEventListener('click',e=>{const b=e.target.closest('button[data-q]');if(b)ask(b.dataset.q)});
 function renderChips(){
   $('#vgRoles').innerHTML=[['auto','Auto'],...Object.entries(SK)].map(([k,v])=>`<button data-r="${k}" class="${agRole===k?'on':''}">${k==='auto'?'Auto · '+SK[curSK()]:v}</button>`).join('');
-  $('#vgVoice').textContent=voiceOn?'🔊 On':'🔇 Off';const vs=$('#vgVoiceSel');if(vs&&!vs.options.length){HD_VOICES.forEach(v=>vs.add(new Option(v[1],v[0])));vs.addEventListener('change',()=>{hdVoice=vs.value;agSave();stopSpeaking();if(hdVoice!=='browser')loadHD().catch(()=>{});speak('This is how I sound now.')})}if(vs)vs.value=hdVoice;
+  $('#vgVoice').innerHTML=`<svg class="ico"><use href="#i-speaker"/></svg> Voice ${voiceOn?'on':'off'}`;$('#vgVoice').setAttribute('aria-pressed',voiceOn);const vs=$('#vgVoiceSel');if(vs&&!vs.options.length){HD_VOICES.forEach(v=>vs.add(new Option(v[1],v[0])));vs.addEventListener('change',()=>{hdVoice=vs.value;agSave();stopSpeaking();if(hdVoice!=='browser')loadHD().catch(()=>{});speak('This is how I sound now.')})}if(vs)vs.value=hdVoice;
 }
 $('#vgRoles').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;agRole=b.dataset.r;agSave();renderChips()});
 $('#vgVoice').addEventListener('click',()=>{voiceOn=!voiceOn;agSave();if(!voiceOn)stopSpeaking();renderChips()});
@@ -1601,7 +1649,7 @@ function greet(){
   const h=new Date().getHours(),g=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
   const f=facts();
   const say=`${g}. I'm Parvis. I'm watching all six sites. ${f.holds.length} are on safety hold, ${f.flagged.length} assets carry readiness flags on ${f.dn}. Ask me anything, or tap a suggestion.`;
-  addMsg('bot',say,'',['Brief me','What is the biggest problem?','What should we do?','What is blocking the sites?']);
+  addMsg('bot',say,'',[]);
 }
 
 /* ---------- speech out: Kokoro HD British voice (WebGPU) with browser fallback ---------- */
@@ -1856,7 +1904,7 @@ function countUp(el,a,b,ms){
 function renderPrize(anim,popSid){
   const u=unlockedH();
   $('#prizeTot').textContent=fmt(sumSteady());
-  $('#prizeBar').innerHTML=SITE_ORDER.map(s=>`<i class="${stat(s)==='ELIGIBLE'?'on':''}${s===popSid?' seg-pop':''}" style="flex:${steady(s)}" title="${siteBy[s].name}: ${fmt(steady(s))} h/yr · ${stat(s)==='ELIGIBLE'?'unlocked':'locked by HSE hold'}"></i>`).join('');
+  $('#prizeBar').innerHTML=SITE_ORDER.map(s=>`<i class="${stat(s)==='ELIGIBLE'?'on':''}${s===popSid?' seg-pop':''}" style="flex:${steady(s)}" title="${siteBy[s].name}: ${fmt(steady(s))} h/yr · ${stat(s)==='ELIGIBLE'?'unlocked':'locked by safety hold'}"></i>`).join('');
   const el=$('#prizeNum');
   if(anim&&prizeShown!==null&&prizeShown!==u){countUp(el,prizeShown,u,1200);const p=$('#prize');p.classList.remove('flash');void p.offsetWidth;p.classList.add('flash')}
   else el.textContent=fmt(u);
@@ -1879,10 +1927,6 @@ function setMode(m){
   frameTargets();
 }
 $('#modeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.mode)});
-/* rows that act like buttons (feed items, "Who's on it") answer Enter and Space too */
-document.addEventListener('keydown',e=>{
-  const t=e.target;if((e.key==='Enter'||e.key===' ')&&t.matches&&t.matches('[role=button][tabindex]:not(button)')){e.preventDefault();t.click()}
-});
 $('#skipLink').addEventListener('click',()=>{const h=UI.page==='map'?$('#stage h1'):$(`#pg-${UI.page} h1`);if(h)h.focus()});
 $('#resumeStory').addEventListener('click',()=>setMode('story'));
 $('#skipStory').addEventListener('click',()=>{setMode('explore');toast(`${ico('cube')}<span>Explore: click any site or press <b>Ctrl K</b> to ask Parvis.</span>`)});
@@ -1930,9 +1974,9 @@ const BEATS=[
    say(){return `Why parts? Across the six sites, the share of the shelf that is empty almost exactly predicts the share of breakdowns that wait. Arroyo is the extreme: the emptiest shelf, and the most waiting.`},
    enter(){deselect();S.hl=D.assets.filter(a=>a.site==='S04').map(a=>a.id);flyTo('S04',{dist:24,pitch:0.82,yaw:-0.2})}},
   {t:'The gate',sheet:'hse',
-   html(){const g=gateFacts(),holds=SITE_ORDER.filter(s=>stat(s)==='HOLD');return `<div class="big red">${holds.length} of 6</div><div class="bigsub">sites on HSE hold right now</div>
+   html(){const g=gateFacts(),holds=SITE_ORDER.filter(s=>stat(s)==='HOLD');return `<div class="big red">${holds.length} of 6</div><div class="bigsub">sites on safety hold right now</div>
      <p>${g.g5.length} overdue severity-5 actions (gas monitoring readiness and energy isolation) lock ${lst(g.names)}. We don't stock a held site. Safety goes first.</p>
-     <div class="minis"><div><b>$${Math.round(g.setup/1000)}k</b><span>to close them</span></div><div><b>${g.hrs} h</b><span>person-hours of work</span></div><div class="good"><b>${g.pct}%</b><span>of the prize they unlock</span></div></div>`},
+     <div class="minis"><div><b>$${Math.round(g.setup/1000)}k</b><span>to close them</span></div><div><b>${g.hrs} h</b><span>person-hours of work</span></div><div><b>${g.pct}%</b><span>of the prize they unlock</span></div></div>`},
    say(){const g=gateFacts();return `Here is the catch. ${g.g5.length} overdue critical safety actions put ${lst(g.names)} on hold. About ${Math.round(g.setup/1000)} thousand dollars and ${g.hrs} person-hours of safety work unlock ${g.pct} percent of the prize.`},
    enter(){deselect();S.hl=[];flyHome({pitch:1.02,dist:52,yaw:-0.5})}},
   {t:'Unlock it',sheet:'hse',
@@ -2013,7 +2057,7 @@ function startTour(){
 const EV_DAY=new Array(366).fill(0);D.events.forEach(e=>{const d=Math.floor(e.s);if(d>=0&&d<366)EV_DAY[d]+=e.h});
 function renderDock(){
   $('#sites').innerHTML=SITE_ORDER.map(sid=>{const s=siteBy[sid],hold=stat(sid)==='HOLD',sel=S.sel&&(S.sel.type==='site'?S.sel.id===sid:assetBy[S.sel.id].site===sid);
-    return `<button class="site-chip ${hold?'hold':'elig'} ${sel?'sel':''}" data-site="${sid}" title="${s.name}: ${hold?'on HSE hold':'eligible'}">
+    return `<button class="site-chip ${hold?'hold':'elig'} ${sel?'sel':''}" data-site="${sid}" title="${s.name}: ${hold?'on safety hold':'eligible'}">
       <span class="t">${ico(hold?'lock':'check')}${s.name}</span>
       <span class="s"><span>${fmt(steady(sid))} h/yr</span><span>spares ${s.spare}%</span></span>
       <span class="sb"><i class="${s.spare<50?'low':''}" style="width:${s.spare}%"></i></span></button>`}).join('');
@@ -2073,8 +2117,9 @@ function verifyFormHtml(g){
     :`Recording ${g.id} is permanent. It is the last open check, so ${s.name}'s safety hold lifts and ${fmt(steady(g.site))} h/yr of avoided downtime unlocks.`;
   return `<div class="vform" data-g="${g.id}" data-site="${g.site}">
     <label>Supervisor name</label><input type="text" class="f-name" aria-label="Supervisor name" value="${esc(UI.persona)}">
-    <label>Closure date</label><input type="date" class="f-date" aria-label="Closure date" value="${TODAY}" max="${TODAY}">
-    <label>Evidence (required)</label><textarea class="f-note" aria-label="Evidence" rows="3" placeholder="What was inspected, who witnessed it, and the permit or checklist number"></textarea>
+    <label>Witness (required)</label><input type="text" class="f-wit" aria-label="Witness" autocomplete="off" placeholder="e.g. Operations lead, J. Ortiz…">
+    <label>Closure date (today or earlier)</label><input type="date" class="f-date" aria-label="Closure date" value="${TODAY}" max="${TODAY}">
+    <label>Evidence (required)</label><textarea class="f-note" aria-label="Evidence" rows="3" placeholder="What was inspected and the permit or checklist number, e.g. GT-114…"></textarea>
     <button class="linkbtn" data-act="fillEv" data-ev="${esc(ev)}" style="margin-top:6px;font-size:12px" title="${esc(ev)}">${ico('book')} Insert the demo field note (${esc(ref)}) and check it</button>
     <div class="consequence${rest.length?'':' unlock'}">${consequence}</div>
     <div class="row"><button class="commit" data-act="verify">${ico('check')} Record verified closure</button></div>
@@ -2092,16 +2137,17 @@ function decideFormHtml(aid){
 function openVerifyFor(gid){UI.verifyOpen=gid;UI.workOpen='g:'+gid;refreshViews();focusEvidence()}
 function doVerify(form){
   const q=c=>form.querySelector(c),sid=form.dataset.site,gid=form.dataset.g,gate=D.gates.find(g=>g.id===gid);
-  const name=q('.f-name').value,date=q('.f-date').value,note=q('.f-note').value;
+  const name=q('.f-name').value,date=q('.f-date').value,note=q('.f-note').value,wit=q('.f-wit').value.trim();
   const r=canVerify(S.role,sid,gate,name,date,note);
   if(!r.ok){q('.f-msg').textContent=r.why;q('.f-note').focus();return}
+  if(wit.length<3){q('.f-msg').textContent='Add who witnessed the closure.';q('.f-wit').focus();return}
   const before=stat(sid);
-  S.verified={...S.verified,[gid]:{name:name.trim(),date,note:note.trim()}};save();
-  addLog({action:'Verified closure',site:sid,gate:gid,name:name.trim(),reason:note.trim()});
+  S.verified={...S.verified,[gid]:{name:name.trim(),date,note:note.trim(),witness:wit}};save();
+  addLog({action:'Verified closure',site:sid,gate:gid,name:name.trim(),reason:`${note.trim()} Witness: ${wit}.`});
   const next=D.gates.find(g=>g.site===sid&&g.block&&!S.verified[g.id]);
   UI.verifyOpen=next?next.id:null;UI.workOpen=next?'g:'+next.id:null;
   if(before==='HOLD'&&stat(sid)==='ELIGIBLE')celebrate(sid);
-  else{toast(`${ico('check')}<span>${gid} verified at ${siteBy[sid].name}. ${next?'One more to go.':''}</span>`);if(next)focusEvidence()}
+  else{toast(`${ico('check')}<span>${gid} verified at ${siteBy[sid].name}.${next?` One more to go: ${next.id}.`:''}</span>`);if(next)focusEvidence()}
   refreshViews();
 }
 function doDecide(b){
@@ -2114,7 +2160,7 @@ function doDecide(b){
 }
 function handleAction(b){
   const act=b.dataset.act;
-  if(act==='fillEv'){const n=b.closest('.vform').querySelector('.f-note');n.value=b.dataset.ev;n.focus();return true}
+  if(act==='fillEv'){const f=b.closest('.vform'),n=f.querySelector('.f-note'),w=f.querySelector('.f-wit');n.value=b.dataset.ev;if(!w.value.trim())w.value='Operations lead (demo)';n.focus();return true}
   if(act==='verify'){doVerify(b.closest('.vform'));return true}
   if(act==='decide'){doDecide(b);return true}
   if(act==='beHSE'){setRole('Site HSE supervisor');openVerifyFor(b.dataset.g);return true}
@@ -2201,8 +2247,11 @@ $('#inspBody').addEventListener('click',onInspClick);
 $('#inspCrumb').addEventListener('click',onInspClick);
 function celebrate(sid){
   renderPrize(true,sid);
-  flyTo(sid,{dist:32,pitch:0.78,yaw:-0.6});
-  toast(`${ico('unlock','unlock-ico')}<div><b>${siteBy[sid].name} unlocked</b>+${fmt(steady(sid))} h/yr joins the prize · ${fmt(unlockedH())} of ${fmt(sumSteady())} now unlocked</div>`,{kind:'good big',ms:6000});
+  if(UI.page==='map')flyTo(sid,{dist:32,pitch:0.78,yaw:-0.6});
+  // off the map, the unlock lands where the user is: the progress panel and the headline prize glow green
+  else setTimeout(()=>$$('#wkProgress,#ovPrize').forEach(el=>{const p=el.closest('.panel')||el;p.classList.remove('glow');void p.offsetWidth;p.classList.add('glow')}),60);
+  const all=unlockedH()>=sumSteady();
+  toast(`${ico('unlock','unlock-ico')}<div><b>${all?'All six sites cleared':`${siteBy[sid].name} unlocked`}</b>${all?`The full ${fmt(sumSteady())} h/yr prize is unlocked. Every site can now stock spare parts.`:`+${fmt(steady(sid))} h/yr joins the prize · ${fmt(unlockedH())} of ${fmt(sumSteady())} now unlocked`}</div>`,{kind:'good big',ms:all?9000:6000});
   if(UI.narrate)speak(`${siteBy[sid].name} is unlocked. ${fmt(steady(sid))} avoided hours a year join the prize.`);
   if(UI.mode==='story'&&UI.beat===3){renderStory();const n=$('#nextBeat');n.classList.add('brand');setTimeout(()=>n.classList.remove('brand'),4000)}
 }
@@ -2235,7 +2284,7 @@ function palIndex(){
   const it=[],toExplore=()=>{nav('map');if(UI.mode==='story')setMode('explore')};
   [['overview','Overview','home','what is going on summary status today'],['map','Map','cube','3d story sites'],['work','Work','list','to do tasks board checks flags who']]
     .forEach(([p,t,ic,kw])=>it.push({g:'Pages',ic,t:'Go to '+t,k:UI.page===p?'you are here':'',kw,run:()=>{closePalette();nav(p)}}));
-  SITE_ORDER.forEach(s=>it.push({g:'Sites',ic:stat(s)==='HOLD'?'lock':'pin',t:siteBy[s].name,k:stat(s)==='HOLD'?'on HSE hold':'eligible',kw:s+' site',run:()=>{closePalette();toExplore();selectSite(s)}}));
+  SITE_ORDER.forEach(s=>it.push({g:'Sites',ic:stat(s)==='HOLD'?'lock':'pin',t:siteBy[s].name,k:stat(s)==='HOLD'?'on safety hold':'eligible',kw:s+' site',run:()=>{closePalette();toExplore();selectSite(s)}}));
   [['why','Why this problem','evidence chart correlation causes options'],['roll','Business case','rollout cost payback roi money slider'],['hse','Safety & guardrails','hse rules self-test register'],['plan','Plan & KPIs','implementation waves kpi steps resources']]
     .forEach(([k,t,kw])=>it.push({g:'Briefings',ic:'book',t,k:'briefing',kw,run:()=>{closePalette();openSheet(k)}}));
   D.gates.filter(g=>g.block&&!S.verified[g.id]).forEach(g=>it.push({g:'Actions',ic:'unlock',t:`Verify ${g.id} · ${g.hazard}`,k:siteBy[g.site].name,kw:'verify unlock closure gate hse',
@@ -2302,7 +2351,7 @@ $('#resetBtn').addEventListener('click',()=>{prizeShown=null;renderPrize(false);
 function toast(html,o={}){
   const box=$('#toasts'),t=document.createElement('div');t.className='toast '+(o.kind||'');t.setAttribute('role','status');
   t.innerHTML=html+(o.q?`<button>${o.btn||'Ask Parvis'}</button>`:'');
-  const dismiss=()=>{t.classList.add('out');setTimeout(()=>t.remove(),260)};
+  const dismiss=()=>{t.classList.add('out');setTimeout(()=>t.remove(),170)};
   if(o.q)t.querySelector('button').onclick=()=>{openPalette();palAsk(o.q);dismiss()};
   box.appendChild(t);setTimeout(dismiss,o.ms||4200);
   while(box.children.length>3)box.firstChild.remove();
@@ -2400,16 +2449,21 @@ function renderOverview(){
   const pill=holds.length?`<span class="pill hold">ACTION NEEDED</span>`:n?`<span class="pill flag">MACHINES DOWN</span>`:`<span class="pill elig">ALL CLEAR</span>`;
   $('#ovHeadline').innerHTML=`<div class="hl-top">${pill}<span class="spacer"></span><button data-ov="copy:">Copy summary</button><button data-ov="read:">${ico('speaker')} Read this to me</button></div><p class="say">${say}</p><p class="say2">${say2}</p>
     <div class="hl-tiles">
-      <div class="${n?'hot':'good'}"><b>${n}</b><span>machines down now</span></div>
-      <div class="${w?'hot':''}"><b>${w}</b><span>of those waiting for a part</span></div>
-      <div class="${holds.length?'hot':'good'}"><b>${holds.length} of 6</b><span>sites on safety hold</span></div>
-      <div class="${unl>=tot?'good':''}"><b>${fmt(unl)}</b><span>of ${fmt(tot)} h/yr prize unlocked ${tagM}</span></div>
+      <button class="${n?'hot':'good'}" data-ov="jump:ovBroken" title="See which machines"><b>${n}</b><span>machines down now</span></button>
+      <button class="${w?'hot':''}" data-ov="jump:ovBroken" title="See which machines"><b>${w}</b><span>of those waiting for a part</span></button>
+      <button class="${holds.length?'hot':'good'}" data-ov="page:work" title="See the safety checks on the Work board"><b>${holds.length} of 6</b><span>sites on safety hold</span></button>
+      <button class="prize-tile ${unl>=tot?'good':''}" id="ovPrize" data-ov="sheet:roll" title="How this is calculated: the Business case briefing">
+        <b>${fmt(unl)} <small>of ${fmt(tot)} h/yr</small></b>
+        <span>downtime a year the spare-parts program can avoid, unlocked so far ${tagM}</span>
+        <span class="pt-bar">${SITE_ORDER.map(s=>`<i class="${stat(s)==='ELIGIBLE'?'on':''}" style="flex:${steady(s)}" title="${siteBy[s].name}: ${fmt(steady(s))} h/yr, ${stat(s)==='ELIGIBLE'?'unlocked':'locked by safety hold'}"></i>`).join('')}</span>
+        <span class="pt-key">${holds.length?`Locked: ${lst(holds.slice().sort((a,b)=>steady(b)-steady(a)).map(s=>`${siteBy[s].name} ${fmt(steady(s))}`))}`:'Every site unlocked'}</span>
+      </button>
     </div>`;
   // sites at a glance
   const gl=rollout(mCur(),1,pCur(),cCur()).gl;
   $('#ovSites').innerHTML=SITE_ORDER.map(sid=>{
     const s=siteBy[sid],hold=stat(sid)==='HOLD',o=openGates(sid).length,down=stopped.filter(x=>x.a.site===sid).length,fN=flagged.filter(a=>a.site===sid).length;
-    const bits=[hold?`<b>${nOf(o,'safety check','safety checks')} to go</b>`:`<b>Cleared</b>, joins wave in month ${gl[sid]}`];
+    const bits=[hold?`<b>${nOf(o,'safety check','safety checks')} to go</b>`:`<b>Cleared</b>, spares program starts in month ${gl[sid]}`];
     bits.push(down?nOf(down,'machine down','machines down'):'all running');
     if(fN)bits.push(nOf(fN,'flag','flags'));
     return `<button class="scard ${hold?'hold':''}" data-ov="site:${sid}" title="Show ${s.name} on the map">
@@ -2461,8 +2515,8 @@ function renderOverview(){
   ev.sort((a,b)=>b.t-a.t);
   const mine=S.log.slice(-5).reverse();
   $('#ovFeedMeta').textContent='last 14 days';
-  $('#ovFeed').innerHTML=(mine.length?`<div class="feed-sub" style="margin-top:0">In this session</div><ul class="feed">${mine.map(l=>`<li><time>${l.ts.slice(11,16)}</time><span><span class="dot dark"></span>${l.action==='Verified closure'?`${esc(l.name)} verified safety check ${esc(l.gate)} at ${esc(siteBy[l.site].name)}.`:`${esc(l.role)}: ${esc(l.action.toLowerCase())} for ${esc(nameOf(l.asset))}.`}</span></li>`).join('')}</ul><div class="feed-sub">In the field</div>`:'')+
-    (ev.length?`<ul class="feed">${ev.slice(0,14).map(x=>`<li data-ov="asset:${x.a}" role="button" tabindex="0" title="Show ${x.a} on the map"><time>${shortDay(x.t)}</time><span>${x.html}</span></li>`).join('')}</ul>`:`<div class="empty">${ico('check')}A quiet two weeks: no stops recorded.</div>`);
+  $('#ovFeed').innerHTML=(mine.length?`<div class="feed-sub" style="margin-top:0">In this session</div><ul class="feed">${mine.map(l=>`<li class="go"><button class="feed-row" data-ov="${l.asset?'asset:'+esc(l.asset):'site:'+esc(l.site)}" title="Show on the map"><time>${l.ts.slice(11,16)}</time><span><span class="dot dark"></span>${l.action==='Verified closure'?`${esc(l.name)} verified safety check ${esc(l.gate)} at ${esc(siteBy[l.site].name)}.`:`${esc(l.role)}: ${esc(l.action.toLowerCase())} for ${esc(nameOf(l.asset))}.`}</span></button></li>`).join('')}</ul><div class="feed-sub">In the field</div>`:'')+
+    (ev.length?`<ul class="feed">${ev.slice(0,14).map(x=>`<li class="go"><button class="feed-row" data-ov="asset:${x.a}" title="Show ${x.a} on the map"><time>${shortDay(x.t)}</time><span>${x.html}</span></button></li>`).join('')}</ul>`:`<div class="empty">${ico('check')}A quiet two weeks: no stops recorded.</div>`);
 }
 $('#pg-overview').addEventListener('click',e=>{
   const b=e.target.closest('[data-ov]');if(!b)return;
@@ -2472,6 +2526,9 @@ $('#pg-overview').addEventListener('click',e=>{
   if(t==='copy')copySummary();
   if(t==='read'){ensureAudio();if(!voiceOn){voiceOn=true;agSave();renderChips()}stopSpeaking();speak(UI.ovSpeech||'')}
   if(t==='work'){nav('work');setTimeout(()=>flashCard(id),60)}
+  if(t==='page')nav(id);
+  if(t==='sheet')openSheet(id);
+  if(t==='jump'){const p=$('#'+id);if(p)p.closest('.panel').scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'})}
 });
 
 function summaryText(){
@@ -2506,7 +2563,7 @@ const cardId=k=>'wc-'+k.replace(':','-');
 function gateCard(it){
   const g=it.g,s=siteBy[it.sid],open=UI.workOpen===it.k,isHSE=S.role==='Site HSE supervisor',over=isOverdue(g);
   return `<div class="wcard p1" id="${cardId(it.k)}">
-    <div class="wc-top"><span class="prio p1">P1</span><b>${g.id}</b><button class="site" data-wk="site" data-site="${it.sid}">${s.name}</button><span class="kind" title="A severity-5 safety action. The site stays on safety hold until it is verified closed.">Safety check</span></div>
+    <div class="wc-top"><span class="prio p1" title="P1: a safety check that is keeping a site on hold">P1</span><b>${g.id}</b><button class="site" data-wk="site" data-site="${it.sid}">${s.name}</button><span class="kind" title="A severity-5 safety action. The site stays on safety hold until it is verified closed.">Safety check</span></div>
     <p class="wc-say">Confirm closed: <b>${esc(g.gap)}</b> <span class="muted">(${esc(g.hazard)})</span></p>
     <div class="wc-meta"><span>${isHSE?'You':'HSE supervisor'}</span><span class="${over?'bad':''}">${over?'Overdue since':'Due'} ${prettyDate(g.due)}</span><span>${usd(g.setup)} · ${g.hrs} person-hours</span></div>
     <div class="wc-impact${it.last?'':' muted'}">${it.last?`Last check at ${s.name}: closing it unlocks ${fmt(steady(it.sid))} h/yr ${tagM}`:`${it.left} checks left before ${s.name} can stock spare parts`}</div>
@@ -2519,7 +2576,7 @@ function gateCard(it){
 function flagCard(it){
   const a=it.a,s=siteBy[a.site],hold=stat(a.site)==='HOLD',isPL=S.role==='Planner',open=UI.workOpen===it.k,high=a.crit==='High',o=openGates(a.site);
   return `<div class="wcard ${high?'p2':''}" id="${cardId(it.k)}">
-    <div class="wc-top"><span class="prio ${high?'p2':''}">${high?'P2':'P3'}</span><b>${a.id}</b><button class="site" data-wk="site" data-site="${a.site}">${s.name}</button><span class="kind">Readiness flag</span></div>
+    <div class="wc-top"><span class="prio ${high?'p2':''}" title="${high?'P2: early warning on a high-criticality machine':'P3: early warning on a lower-criticality machine'}">${high?'P2':'P3'}</span><b>${a.id}</b><button class="site" data-wk="site" data-site="${a.site}">${s.name}</button><span class="kind">Readiness flag</span></div>
     <p class="wc-say">${a.type} showing early warning signs: ${flagEvidence(it.f)}. Have a bearing/seal kit ready.</p>
     <span class="spark-wrap">${sparkSvg(a.id)}<span>vibration, last 30 days</span></span>
     <div class="wc-meta"><span>${isPL?'You':'Planner'}</span><span>${a.crit} criticality</span><span>${a.age} years old</span></div>
@@ -2560,7 +2617,7 @@ function renderWork(){
   const who=[['Site HSE supervisor','hse','HS',gN?`${nOf(gN,'safety check','safety checks')} to verify`:'Nothing to verify'],
     ['Planner','pl','PL',(fN?`${nOf(fN,'flag','flags')} to decide`:'No flags to decide')+(bN?` (${bN} more behind holds)`:'')],
     ['Manager','','MG','Watches progress. Can’t verify or approve.']];
-  $('#wkWho').innerHTML=who.map(([r,c,av,txt])=>`<div class="who ${S.role===r?'me':''}" data-wk="role" data-role="${r}" role="button" tabindex="0" title="Act as ${r}"><span class="av ${c}">${av}</span><div><b>${r==='Site HSE supervisor'?'HSE supervisor':r}${S.role===r?' · you':''}</b><span>${txt}</span></div></div>`).join('');
+  $('#wkWho').innerHTML=who.map(([r,c,av,txt])=>`<button class="who ${S.role===r?'me':''}" data-wk="role" data-role="${r}" aria-pressed="${S.role===r}" title="Act as ${r}"><span class="av ${c}">${av}</span><span><b>${r==='Site HSE supervisor'?'HSE supervisor':r}${S.role===r?' · you':''}</b><span>${txt}</span></span></button>`).join('');
   const crit=D.gates.filter(g=>g.block),ver=crit.filter(g=>S.verified[g.id]).length,unl=unlockedH(),tot=sumSteady(),el=SITE_ORDER.filter(s=>stat(s)==='ELIGIBLE').length,dec=S.log.filter(l=>l.asset).length;
   $('#wkProgress').innerHTML=`<div class="prog"><span>Safety checks verified</span><b>${ver} of ${crit.length}</b></div><div class="pbar"><i style="width:${ver/crit.length*100}%"></i></div>
     <div class="prog"><span>Sites cleared</span><b>${el} of 6</b></div><div class="pbar"><i style="width:${el/6*100}%"></i></div>
