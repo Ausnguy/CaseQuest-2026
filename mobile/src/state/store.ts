@@ -3,7 +3,7 @@ import { Accelerometer } from 'expo-sensors';
 import { AppState, Vibration } from 'react-native';
 import { create } from 'zustand';
 
-import { PHONE_ENGINEER, SHAKE_KM, isActive, type Action, type DispatchState, type Job } from '@dispatch/dispatch';
+import { PHONE_ENGINEER, SHAKE_KM, isActive, siteById, type Action, type DispatchState, type Job } from '@dispatch/dispatch';
 
 // Production by default so the phone works anywhere. For a laptop API over USB:
 // EXPO_PUBLIC_API_URL=http://127.0.0.1:3300 plus `adb reverse tcp:3300 tcp:3300`.
@@ -124,11 +124,11 @@ const seen = new Set<string>();
 function notify(state: DispatchState, now: number) {
   const job = myJob(state);
   if (!job) return;
-  const site = job.site;
+  const site = siteById(job.site)?.name ?? job.site;
   if (!seen.has(job.id)) {
     seen.add(job.id);
     useStore.setState({
-      banner: { key: job.id, tone: 'job', title: `New job ${job.id}: ${job.asset}`, body: job.note || `Repair at site ${site}. Open the job for timing.` },
+      banner: { key: job.id, tone: 'job', title: `New job: ${job.asset} at ${site}`, body: job.note || 'Open the job for when to leave.' },
     });
     Vibration.vibrate([0, 400, 200, 400]);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
@@ -136,7 +136,7 @@ function notify(state: DispatchState, now: number) {
   const goKey = `${job.id}:go`;
   if (job.status === 'scheduled' && now >= job.leaveAt && !seen.has(goKey)) {
     seen.add(goKey);
-    useStore.setState({ banner: { key: goKey, tone: 'go', title: 'Time to leave', body: 'Set off now and you reach the site as the parts arrive.' } });
+    useStore.setState({ banner: { key: goKey, tone: 'go', title: 'Time to leave', body: job.partsId ? `Set off now and you reach ${site} as the parts land.` : `Set off for ${site} now.` } });
     Vibration.vibrate([0, 600, 200, 600, 200, 600]);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
   }
