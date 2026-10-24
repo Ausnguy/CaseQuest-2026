@@ -18,16 +18,13 @@ Requires Node 20+ and Expo Go 57 on the phone (Expo Go only opens projects on it
 
 ```bash
 cd mobile
-npm install
-npx expo start --lan
+npm run phone
 ```
 
-Scan the QR code with Expo Go. If the phone is on USB and the network blocks LAN traffic:
+`scripts/phone.sh` always points the app at the live server (https://casequest-2026.vercel.app), installs dependencies on first run, and checks the server answers before starting Metro.
 
-```bash
-adb reverse tcp:8081 tcp:8081
-adb shell am start -a android.intent.action.VIEW -d exp://127.0.0.1:8081 host.exp.exponent
-```
+- Phone on USB with USB debugging on: it forwards Metro over the cable and opens the app in Expo Go by itself.
+- No phone on USB: scan the QR code with Expo Go on the same wifi as the computer.
 
 ## Checks
 
