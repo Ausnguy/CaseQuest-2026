@@ -2,7 +2,11 @@
 
 `parvius.html` is a single self-contained file. Open it in any browser; no server or internet needed.
 
-Parvius is Lone Mesa's operations console for the gate-first spare-parts program. It has three pages, chosen from the left sidebar:
+Parvius is Lone Mesa's operations console for the gate-first spare-parts program. The visual design follows the "Parvius Operations" Claude Design file and its Industry design system: ink on a light grid ground, square hairline frames with registration marks, Barlow Condensed over Barlow with IBM Plex Mono labels. Red means blocked or stopped, amber an early warning and green cleared. A solid outline marks recorded figures and a dashed outline marks modeled ones. Fonts load from Google Fonts and fall back to system fonts offline.
+
+The header carries the replay date, the spares-program meter, page links and the role switch. On the Map, the inspector (field overview, site or asset) is docked on the right, Parvis analysis sits in a collapsible column beside it, and timeline lanes along the bottom show each site's stops and overdue critical checks for the replay date. HSE sign-offs and planner decisions open in a dialog, which requires a witness, a date and a field-verification confirmation.
+
+It has these pages, chosen from the header:
 
 - **Overview** (opens first): what's going on, in plain English, for whichever 2025 day you're replaying.
   - a headline (sites on hold, machines down, machines waiting for parts)

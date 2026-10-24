@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#111418">
 <title>Parvius</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 :root{
   --bg:#EEF0F3;--panel:#FFFFFF;--panel2:#F3F4F6;--line:#E3E6EB;--line2:#CBD0D8;
@@ -620,6 +623,408 @@ body.page-map #play2{display:none}
 }
 @media(max-width:620px){#modeSeg{display:none}body.page-map #dayBack,body.page-map #dayFwd{display:none}.board.no-done{grid-template-columns:1fr}.datechip>span .eyebrow{display:none}.dock .sites{display:none}.dock-div{display:none}.role-wrap .seg button span.nm{display:none}.prize{display:none}.brand b{display:none}#modeSeg .nm{display:none}.topbar{gap:8px;padding:0 10px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ======================= Industry design layer (Claude Design: Parvius Operations) =======================
+   Wireframe look: ink on a light technical ground, square hairline frames with "+" registration marks,
+   Barlow Condensed over Barlow, IBM Plex Mono labels. Red = blocked or stopped, amber = early warning,
+   green = cleared. Solid outline = recorded, dashed outline = modeled. Everything below overrides the
+   earlier rules by source order; the old tokens are remapped so existing components follow. */
+:root{
+  --font-heading:"Barlow Condensed",system-ui,"Segoe UI",sans-serif;
+  --font-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ink:#1d1f20;--paper:#f2f2f3;--surface:#e9e9ea;
+  --n200:#e7e7ea;--n300:#d4d4d7;--n400:#b7b7ba;--n500:#98989b;--n600:#7a7a7d;--n700:#5d5d60;--n800:#424244;
+  --accent:#5980a6;--accent-600:#597ea3;--accent-700:#416180;--accent-100:#eef6ff;
+  --red:oklch(0.52 0.19 25);--red-ink:oklch(0.42 0.17 25);--red-bg:oklch(0.96 0.02 25);
+  --amber:oklch(0.56 0.12 65);--amber-ink:oklch(0.45 0.10 65);--amber-bg:oklch(0.95 0.035 75);
+  --green:oklch(0.50 0.10 150);--green-ink:oklch(0.42 0.10 150);--green-bg:oklch(0.95 0.03 150);
+  --divider:rgba(29,31,32,.16);--mk:rgba(29,31,32,.55);
+  --bg:var(--paper);--panel:var(--paper);--panel2:var(--surface);--line:var(--divider);--line2:rgba(29,31,32,.3);
+  --text:var(--ink);--muted:var(--n700);--faint:var(--n600);--focus:var(--accent);
+  --brand:var(--red);--brand-ink:var(--red-ink);--brand-tint:var(--red-bg);--brand-line:var(--red);
+  --ok:var(--green);--ok-tint:var(--green-bg);--ok-line:var(--green);
+  --flag:var(--amber-ink);--flag-c:var(--amber);--flag-tint:var(--amber-bg);--flag-line:var(--amber);
+  --info:var(--accent-700);--info-tint:var(--accent-100);--violet:var(--accent-700);--violet-tint:var(--accent-100);--magenta:var(--red);
+  --glass:var(--paper);--shadow:none;--shadow-lg:0 12px 32px rgba(43,43,45,.22);
+  --top:56px;--sideW:0px;--inspW:384px;--aiW:46px;--tlH:146px;--gap:16px;
+}
+body.ai-open{--aiW:380px}
+*,*::before,*::after{border-radius:0!important}
+body{font-family:var(--font-body);background:var(--paper);color:var(--ink)}
+button,select,input,textarea{font-family:var(--font-body)}
+::selection{background:rgba(89,128,166,.3)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--font-mono);font-weight:500;font-size:9.5px;line-height:1.2;letter-spacing:.08em;color:var(--n700);text-transform:uppercase}
+.eyebrow{font-family:var(--font-mono);font-weight:500;font-size:10px;letter-spacing:.08em;color:var(--n700)}
+kbd{font-family:var(--font-mono);background:transparent;border:1px solid var(--divider)}
+h1,h2,h3,h4{font-family:var(--font-heading)}
+.page-head h1{font:600 36px/1.05 var(--font-heading);letter-spacing:.02em}
+.panel-h h2,.card h3{font:600 17px/1.1 var(--font-heading);letter-spacing:.08em;text-transform:uppercase}
+.sheet-intro h2{font:600 30px/1.05 var(--font-heading);letter-spacing:.02em}
+.card h4,.insp h4{font-family:var(--font-mono);font-weight:500;font-size:9.5px;letter-spacing:.08em;color:var(--n700)}
+
+/* controls: square, hairline; the accent fill is the one solid object */
+button{background:transparent;border:1px solid var(--divider);font-weight:500;color:var(--ink)}
+button:hover:not(:disabled){border-color:var(--ink);background:rgba(29,31,32,.05)}
+button.primary,button.brand,button.commit,.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--paper);font-family:var(--font-heading);font-weight:600;letter-spacing:.05em;font-size:14px}
+button.primary:hover:not(:disabled),button.brand:hover:not(:disabled),button.commit:hover:not(:disabled){background:var(--accent-600);border-color:var(--accent-600)}
+button.primary:active:not(:disabled),button.brand:active:not(:disabled),button.commit:active:not(:disabled){background:var(--accent-700)}
+button.ghost{border-color:transparent;background:transparent}
+button.ghost:hover:not(:disabled){background:rgba(89,128,166,.1);border-color:transparent}
+button.warn{background:var(--red-bg);border-color:var(--red);color:var(--red-ink)}
+button.locked{background:transparent;border:1px dashed var(--n500);color:var(--n700)}
+.linkbtn{color:var(--accent-700)}.linkbtn:hover:not(:disabled){color:var(--ink)}
+select,input[type=text],input[type=date],textarea,.input{background:var(--surface);border:1px solid var(--divider);color:var(--ink);font-size:13px}
+select:hover,input[type=text]:hover,input[type=date]:hover,textarea:hover{border-color:rgba(29,31,32,.45)}
+input[type=range]{accent-color:var(--ink)}
+.seg{background:transparent;border:1px solid var(--divider);padding:0;gap:0}
+.seg button{border:0;padding:6px 11px;color:var(--ink);font-weight:500;background:transparent}
+.seg button.on{background:var(--ink);color:var(--paper);box-shadow:none}
+.seg button:hover:not(:disabled):not(.on){background:rgba(29,31,32,.06)}
+
+/* blueprint frames: hairline border plus "+" registration marks drawn by one pseudo-element */
+.bp,.panel,.card,.headline,.wcard,.chk-card,.kgrid,.a-frame{position:relative;background:transparent;border:1px solid var(--divider);box-shadow:none}
+.bp::after,.panel::after,.card::after,.headline::after,.wcard::after,.chk-card::after,.kgrid::after,.a-frame::after{content:"";position:absolute;inset:-6px;pointer-events:none;
+  background:
+    linear-gradient(var(--mk),var(--mk)) 5px 0/1px 11px no-repeat,linear-gradient(var(--mk),var(--mk)) 0 5px/11px 1px no-repeat,
+    linear-gradient(var(--mk),var(--mk)) calc(100% - 5px) 0/1px 11px no-repeat,linear-gradient(var(--mk),var(--mk)) 100% 5px/11px 1px no-repeat,
+    linear-gradient(var(--mk),var(--mk)) 5px 100%/1px 11px no-repeat,linear-gradient(var(--mk),var(--mk)) 0 calc(100% - 5px)/11px 1px no-repeat,
+    linear-gradient(var(--mk),var(--mk)) calc(100% - 5px) 100%/1px 11px no-repeat,linear-gradient(var(--mk),var(--mk)) 100% calc(100% - 5px)/11px 1px no-repeat}
+.panel{padding:16px 18px}
+.gate{overflow:visible}
+
+/* data surfaces */
+.tile{background:transparent;border:1px solid var(--divider);padding:10px 12px}
+.tile b{font:700 26px/1.05 var(--font-heading);letter-spacing:.01em}
+.tile.hot{background:var(--red-bg);border-color:var(--red)}.tile.hot b{color:var(--red)}
+.tag{font:500 9.5px/1 var(--font-mono);letter-spacing:.06em;padding:3px 5px;background:transparent;border:1px solid var(--n700);color:var(--n800)}
+.tag.obs{background:transparent;border:1px solid var(--n700);color:var(--n800)}
+.tag.mod{background:transparent;border:1px dashed var(--n700);color:var(--n800)}
+.tag.prop{background:transparent;border:1px solid var(--accent);color:var(--accent-700)}
+.pill{font:600 12px/1 var(--font-heading);letter-spacing:.12em;padding:4px 8px}
+.pill.hold{background:var(--red);color:#fff}
+.pill.elig{background:transparent;border:1px solid var(--green);color:var(--green-ink)}
+.pill.flag{background:transparent;border:1px solid var(--amber);color:var(--amber-ink)}
+.banner{background:var(--amber-bg);border:1px solid var(--amber);color:var(--n800)}
+.banner.red{background:var(--red-bg);border-color:var(--red);color:var(--red-ink)}
+.banner.teal{background:var(--green-bg);border-color:var(--green);color:var(--green-ink)}
+.callout{background:transparent;border:1px solid var(--divider)}
+.callout b{font:700 30px/1 var(--font-heading)}
+.callout.hot{background:var(--red-bg);border-color:var(--red)}
+th{font-family:var(--font-mono);font-weight:500;font-size:9.5px;letter-spacing:.08em;color:var(--n700);border-bottom:1px solid var(--ink)}
+td{border-bottom:1px solid var(--divider)}
+.bar{background:var(--n200)}
+.kv span:nth-child(odd){font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+details.more>summary{color:var(--accent-700);font-weight:600}
+
+/* ---------- header ---------- */
+.topbar{left:0;right:0;height:var(--top);gap:14px;padding:0 16px;background:var(--paper);border-top:0;border-bottom:1px solid var(--divider)}
+.topline{position:absolute;left:0;right:0;top:0;height:3px;background:var(--red)}
+.hbrand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:0 0 auto}
+.hbrand b{display:block;font:700 21px/1 var(--font-heading);letter-spacing:.14em}
+.hbrand small{display:block;margin-top:3px;font-size:9px}
+.hdiv{width:1px;align-self:stretch;margin:12px 0;background:var(--divider);flex:0 0 1px}
+.datechip{background:transparent;border:0;padding:0;gap:2px}
+.datechip>span.dc-l{display:flex;flex-direction:column;gap:3px;padding:0 6px 0 0}
+.dc-l b{font:600 19px/1 var(--font-heading);letter-spacing:.03em;white-space:nowrap}
+.datechip button{padding:5px;border-color:transparent}
+.datechip button.on{background:var(--ink);color:var(--paper)}
+.prize{flex:0 0 auto;min-width:0;display:grid;grid-template-columns:auto 140px;column-gap:12px;row-gap:3px;padding:0;align-items:center}
+.prize>.mono{grid-column:1;grid-row:1}
+.prize-top{grid-column:1;grid-row:2;gap:5px;align-items:baseline}
+.prize-top b{font:700 22px/1 var(--font-heading);letter-spacing:0}
+.prize-top .of{font-size:12px;color:var(--n700)}
+.mtag{font:500 9px/1 var(--font-mono);padding:2px 4px;border:1px dashed var(--n700);color:var(--n800);margin-left:4px;align-self:center}
+.prize-bar{grid-column:2;grid-row:1/span 2;height:10px;gap:2px}
+.prize-bar i{background:transparent;border:1px dashed var(--red)}
+.prize-bar i.on{background:var(--ink);border:1px solid var(--ink)}
+.prize.flash .prize-top b{animation:numflash 1.2s var(--ease)}
+@keyframes numflash{20%{color:var(--green);transform:scale(1.12)}}
+.hnav{display:flex;align-items:center;gap:0;flex:0 0 auto}
+.hnav a,.hnav button{font:600 14px/1 var(--font-heading);letter-spacing:.08em;text-transform:uppercase;color:var(--n700);text-decoration:none;padding:8px 9px;border:1px solid transparent;background:transparent;display:inline-flex;align-items:center;gap:6px}
+.hnav a:hover,.hnav button:hover:not(:disabled){color:var(--ink);background:rgba(29,31,32,.05);border-color:transparent}
+.hnav a.on{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+.hnav .nav-badge{position:static;margin:0;min-width:16px;height:16px;font:600 10px/16px var(--font-mono);background:var(--red);padding:0 4px}
+.role-wrap{display:flex!important;align-items:center;gap:10px}
+#roleSeg{border:1px solid var(--divider)}
+#roleSeg button{border:0;padding:7px 11px;font:500 12px/1 var(--font-body);color:var(--ink);background:transparent;box-shadow:none}
+#roleSeg button.on{background:var(--ink);color:var(--paper)}
+#roleSeg .ab{display:none}
+.cmdk{flex:0 0 auto;background:transparent;border:1px solid var(--divider);padding:4px 8px 4px 4px;gap:8px;color:var(--ink);font-weight:500}
+.cmdk:hover:not(:disabled){background:rgba(29,31,32,.05);border-color:var(--ink)}
+.cmdk canvas{width:24px;height:24px;flex:0 0 24px}
+.bell .badge{background:var(--red);border-color:var(--paper);font-family:var(--font-mono)}
+@media(min-width:901px){.side{display:none}}
+
+/* ---------- map ---------- */
+.stage{top:var(--top);left:0;right:calc(var(--inspW) + var(--aiW));bottom:var(--tlH);background-color:var(--paper);
+  background-image:linear-gradient(rgba(29,31,32,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(29,31,32,.05) 1px,transparent 1px);background-size:32px 32px;background-position:-1px -1px}
+.fcap{position:absolute;left:22px;top:16px;z-index:6;display:flex;align-items:baseline;gap:12px;pointer-events:none;white-space:nowrap}
+.fcap b{font:600 15px/1 var(--font-heading);letter-spacing:.1em}
+.fkey{position:absolute;left:22px;top:38px;z-index:6;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:10px;color:var(--n800);background:var(--paper);border:1px solid var(--divider);padding:6px 10px}
+.fkey span{display:flex;align-items:center;gap:5px}
+.fkey i{display:inline-block;width:8px;height:8px}
+.k-run{background:var(--ink)}.k-warn{background:var(--amber)}.k-stop{background:var(--red)}
+.fkey .k-hold{width:14px;border:1.5px solid var(--red);background:repeating-linear-gradient(-45deg,oklch(0.52 0.19 25 / .35) 0 2px,transparent 2px 4px)}
+.fkey .k-div{width:1px;height:12px;background:var(--divider)}
+.fkey .k-rec{width:14px;border:1px solid var(--ink)}.fkey .k-mod{width:14px;border:1px dashed var(--ink)}
+.glass{background:var(--paper);backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid var(--divider);box-shadow:none}
+.mapctl,body.insp-open .mapctl{top:14px;right:16px;gap:6px;align-items:center}
+.mapctl button{background:var(--paper);backdrop-filter:none;box-shadow:none;font-size:12px}
+.mapctl .seg{background:var(--paper)}
+#legendBtn,.legend-pop,.dock{display:none!important}
+.tip{background:var(--paper);border:1px solid var(--ink);box-shadow:var(--shadow-lg);font-size:12px}
+.rail{top:84px;left:22px;bottom:var(--gap);background:var(--paper)}
+.resume{top:84px;left:22px;background:var(--paper);box-shadow:none}
+.beat.on{background:transparent;box-shadow:none;outline:1px solid var(--divider)}
+.beat .n{background:transparent;border:1px solid var(--divider)}
+.beat.done .n{background:var(--ink);border-color:var(--ink)}
+.beat.on .n{background:var(--red);border-color:var(--red)}
+.big{font:700 46px/1 var(--font-heading);letter-spacing:.01em}
+.big.red{color:var(--red)}.big.green{color:var(--green)}
+.minis div{background:transparent;border:1px solid var(--divider)}
+.minis b{font:700 19px/1.1 var(--font-heading)}
+.minis .hot{background:var(--red-bg);border-color:var(--red)}.minis .hot b{color:var(--red-ink)}
+.minis .good{background:var(--green-bg);border-color:var(--green)}
+.slider-row{background:transparent;border:1px solid var(--divider)}
+.dots button::before{background:var(--n300)}.dots button.done::before{background:var(--ink)}.dots button.on::before{background:var(--red)}
+.done-note{background:var(--green-bg);border-color:var(--green);color:var(--green-ink)}
+
+/* ---------- inspector, docked as the design's right column ---------- */
+.insp{position:fixed;z-index:21;top:var(--top);right:var(--aiW);bottom:0;width:var(--inspW);transform:none;opacity:1;pointer-events:auto;background:var(--paper);border:0;border-left:1px solid var(--divider);box-shadow:none}
+body.presenter .insp{bottom:0}
+.insp-bar{display:none}
+.insp-body{padding:0}
+.iv{padding:18px 18px 28px;display:flex;flex-direction:column;gap:18px}
+.iv-h h2{margin:6px 0 0;font:600 30px/1 var(--font-heading);letter-spacing:.02em}
+.iv-lead{margin:8px 0 0;font:500 15px/1.4 var(--font-body);text-wrap:pretty}
+.kgrid{display:grid;grid-template-columns:1fr 1fr}
+.kgrid>div{padding:10px 12px;border-bottom:1px solid var(--divider)}
+.kgrid>div:nth-child(odd){border-right:1px solid var(--divider)}
+.kgrid>div:nth-last-child(-n+2){border-bottom:0}
+.kgrid b{display:block;font:700 24px/1 var(--font-heading)}
+.kgrid span{display:block;font-size:11px;line-height:1.3;color:var(--n700);margin-top:3px}
+.kgrid .hot b{color:var(--red)}
+.kgrid .mod{outline:1px dashed var(--n600);outline-offset:-5px}
+.sh{display:flex;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--ink)}
+.srow{display:grid;grid-template-columns:18px 1fr 64px 62px;align-items:center;gap:8px;width:100%;padding:8px 0;border:0;border-bottom:1px solid var(--divider);background:transparent;text-align:left;font:inherit;color:inherit}
+.srow:hover:not(:disabled){background:var(--n200);border-color:transparent transparent var(--divider)}
+.srow .d{width:10px;height:10px;margin-left:2px}
+.srow .nm{display:flex;flex-direction:column;gap:2px;min-width:0}
+.srow .nm b{font:600 14px/1 var(--font-heading);letter-spacing:.06em;text-transform:uppercase}
+.srow .nm span{font-size:11px;line-height:1.2;color:var(--n700)}
+.srow .sp{height:4px;background:var(--n200)}.srow .sp i{display:block;height:100%}
+.srow .hy{text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+.ivs{display:flex;flex-direction:column;gap:8px}
+.nx{display:grid;grid-template-columns:4px 1fr auto;gap:10px;align-items:center;width:100%;padding:9px 10px 9px 0;border:1px solid var(--divider);background:transparent;text-align:left;font:inherit;color:inherit}
+.nx:hover:not(:disabled){border-color:var(--ink);background:transparent}
+.nx .nb{align-self:stretch}
+.nx .t{display:flex;flex-direction:column;gap:3px;min-width:0}.nx .t b{font:600 13px/1.25 var(--font-body)}.nx .t span{font-size:11.5px;line-height:1.3;color:var(--n700)}
+.nx .c{font:500 10px/1 var(--font-mono);color:var(--accent-700)}
+.act{display:grid;grid-template-columns:48px 8px 1fr;gap:8px;align-items:baseline;font-size:12px;line-height:1.35}
+.act time{font:500 10px/1 var(--font-mono);color:var(--n700)}
+.act i{display:block;width:6px;height:6px}
+.is-top{padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.is-top button{padding:4px 2px;font-size:12px;border:0;color:var(--accent-700);background:transparent;display:inline-flex;align-items:center;gap:4px}
+.is-title{padding:6px 18px 14px;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.is-title h2{margin:0;font:600 34px/1 var(--font-heading);letter-spacing:.06em;text-transform:uppercase}
+.is-title .st{font:500 11px/1 var(--font-mono);white-space:nowrap}
+.is-hold{margin:0 18px 14px;background:var(--red);color:#fff;padding:12px 14px;display:grid;grid-template-columns:22px 1fr;gap:10px}
+.is-hold b{display:block;font:700 16px/1 var(--font-heading);letter-spacing:.14em;margin-bottom:5px}
+.is-hold span{font-size:12.5px;line-height:1.4}
+.is-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--divider);border-bottom:1px solid var(--divider)}
+.is-cells>div{padding:10px 12px;border-right:1px solid var(--divider)}
+.is-cells>div:first-child{padding-left:18px}.is-cells>div:last-child{border-right:0}
+.is-cells .k{font:500 9px/1 var(--font-mono);letter-spacing:.04em;color:var(--n700)}
+.is-cells .v{margin-top:8px;font:700 20px/1 var(--font-heading)}
+.is-cells .v.mod{display:inline-block;margin-top:6px;padding:2px 5px;border:1px dashed var(--ink)}
+.is-trend{margin:14px 18px 0;width:calc(100% - 36px);display:flex;justify-content:space-between;align-items:center;font:600 13px/1 var(--font-heading);letter-spacing:.06em;text-transform:uppercase;padding:9px 12px}
+.is-sec{padding:18px 18px 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.eq{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;margin:0 18px;width:calc(100% - 36px);padding:8px 0;border:0;border-bottom:1px solid var(--divider);background:transparent;text-align:left;font:inherit;color:inherit}
+.eq:hover:not(:disabled){background:var(--n200);border-color:transparent transparent var(--divider)}
+.eq .i{display:grid;place-items:center}
+.eq .t b{display:block;font:600 13px/1.15 var(--font-body)}.eq .t span{font-size:11.5px;color:var(--n700)}
+.eq .l{font:600 10.5px/1 var(--font-heading);letter-spacing:.08em;white-space:nowrap}
+.wf{margin:0 18px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
+.wf div{display:flex;flex-direction:column;gap:5px}.wf i{display:block;height:4px}.wf span{font-size:10px;line-height:1.2}
+.chk-list{padding:12px 18px 0;display:flex;flex-direction:column;gap:12px}
+.chk-card{padding:12px 12px 12px 14px;border-color:var(--red);display:flex;flex-direction:column;gap:6px}
+.cc-top{display:flex;align-items:center;gap:8px}
+.p1b{font:600 10px/1 var(--font-mono);background:var(--red);color:#fff;padding:3px 5px}
+.cc-top b{font:600 13px/1 var(--font-mono)}.cc-top span:last-child{margin-left:auto;font-size:11px;color:var(--n700)}
+.cc-title{font:600 14px/1.3 var(--font-body)}.cc-title span{font-weight:400;color:var(--n700)}
+.cc-meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;line-height:1.3;color:var(--n800)}.cc-meta .bad{font-weight:600;color:var(--red)}
+.cc-imp{font-size:12px;line-height:1.35;color:var(--n800)}
+.cc-act{display:flex;gap:8px;margin-top:4px}.cc-act button{font-size:12.5px;padding:7px 12px}
+.chk-done{padding:10px 0;border-bottom:1px solid var(--divider);display:flex;flex-direction:column;gap:5px}
+.chk-done .top{display:flex;align-items:center;gap:8px}
+.vtag{font:600 10px/1 var(--font-mono);border:1px solid var(--green);color:var(--green-ink);padding:2px 5px}
+.chk-done .top b{font:600 12px/1 var(--font-mono)}.chk-done .top time{margin-left:auto;font:500 10px/1 var(--font-mono);color:var(--n700)}
+.chk-done p{margin:0;font-size:12px;line-height:1.4;color:var(--n800)}
+.is-pad{padding:0 18px}
+.is-note{font-size:12px;line-height:1.4;color:var(--n700);padding-bottom:6px}
+.a-frame{margin:14px 18px 0;height:150px;display:grid;place-items:center;background-image:linear-gradient(rgba(29,31,32,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(29,31,32,.05) 1px,transparent 1px);background-size:16px 16px}
+.a-frame .ty{position:absolute;left:10px;bottom:8px}
+.a-frame .lb{position:absolute;right:10px;top:8px;font:600 11px/1 var(--font-heading);letter-spacing:.1em}
+.ia-title{padding:14px 18px 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ia-title h2{margin:0;font:600 32px/1 var(--font-heading);letter-spacing:.04em}
+.ia-title span{font:500 14px/1 var(--font-body);color:var(--n800)}
+.ia-body{padding:14px 18px 24px;display:flex;flex-direction:column;gap:12px}
+.days{display:flex;gap:3px}.days i{display:block;width:18px;height:18px;border:1px solid var(--n400)}
+.days i.on{background:var(--amber);border-color:var(--amber)}.days i.nz{border:2px solid var(--amber)}.days i.na{background:repeating-linear-gradient(-45deg,rgba(29,31,32,.12) 0 2px,transparent 2px 4px)}
+.blk{display:grid;grid-template-columns:4px 1fr;gap:10px;background:var(--red-bg)}
+.blk>i{background:var(--red)}.blk>div{padding:10px 10px 10px 0;display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.35}
+.blk b{font-size:13px;color:var(--red-ink)}.blk button{align-self:flex-start;font-size:12px;padding:6px 10px}
+.stopbox{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--red);background:var(--red-bg);font-size:12px;line-height:1.35}
+.stopbox b{font-size:14px;color:var(--red-ink)}
+.decbox{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--ink);font-size:12px}
+.decbox b{font-size:13px}
+.ia-body p{margin:0;font-size:12.5px;line-height:1.4;color:var(--n800)}
+#aChart{display:block;width:100%}
+
+/* ---------- timeline lanes ---------- */
+.tl{position:fixed;z-index:15;left:0;right:calc(var(--inspW) + var(--aiW));bottom:0;height:var(--tlH);background:var(--paper);border-top:1px solid var(--divider);padding:10px 18px 10px;display:grid;grid-template-columns:76px minmax(0,1fr) 186px;grid-template-rows:34px 1fr;column-gap:14px;row-gap:8px;user-select:none}
+body:not(.page-map) .tl{display:none}
+.tl-play{display:flex;align-items:center;gap:6px}
+#tlPlay{width:34px;height:34px;padding:0;display:grid;place-items:center;background:var(--ink);color:var(--paper);border:0;flex:0 0 34px}
+#tlPlay:hover:not(:disabled){background:#000}
+.tl-play .mono{font-size:9px}
+.tl-months{position:relative;align-self:end;height:12px}
+.tl-months span{position:absolute;bottom:0;white-space:nowrap}
+.tl-end{align-self:end}
+.tl-names{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--n800)}
+.tl-names span{display:block;height:11px;line-height:11px}
+.tl-track{position:relative;display:flex;flex-direction:column;gap:3px;cursor:ew-resize}
+.tl-lane{position:relative;height:11px;border-bottom:1px solid var(--divider)}
+.tl-band{position:absolute;top:2px;height:7px;background:repeating-linear-gradient(-45deg,oklch(0.52 0.19 25 / .55) 0 2px,oklch(0.52 0.19 25 / .12) 2px 4px);border-left:2px solid var(--red)}
+.tl-band.done{background:repeating-linear-gradient(-45deg,rgba(29,31,32,.22) 0 2px,transparent 2px 4px);border-left-color:var(--green)}
+.tl-mk{position:absolute;top:2px;width:7px;height:7px;margin-left:-3.5px;transform:rotate(45deg);background:var(--paper);border:1px solid var(--ink)}
+.tl-mk.w{background:var(--red);border-color:var(--red-ink)}
+.tl-head{position:absolute;top:-16px;bottom:-4px;width:0;border-left:1.5px solid var(--ink);pointer-events:none}
+.tl-head::before{content:"";position:absolute;top:0;left:-5px;width:9px;height:9px;background:var(--ink)}
+.tl-now{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tl-now b{font:600 17px/1 var(--font-heading);white-space:nowrap}
+.tl-now span{font-size:11px;line-height:1.35;color:var(--n700)}
+.tl-k{display:inline-block;width:7px;height:7px;transform:rotate(45deg);border:1px solid var(--ink);margin:0 3px 0 1px;background:var(--paper)}
+.tl-k.stop{background:var(--red);border-color:var(--red-ink)}
+
+/* ---------- Parvis analysis column ---------- */
+.ai{position:fixed;z-index:22;top:var(--top);right:0;bottom:0;width:var(--aiW);background:var(--paper);border-left:1px solid var(--divider);display:flex;flex-direction:column;overflow:hidden}
+.ai-tab{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 0;color:var(--ink)}
+.ai-tab:hover:not(:disabled){background:var(--n200);border:0}
+.ai-v{writing-mode:vertical-rl;font:600 13px/1 var(--font-heading);letter-spacing:.18em}
+.ai-t{writing-mode:vertical-rl;font-size:11px;color:var(--n700)}
+.ai-panel{display:none;flex-direction:column;height:100%;min-height:0}
+body.ai-open .ai-tab{display:none}body.ai-open .ai-panel{display:flex}
+.ai-head{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--divider)}
+.ai-head b{font:600 16px/1 var(--font-heading);letter-spacing:.12em}
+.ai-head button{margin-left:auto;padding:4px}
+.ai-body{flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px;overscroll-behavior:contain}
+.ai-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ai-chips button{padding:6px 9px;font-size:12px;line-height:1.2;text-align:left;border:1px solid rgba(29,31,32,.25)}
+.ai-chips button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#aiAns{display:flex;flex-direction:column;gap:10px}
+.ai-q{margin:0;font:600 18px/1.15 var(--font-heading);letter-spacing:.02em}
+.ai-ln{display:grid;grid-template-columns:20px 1fr;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--divider);font-size:13px;line-height:1.45}
+.ai-ln .n{font:500 10px/1.7 var(--font-mono);color:var(--n700)}
+.ai-tags{display:flex;gap:6px;flex-wrap:wrap}
+.ai-src .tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.ai-follow{display:flex;flex-wrap:wrap;gap:6px}.ai-follow button{font-size:12px;padding:5px 8px;color:var(--accent-700)}
+.ai-ask{padding:12px 16px 14px;border-top:1px solid var(--divider);display:flex;flex-direction:column;gap:8px;margin:0}
+.ai-ask div{display:flex;gap:6px}.ai-ask input{flex:1;min-width:0;padding:8px 10px}
+.ai-ask button{padding:8px 12px;font-size:12.5px}
+.ai-ask span{font-size:10.5px;line-height:1.35;color:var(--n700)}
+
+/* ---------- dialogs ---------- */
+.dlg-scrim{position:fixed;inset:0;z-index:58;background:rgba(29,31,32,.45);display:none;place-items:center;padding:16px}
+.dlg-scrim.on{display:grid}
+.dlg{width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--paper);border:1px solid var(--ink);box-shadow:var(--shadow-lg)}
+.dlg-h{background:var(--red);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:8px;font:600 13px/1 var(--font-heading);letter-spacing:.14em}
+.dlg-h span{margin-left:auto;font:500 11px/1 var(--font-mono);letter-spacing:.04em}
+.dlg-h.ink{background:transparent;color:var(--n700);font:500 9.5px/1 var(--font-mono);letter-spacing:.08em;padding:16px 18px 0}
+.dlg-b{padding:14px 18px 18px}
+.dlg-t{margin:0 0 4px;font:600 18px/1.25 var(--font-body)}
+.dlg-t.big2{font:600 24px/1.1 var(--font-heading);letter-spacing:.02em}
+.dlg-s{margin:0 0 8px;font-size:12.5px;line-height:1.4;color:var(--n800)}
+.dlg .vform,.dlg .dform{border:0;background:transparent;padding:0;margin:0;animation:none}
+.vform label,.dform label{font-family:var(--font-mono);font-weight:500;font-size:10px;letter-spacing:.06em;color:var(--n700)}
+.vform .consequence{background:transparent;border:1px dashed var(--n600);color:var(--n800)}
+.vform .consequence.unlock{background:var(--green-bg);border:1px solid var(--green);color:var(--green-ink)}
+.vform label.chk-row{display:flex;align-items:flex-start;gap:8px;margin:12px 0 0;font:400 12.5px/1.4 var(--font-body);letter-spacing:0;text-transform:none;color:var(--ink);cursor:pointer}
+.chk-row input{margin:2px 0 0;width:auto;accent-color:var(--ink)}
+.dlg .row{justify-content:flex-end}
+
+/* ---------- pages ---------- */
+.page{left:0;right:var(--aiW);background:var(--paper)}
+.headline{background:transparent}
+.headline .say{font:600 24px/1.25 var(--font-heading);letter-spacing:.01em}
+.hl-tiles>button{background:transparent;border:1px solid var(--divider)}
+.hl-tiles b{font:700 32px/1 var(--font-heading)}
+.hl-tiles .hot{background:var(--red-bg);border-color:var(--red)}.hl-tiles .hot b{color:var(--red)}
+.hl-tiles .good{background:var(--green-bg);border-color:var(--green)}
+.prize-tile{background:transparent!important}
+.pt-bar i{background:transparent;border:1px dashed var(--red)}.pt-bar i.on{background:var(--ink);border:1px solid var(--ink)}
+.scard{background:transparent}
+.scard .sn{font:600 15px/1 var(--font-heading);letter-spacing:.06em;text-transform:uppercase}
+.scard.hold{background:var(--red-bg);border-color:var(--red)}
+.scard .sb{background:var(--n200)}.scard .sb i{background:var(--ink)}.scard .sb i.low{background:var(--red)}
+.orow .oi{background:transparent;border:1px solid var(--divider)}
+.orow .oi.red{background:var(--red-bg);border-color:var(--red)}.orow .oi.amber{background:var(--amber-bg);border-color:var(--amber)}.orow .oi.green{background:var(--green-bg);border-color:var(--green)}
+.feed-sub{font-family:var(--font-mono);font-weight:500}
+.wcard{background:transparent}
+.wcard.done{background:transparent;border-color:var(--green)}
+.prio{font-family:var(--font-mono);font-weight:600;background:transparent;border:1px solid var(--n500)}
+.prio.p1{background:var(--red);border-color:var(--red);color:#fff}.prio.p2{background:var(--amber);border-color:var(--amber);color:#fff}
+.col-h{font:600 15px/1 var(--font-heading);letter-spacing:.08em;text-transform:uppercase}
+.col-h .cnt{background:transparent;border:1px solid var(--divider);font-family:var(--font-mono)}
+.wc-wait{background:var(--red-bg);border-left:3px solid var(--red)}
+.pbar{background:var(--n200)}.pbar i{background:var(--ink)}
+.who .av,#sideRoles .av{background:var(--n700)}.who .av.hse{background:var(--red)}.who .av.pl{background:var(--ink)}
+.col-empty{border:1px dashed var(--n400)}
+.sheet{background:var(--paper);border:1px solid var(--ink);box-shadow:var(--shadow-lg)}
+.sheet-head{background:var(--paper);border-bottom:1px solid var(--divider)}
+.rule-hero{background:var(--red-bg);border-color:var(--red)}
+.scrim{background:rgba(29,31,32,.45);backdrop-filter:none}
+#vg{background:var(--paper);border:1px solid var(--ink);box-shadow:var(--shadow-lg)}
+.pal-item.on,.pal-item:hover:not(:disabled){background:var(--n200)}
+.vgm.me .vgb{background:var(--ink);color:var(--paper)}.vgm.bot .vgb{background:var(--surface)}
+.vgf button{color:var(--accent-700);border-color:var(--divider);background:transparent}
+.pal-foot{background:var(--surface)}
+.pop{background:var(--paper);border:1px solid var(--ink);box-shadow:var(--shadow-lg)}
+.toasts{right:calc(var(--aiW) + 16px);bottom:16px}
+body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + var(--aiW) + 16px);bottom:calc(var(--tlH) + 16px)}
+.toast{background:var(--paper);color:var(--ink);border:1px solid var(--ink);box-shadow:var(--shadow-lg)}
+.toast.good{background:var(--paper);border-color:var(--green)}.toast.good .ico{color:var(--green)}
+.toast button{background:transparent;border:1px solid var(--divider);color:var(--ink)}
+.sd-chip{background:transparent;border:1px solid var(--accent);color:var(--accent-700)}
+.sd-tip{background:var(--paper);border:1px solid var(--ink)}
+.sd-legend button.off{text-decoration:none;opacity:.4}
+
+/* ---------- smaller screens ---------- */
+@media(max-width:1599px){.hbrand small{display:none}.cmdk span,.cmdk kbd{display:none}#roleSeg .nm{display:none}#roleSeg .ab{display:inline}}
+@media(max-width:1299px){.prize>.mono,.role-wrap>.mono{display:none}.prize{grid-template-columns:auto 90px}.hdiv{display:none}.hnav a,.hnav button{padding:8px 6px;font-size:13px}}
+@media(max-width:1100px){
+  :root,body.ai-open{--aiW:0px;--inspW:380px}
+  .ai{display:none}
+  .stage{right:0}.tl{right:0}
+  .insp{right:0;bottom:var(--tlH);width:min(var(--inspW),100vw);transform:translateX(100%);opacity:0;pointer-events:none;box-shadow:var(--shadow-lg);transition:transform .28s var(--ease),opacity .2s}
+  body.insp-open .insp{transform:none;opacity:1;pointer-events:auto}
+  body.page-map .toasts,body.page-map.insp-open .toasts{right:16px}
+  .prize{display:none}
+}
+@media(max-width:900px){
+  :root{--tlH:0px}
+  .tl,.hnav,.role-wrap>.mono,.hdiv,.datechip .dc-l .mono{display:none}
+  .topbar{gap:8px;padding:0 10px}
+  .stage{bottom:var(--tabH)}
+  .insp{bottom:var(--tabH);top:var(--top);width:100%}
+  .page{right:0}
+  .side{background:var(--paper);color:var(--ink);border-top:1px solid var(--ink)}
+  .side-nav a,.side-more{color:var(--n700)}.side-nav a.on{background:var(--ink);color:var(--paper)}
+  .fkey{display:none}
+}
+@media(max-width:620px){.hbrand b{display:none}.dc-l b{font-size:16px}.fcap .mono{display:none}}
 </style>
 </head>
 <body>
@@ -669,7 +1074,7 @@ body.page-map #play2{display:none}
   <div class="side-nav">
     <a href="#/overview" data-page="overview"><svg class="ico"><use href="#i-home"/></svg><span>Overview</span></a>
     <a href="#/map" data-page="map"><svg class="ico"><use href="#i-cube"/></svg><span>Map</span></a>
-    <a href="#/work" data-page="work"><svg class="ico"><use href="#i-list"/></svg><span>Work</span><b class="nav-badge" id="workBadge"></b></a>
+    <a href="#/work" data-page="work"><svg class="ico"><use href="#i-list"/></svg><span>Work</span><b class="nav-badge" id="workBadge2"></b></a>
     <button class="side-more" data-sheet-open="why" aria-label="Briefings"><svg class="ico"><use href="#i-book"/></svg><span>Briefings</span></button>
   </div>
   <div class="side-brief">
@@ -691,31 +1096,42 @@ body.page-map #play2{display:none}
   <div class="side-foot"><b>Replaying 2025 field data</b><span>Lone Mesa's six sites, day by day. Nothing here touches plant controls.</span></div>
 </nav>
 <header class="topbar">
-  <div class="crumbs"><span>Lone Mesa</span><span class="sep" aria-hidden="true">/</span><span>All sites</span><span class="sep" aria-hidden="true">/</span><b id="crumbPage">Overview</b></div>
+  <span class="topline" aria-hidden="true"></span>
+  <a class="hbrand" href="#/overview" aria-label="Parvius home">
+    <svg viewBox="0 0 28 28" width="28" height="28" fill="none" aria-hidden="true"><path d="M14 2.5 24.5 8.5v11L14 25.5 3.5 19.5v-11z" stroke="#1d1f20" stroke-width="1.5"/><path d="M14 8.5 19 11.3v5.4L14 19.5 9 16.7v-5.4z" fill="var(--brand)"/></svg>
+    <span><b translate="no">PARVIUS</b><small class="mono">LONE MESA · DECISION SUPPORT</small></span>
+  </a>
+  <span class="hdiv" aria-hidden="true"></span>
   <div class="datechip" title="The date being replayed. Everything on every page is as of this day.">
+    <span class="dc-l"><span class="mono">AS OF · 2025 FIELD REPLAY</span><b id="dateLbl"></b></span>
     <button class="ghost" id="dayBack" aria-label="Previous day"><svg class="ico"><use href="#i-back"/></svg></button>
-    <span><span class="eyebrow">As of</span> <b id="dateLbl"></b></span>
     <button class="ghost" id="dayFwd" aria-label="Next day"><svg class="ico"><use href="#i-chev"/></svg></button>
     <button class="ghost" id="play2" aria-label="Replay 2025"><svg class="ico"><use href="#i-play"/></svg></button>
   </div>
+  <span class="hdiv" aria-hidden="true"></span>
   <div class="prize" id="prize" title="Avoided downtime unlocked by verified safety closures (modeled, base case)">
-    <div class="prize-top"><span class="eyebrow">Prize unlocked</span><b id="prizeNum">0</b><span class="of">/ <span id="prizeTot">968</span> h/yr</span></div>
+    <span class="mono">SPARES PROGRAM UNLOCKED</span>
+    <div class="prize-top"><b id="prizeNum">0</b><span class="of">/ <span id="prizeTot">968</span> h/yr</span><span class="mtag">MODELED</span></div>
     <div class="prize-bar" id="prizeBar"></div>
   </div>
+  <nav class="hnav" aria-label="Pages">
+    <a href="#/map" data-page="map">Map</a>
+    <a href="#/overview" data-page="overview">Overview</a>
+    <a href="#/work" data-page="work">Work<b class="nav-badge" id="workBadge"></b></a>
+    <a href="#/site/S04" data-page="site" id="navTrends">Trends</a>
+    <button data-sheet-open="why">Briefings</button>
+  </nav>
+  <b id="crumbPage" class="sr">Overview</b>
   <div class="spacer"></div>
-  <button class="cmdk" id="vgFab" title="Ask Parvis or jump anywhere (Ctrl+K or /)"><canvas id="vgFabOrb" width="56" height="56"></canvas><span>Ask Parvis or jump to…</span><kbd>Ctrl K</kbd></button>
-  <div class="role-wrap" style="display:flex;align-items:center;gap:8px">
-    <span class="seg-lbl">Acting as</span>
+  <div class="role-wrap">
+    <span class="mono">ACTING AS</span>
     <div class="seg" id="roleSeg" role="radiogroup" aria-label="Acting as">
-      <button data-role="Planner" role="radio" title="Act as Planner"><span class="av">PL</span><span class="nm">Planner</span></button>
-      <button data-role="Site HSE supervisor" role="radio" title="Act as HSE supervisor"><span class="av hse">HS</span><span class="nm">HSE supervisor</span></button>
-      <button data-role="Manager" role="radio" title="Act as Manager"><span class="av">MG</span><span class="nm">Manager</span></button>
+      <button data-role="Site HSE supervisor" role="radio" title="Act as HSE supervisor"><span class="nm">HSE supervisor</span><span class="ab">HSE</span></button>
+      <button data-role="Planner" role="radio" title="Act as Planner"><span class="nm">Planner</span><span class="ab">PL</span></button>
+      <button data-role="Manager" role="radio" title="Act as Manager"><span class="nm">Manager</span><span class="ab">MG</span></button>
     </div>
   </div>
-  <div class="seg" id="modeSeg" aria-label="Mode">
-    <button data-mode="story"><svg class="ico"><use href="#i-spark"/></svg><span class="nm">Story</span></button>
-    <button data-mode="explore"><svg class="ico"><use href="#i-cube"/></svg><span class="nm">Explore</span></button>
-  </div>
+  <button class="cmdk" id="vgFab" title="Ask Parvis or jump anywhere (Ctrl+K or /)"><canvas id="vgFabOrb" width="56" height="56"></canvas><span>Ask Parvis</span><kbd>Ctrl K</kbd></button>
   <button class="bell ghost" id="bellBtn" title="Decision log" aria-label="Decision log"><svg class="ico" style="width:20px;height:20px"><use href="#i-bell"/></svg><span class="badge" id="bellBadge"></span></button>
 </header>
 
@@ -724,7 +1140,16 @@ body.page-map #play2{display:none}
   <canvas id="c3d" aria-label="3D map of the six Lone Mesa sites. The same status is listed on the Overview page."></canvas>
   <div class="tip" id="tip"></div>
 
+  <div class="fcap"><b>FIELD MAP</b><span class="mono">6 SITES · 18 ASSETS · SCHEMATIC LAYOUT</span></div>
+  <div class="fkey mono" aria-label="Map key">
+    <span><i class="k-run"></i>RUNNING</span><span><i class="k-warn"></i>EARLY WARNING</span><span><i class="k-stop"></i>STOPPED</span><span><i class="k-hold"></i>SAFETY HOLD</span>
+    <span class="k-div"></span><span><i class="k-rec"></i>RECORDED</span><span><i class="k-mod"></i>MODELED</span>
+  </div>
   <div class="mapctl">
+    <div class="seg" id="modeSeg" aria-label="Mode">
+      <button data-mode="story"><svg class="ico"><use href="#i-spark"/></svg><span class="nm">Story</span></button>
+      <button data-mode="explore"><svg class="ico"><use href="#i-cube"/></svg><span class="nm">Explore</span></button>
+    </div>
     <button id="orbit" title="Auto-rotate"><svg class="ico"><use href="#i-orbit"/></svg><span>Orbit: off</span></button>
     <button id="resetCam" title="Reset view" aria-label="Reset view"><svg class="ico"><use href="#i-target"/></svg></button>
     <button id="legendBtn" title="What the colors and shapes mean"><svg class="ico"><use href="#i-layers"/></svg><span>Legend</span></button>
@@ -771,6 +1196,41 @@ body.page-map #play2{display:none}
     </div>
   </div>
 </main>
+
+<section class="tl" id="tl" aria-label="Historical replay">
+  <div class="tl-play"><button id="tlPlay" aria-label="Replay 2025"><svg class="ico"><use href="#i-play"/></svg></button><span class="mono">HISTORICAL<br>REPLAY</span></div>
+  <div class="tl-months mono" id="tlMonths"></div>
+  <div class="tl-end mono">2025</div>
+  <div class="tl-names mono" id="tlNames"></div>
+  <div class="tl-track" id="tlTrack" role="slider" tabindex="0" aria-label="Replay date" aria-valuemin="6" aria-valuemax="364"></div>
+  <div class="tl-now"><b id="tlDate"></b><span>Drag to scrub · <i class="tl-k stop"></i> stop that waited for parts · <i class="tl-k"></i> other stop · hatched = critical check overdue</span></div>
+</section>
+
+<aside class="ai" id="ai" aria-label="Parvis analysis">
+  <button class="ai-tab" id="aiTab" aria-label="Open Parvis analysis" aria-expanded="false">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3l1.9 5.8L20 10.5l-6.1 1.7L12 18l-1.9-5.8L4 10.5l6.1-1.7z"/></svg>
+    <span class="ai-v">PARVIS ANALYSIS</span><span class="ai-t" id="aiTeaser"></span>
+  </button>
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-head">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3l1.9 5.8L20 10.5l-6.1 1.7L12 18l-1.9-5.8L4 10.5l6.1-1.7z"/></svg>
+      <b>PARVIS ANALYSIS</b>
+      <button class="ghost" id="aiClose" aria-label="Collapse Parvis analysis"><svg class="ico"><use href="#i-chev"/></svg></button>
+    </div>
+    <div class="ai-body">
+      <div class="ai-chips" id="aiChips"></div>
+      <div id="aiAns" aria-live="polite"></div>
+    </div>
+    <form class="ai-ask" id="aiAsk">
+      <div><input class="input" id="aiQ" type="text" autocomplete="off" placeholder="Ask about a site, asset or check…" aria-label="Ask Parvis"><button type="submit">Ask</button></div>
+      <span>Parvis summarises records already in Parvius. It adds no figures and never touches plant controls.</span>
+    </form>
+  </div>
+</aside>
+
+<div class="dlg-scrim" id="dlgScrim">
+  <div class="dlg" id="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div>
+</div>
 
 <section class="page" id="pg-overview" aria-label="Overview">
   <div class="page-inner">
@@ -1057,13 +1517,17 @@ function addBox(cx,y0,cz,w,h,dd,col,o={}){
   });
 }
 function addLine(p,q,col,lw,dash){const a=proj(p),b=proj(q);items.push({t:'line',a,b,d:Math.min(a[2],b[2])-0.05,col,lw,dash})}
-function addWire(cx,y0,cz,w,h,dd,col,lw){
+function addWire(cx,y0,cz,w,h,dd,col,lw,dash){
   const x0=cx-w/2,x1=cx+w/2,z0=cz-dd/2,z1=cz+dd/2,y1=y0+h;
   const c=[[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]];
-  [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(e=>addLine(c[e[0]],c[e[1]],col,lw));
+  [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(e=>addLine(c[e[0]],c[e[1]],col,lw,dash));
 }
+// map palette (Industry): ink running, amber early warning, red stopped or held; canvas needs plain rgb
+const MAPC={ink:'#1d1f20',muted:'#5d5d60',accent:'#5980a6',red:'rgb(183,40,42)',amber:'rgb(168,114,34)',
+  inkA:[29,31,32],runA:[78,80,83],shelfA:[70,72,75],stopA:[183,40,42],waitA:[150,24,30],warnA:[190,132,44]};
+const labelFont=l=>l.mono?`${l.bold?'600':'500'} ${l.size}px "IBM Plex Mono",ui-monospace,monospace`:`${l.bold?'700':'600'} ${l.size}px "Barlow Condensed","Segoe UI",sans-serif`;
 const labels=[];
-function addText(p,text,o={}){const q=proj(p);labels.push({x:q[0],y:q[1],text,size:o.size||12,col:o.col||PAL.text,bold:o.bold,align:o.align||'center',bg:o.bg,d:q[2],pri:o.pri||0})}
+function addText(p,text,o={}){const q=proj(p);labels.push({x:q[0],y:q[1],text,size:o.size||12,col:o.col||PAL.text,bold:o.bold,mono:o.mono,align:o.align||'center',bg:o.bg,d:q[2],pri:o.pri||0})}
 const ASSET_SHAPE={'Transfer pump':[1.4,0.9,1.1],'Lift pump':[0.9,1.7,0.9],'Compressor':[1.7,1.3,1.5]};
 function equipIcon(type){
   const c='#3B4352',bg='#FFFFFF';
@@ -1096,60 +1560,61 @@ function scene(t){
   items=[];picks=[];labels.length=0;assetScreen={};
   const flags=allFlags(S.day);
   // ground grid
-  for(let g=-18;g<=18;g+=3){addLine([g,0,-15],[g,0,15],'rgba(90,104,128,.16)',1);addLine([-18,0,g*0.83],[18,0,g*0.83],'rgba(90,104,128,.16)',1)}
+  for(let g=-18;g<=18;g+=3){addLine([g,0,-15],[g,0,15],'rgba(29,31,32,.08)',1);addLine([-18,0,g*0.83],[18,0,g*0.83],'rgba(29,31,32,.08)',1)}
   // pipeline links
   [['S01','S02'],['S02','S03'],['S04','S05'],['S05','S06'],['S01','S04'],['S02','S05'],['S03','S06']].forEach(([a,b])=>{
-    addLine([POS[a][0],0.02,POS[a][1]],[POS[b][0],0.02,POS[b][1]],'rgba(47,93,168,.3)',2,[6,6]);
+    addLine([POS[a][0],0.02,POS[a][1]],[POS[b][0],0.02,POS[b][1]],'rgba(152,152,155,.9)',1.5,[5,4]);
   });
   SITE_ORDER.forEach(sid=>{
     const [cx,cz]=POS[sid],s=siteBy[sid],hold=stat(sid)==='HOLD';
     const target=hold?1:0;vis[sid]+=(target-vis[sid])*0.06;towerVis[sid]+=((hold?0.3:1)-towerVis[sid])*0.06;
     const sel=(S.sel&&S.sel.type==='site'&&S.sel.id===sid)||S.hl.includes(sid);
-    const padCol=hold?[248,222,224]:[226,231,238];
-    addBox(cx,0,cz,7.4,0.28,6.4,padCol,{tag:'site:'+sid,stroke:sel?PAL.brand:'rgba(17,20,24,.25)',lw:sel?2.5:1});
+    const padCol=hold?[248,232,230]:[236,236,238];
+    addBox(cx,0,cz,7.4,0.28,6.4,padCol,{tag:'site:'+sid,stroke:sel?MAPC.accent:hold?MAPC.red:'rgba(29,31,32,.35)',lw:sel?2.5:hold?1.6:1});
     // assets
     const types=['Transfer pump','Lift pump','Compressor'];
     // one status label per site and state, so two waiting machines don't stack two identical labels
     const stops=D.assets.filter(a=>a.site===sid).map(a=>stoppedNow(a.id,S.day)).filter(Boolean),nW=stops.filter(e=>e.pw>0).length,nS=stops.length-nW;
-    if(nW) addText([cx,3.1,cz-0.5],(nW>1?nW+' ':'')+'WAITING FOR PARTS',{size:10,col:PAL.magenta,bold:1,pri:2});
-    if(nS) addText([cx,nW?2.5:3.1,cz-0.5],(nS>1?nS+' ':'')+'STOPPED',{size:10,col:PAL.brand,bold:1,pri:2});
+    if(nW) addText([cx,3.1,cz-0.5],(nW>1?nW+' ':'')+'WAITING FOR PARTS',{size:11,col:MAPC.red,bold:1,pri:2});
+    if(nS) addText([cx,nW?2.5:3.1,cz-0.5],(nS>1?nS+' ':'')+'STOPPED',{size:11,col:MAPC.red,bold:1,pri:2});
     D.assets.filter(a=>a.site===sid).forEach((a,i)=>{
       const [w,h,d]=ASSET_SHAPE[a.type],ax=cx-2.2+i*2.2,az=cz-0.5;
       const st=stoppedNow(a.id,S.day),fl=flags[a.id];
-      let col=[112,124,148];
-      if(st) col=st.pw>0?[176,40,190]:[227,27,35]; else if(fl.flag) col=[236,170,30];
+      let col=MAPC.runA;
+      if(st) col=st.pw>0?MAPC.waitA:MAPC.stopA; else if(fl.flag) col=MAPC.warnA;
       const isSel=S.sel&&S.sel.type==='asset'&&S.sel.id===a.id;
-      addBox(ax,0.28,az,w,h,d,col,{tag:'asset:'+a.id,stroke:isSel?PAL.text:'rgba(17,20,24,.3)',lw:isSel?2.5:1});
+      addBox(ax,0.28,az,w,h,d,col,{tag:'asset:'+a.id,stroke:isSel?MAPC.accent:'rgba(29,31,32,.45)',lw:isSel?2.5:1});
       const top=proj([ax,0.28+h+0.2,az]);
       assetScreen[a.id]={x:top[0],y:top[1],f:top[3]};
       if(fl.flag&&!st){
         const pulse=0.5+0.5*Math.sin(t/260+i);
-        items.push({t:'ring',x:top[0],y:top[1]-8*top[3]/30,r:(5+pulse*4)*top[3]/34,col:PAL.flag,d:top[2]-3});
+        items.push({t:'ring',x:top[0],y:top[1]-8*top[3]/30,r:(5+pulse*4)*top[3]/34,col:MAPC.amber,d:top[2]-3});
       }
-      if(S.hl.includes(a.id)){const pu=0.5+0.5*Math.sin(t/200);items.push({t:'ring',x:top[0],y:top[1]-8*top[3]/30,r:(9+pu*5)*top[3]/34,col:PAL.text,d:top[2]-3})}
-      if(cam.dist<40||isSel) addText([ax,0.1,az+d/2+0.5],a.id,{size:10,col:PAL.muted});
+      if(S.hl.includes(a.id)){const pu=0.5+0.5*Math.sin(t/200);items.push({t:'ring',x:top[0],y:top[1]-8*top[3]/30,r:(9+pu*5)*top[3]/34,col:MAPC.accent,d:top[2]-3})}
+      if(cam.dist<40||isSel) addText([ax,0.1,az+d/2+0.5],a.id,{size:10,col:MAPC.muted,mono:1});
     });
     // shelf cubes = spare fill
     const lit=Math.round(s.spare/10);
     for(let k=0;k<10;k++){
-      const on=k<lit,c=on?(s.spare<50?[234,120,40]:[46,150,96]):[208,214,223];
+      const on=k<lit,c=on?(s.spare<50?MAPC.stopA:MAPC.shelfA):[218,218,221];
       addBox(cx-2.25+k*0.5,0.28,cz+2.5,0.4,on?0.4:0.12,0.4,c,{tag:'site:'+sid});
     }
-    addText([cx,0.1,cz+3.55],'spares '+s.spare+'%',{size:11,col:s.spare<50?'#B4530F':PAL.muted,bold:s.spare<50,pri:1});
-    // prize tower
+    addText([cx,0.1,cz+3.55],'SPARES '+s.spare+'%',{size:10,col:s.spare<50?MAPC.red:MAPC.muted,bold:s.spare<50,pri:1,mono:1});
+    // prize tower: solid ink when unlocked, a faint dashed ghost while locked (modeled)
     const th=steady(sid)*0.0145;
     const tv=towerVis[sid];
-    const tcol=hold?[176,182,194]:[30,127,79];
-    addBox(cx+3.1,0.28,cz-2.7,0.9,th*tv,0.9,tcol,{alpha:hold?0.5:0.95,tag:'site:'+sid});
-    addText([cx+3.1,0.28+th*tv+0.5,cz-2.7],Math.round(steady(sid))+' h/yr',{size:11,col:hold?PAL.faint:PAL.ok,bold:1,pri:2});
+    const tcol=hold?[226,226,229]:MAPC.inkA;
+    addBox(cx+3.1,0.28,cz-2.7,0.9,th*tv,0.9,tcol,{alpha:hold?0.55:0.92,tag:'site:'+sid,stroke:hold?'rgba(29,31,32,.45)':'rgba(29,31,32,.6)'});
+    if(hold)addWire(cx+3.1,0.28,cz-2.7,0.9,th*tv,0.9,'rgba(29,31,32,.5)',1,[3,3]);
+    addText([cx+3.1,0.28+th*tv+0.5,cz-2.7],Math.round(steady(sid))+' H/YR',{size:11,col:hold?MAPC.muted:MAPC.ink,bold:1,pri:2});
     // hold cage
     if(vis[sid]>0.02){
       const a=vis[sid];
-      addWire(cx,0.28,cz,7.4,3.6*a+0.3,6.4,`rgba(227,27,35,${0.35+0.5*a})`,1.6);
-      addBox(cx,0.28,cz,7.4,(3.6*a+0.3),6.4,[227,27,35],{alpha:0.06*a,stroke:'rgba(0,0,0,0)',lw:0});
-      addText([cx,3.7*a+0.9,cz],'SAFETY HOLD',{size:12,col:PAL.brand,bold:1,pri:3});
+      addWire(cx,0.28,cz,7.4,3.6*a+0.3,6.4,`rgba(${MAPC.stopA.join(',')},${0.4+0.5*a})`,1.6);
+      addBox(cx,0.28,cz,7.4,(3.6*a+0.3),6.4,MAPC.stopA,{alpha:0.07*a,stroke:'rgba(0,0,0,0)',lw:0});
+      addText([cx,3.7*a+0.9,cz],'SAFETY HOLD',{size:13,col:MAPC.red,bold:1,pri:3});
     }
-    addText([cx,0.1,cz-3.7],s.name.toUpperCase(),{size:13,col:sel?PAL.brand:PAL.text,bold:1,pri:4});
+    addText([cx,0.1,cz-3.7],s.name.toUpperCase(),{size:16,col:sel?MAPC.accent:MAPC.ink,bold:1,pri:4});
   });
 }
 function draw(t){
@@ -1169,8 +1634,8 @@ function draw(t){
     }
   });
   placeLabels().sort((a,b)=>b.d-a.d).forEach(l=>{
-    ctx.font=`${l.bold?'700 ':''}${l.size}px -apple-system,Segoe UI,sans-serif`;ctx.textAlign=l.align;
-    ctx.lineWidth=3.5;ctx.lineJoin='round';ctx.strokeStyle='rgba(255,255,255,.92)';ctx.strokeText(l.text,l.x,l.y);
+    ctx.font=labelFont(l);ctx.textAlign=l.align;
+    ctx.lineWidth=3.5;ctx.lineJoin='round';ctx.strokeStyle='rgba(242,242,243,.94)';ctx.strokeText(l.text,l.x,l.y);
     ctx.fillStyle=l.col;ctx.fillText(l.text,l.x,l.y);
   });
 }
@@ -1178,7 +1643,7 @@ function draw(t){
 function placeLabels(){
   const placed=[],out=[],hit=r=>placed.some(p=>r.x0<p.x1&&r.x1>p.x0&&r.y0<p.y1&&r.y1>p.y0);
   labels.slice().sort((a,b)=>b.pri-a.pri||a.d-b.d).forEach(l=>{
-    ctx.font=`${l.bold?'700 ':''}${l.size}px -apple-system,Segoe UI,sans-serif`;
+    ctx.font=labelFont(l);
     const w=ctx.measureText(l.text).width+6,step=l.size+3;
     for(const dy of [0,-step,step,-2*step]){
       const r={x0:l.x-w/2,x1:l.x+w/2,y0:l.y+dy-l.size,y1:l.y+dy+3};
@@ -1261,7 +1726,7 @@ $('#exportLog').addEventListener('click',()=>{
 });
 
 /* ======================= WHY ======================= */
-const STAGES=[['det','Detect','#7C93BD'],['dis','Dispatch','#A99BD0'],['pw','Parts wait',PAL.brand],['rep','Repair','#D9B56A'],['res','Restart','#C3C8D0']];
+const STAGES=[['det','Detect','#b7b7ba'],['dis','Dispatch','#7a7a7d'],['pw','Parts wait',MAPC.red],['rep','Repair','#5980a6'],['res','Restart','#d4d4d7']];
 let whyDone=false;
 function renderWhy(){
   const {ev,tot,pwT,share}=problemFacts();
@@ -1922,12 +2387,13 @@ const cssPx=n=>parseFloat(getComputedStyle(document.documentElement).getProperty
 
 /* ---------- 3D framing: keep the map centred in the space the panels leave ---------- */
 function frameTargets(snap){
-  const mobile=innerWidth<=900,g=cssPx('--gap');
+  // desktop: inspector, Parvis column and timeline sit outside the canvas, so only the story rail and the map key eat into it
+  const mobile=innerWidth<=900,docked=innerWidth>1100,g=cssPx('--gap');
   const L=(!mobile&&UI.mode==='story')?cssPx('--railW')+g*2:0;
-  const R=(!mobile&&document.body.classList.contains('insp-open'))?cssPx('--inspW')+g*2:0;
-  const bottom=mobile?(UI.mode==='story'?$('#rail').offsetHeight:cssPx('--dockH')+g*2):UI.presenter?g:cssPx('--dockH')+g*2;
-  const usable=Math.max(300,W-L-R),usableH=Math.max(260,H-bottom);
-  view.tx=L+usable/2;view.ty=usableH*0.56;view.tw=Math.min(Math.max(usable,Math.min(W,720)),usableH*1.75);
+  const R=(!mobile&&!docked&&document.body.classList.contains('insp-open'))?cssPx('--inspW')+g*2:0;
+  const top=mobile?0:70,bottom=mobile?(UI.mode==='story'?$('#rail').offsetHeight:g):g;
+  const usable=Math.max(300,W-L-R),usableH=Math.max(260,H-bottom-top);
+  view.tx=L+usable/2;view.ty=top+usableH*0.56;view.tw=Math.min(Math.max(usable,Math.min(W,720)),usableH*1.75);
   if(snap){view.x=view.tx;view.y=view.ty;view.w=view.tw}
 }
 function easeView(){const k=reduceMotion()?1:0.1;view.x+=(view.tx-view.x)*k;view.y+=(view.ty-view.y)*k;view.w+=(view.tw-view.w)*k}
@@ -2043,7 +2509,7 @@ const BEATS=[
    say(){return `The plan: four waves, gate first. Pilot at an unblocked site, then the rest of the cleared sites, then Arroyo, the biggest prize, the moment its closures are verified. We measure parts-wait hours, critical safety actions, and zero approvals on a held site.`},
    enter(){deselect();startTour()}}
 ];
-function deselect(){S.sel=null;UI.verifyOpen=null;closeInsp();renderDock()}
+function deselect(){S.sel=null;UI.verifyOpen=null;closeInsp();renderDock();renderInsp()}
 function renderStory(){
   const done=i=>i<UI.beat||(i===3&&stat('S04')==='ELIGIBLE');
   $('#dots').innerHTML=BEATS.map((b,i)=>`<button class="${i===UI.beat?'on':done(i)?'done':''}" data-b="${i}" aria-label="Beat ${i+1}: ${b.t}"></button>`).join('');
@@ -2114,11 +2580,48 @@ function onDay(){
   drawSpark();
   const f=allFlags(S.day),nf=Object.values(f).filter(x=>x.flag).length,st=D.assets.filter(a=>stoppedNow(a.id,S.day)).length;
   $('#dayLbl').textContent=prettyDay(S.day);$('#dayStats').textContent=`${st} stopped · ${nf} flagged`;
-  if(UI.page==='map'&&S.sel&&!UI.verifyOpen&&document.body.classList.contains('insp-open'))renderInsp();
+  // the docked inspector shows the overview when nothing is selected, so it follows the replay day too
+  if(UI.page==='map'&&!dlgOpen())renderInsp();
+  renderTimeline();renderAI(false);
   updateDateChip();renderWorkBadge();schedulePageRender();
 }
+/* ---------- timeline lanes: one lane per site, recorded stops and overdue critical checks as of the replay day ---------- */
+const dayIdx=iso=>Math.round((Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10))-BASE.getTime())/864e5);
+const tlPct=d=>(Math.max(0,Math.min(364,d))/364*100).toFixed(3)+'%';
+function renderTimeline(){
+  const tr=$('#tlTrack');if(!tr)return;
+  if(!$('#tlNames').childElementCount){
+    $('#tlNames').innerHTML=SITE_ORDER.map(s=>`<span>${siteBy[s].name.toUpperCase()}</span>`).join('');
+    $('#tlMonths').innerHTML=MONTH_RANGES.map(([d0],k)=>`<span style="left:${tlPct(d0)}">${MON[k].toUpperCase()}</span>`).join('');
+  }
+  const day=S.day;
+  tr.innerHTML=SITE_ORDER.map(sid=>{
+    const bands=D.gates.filter(g=>g.site===sid&&g.block).map(g=>{const d0=dayIdx(g.due);if(d0>day||d0>364)return '';const v=S.verified[g.id];
+      return `<div class="tl-band${v?' done':''}" style="left:${tlPct(d0)};width:calc(${tlPct(day)} - ${tlPct(d0)})" title="${g.id} · ${esc(g.hazard)} · ${v?'verified':'overdue'} since ${prettyDate(g.due)}"></div>`}).join('');
+    const marks=D.events.filter(e=>assetBy[e.a].site===sid&&Math.floor(e.s)<=day).map(e=>
+      `<div class="tl-mk${e.pw>0?' w':''}" style="left:${tlPct(e.s)}" title="${shortDay(e.s)} · ${e.a} ${esc(e.c.toLowerCase())} · ${h1(e.h)} h${e.pw>0?`, ${h1(e.pw)} h waiting for parts`:''}"></div>`).join('');
+    return `<div class="tl-lane">${bands}${marks}</div>`;
+  }).join('')+`<div class="tl-head" style="left:${tlPct(day)}"></div>`;
+  tr.setAttribute('aria-valuenow',day);tr.setAttribute('aria-valuetext',prettyDay(day));
+  $('#tlDate').textContent=prettyDay(day);
+}
+(()=>{
+  const tr=$('#tlTrack'),at=x=>{const r=tr.getBoundingClientRect();return Math.max(6,Math.min(364,Math.round((x-r.left)/r.width*364)))};
+  tr.addEventListener('pointerdown',e=>{
+    if(playT){clearInterval(playT);playT=null;setPlayIcon()}
+    tr.setPointerCapture(e.pointerId);setDay(at(e.clientX));
+    const mv=ev=>setDay(at(ev.clientX)),up=()=>{tr.removeEventListener('pointermove',mv);tr.removeEventListener('pointerup',up)};
+    tr.addEventListener('pointermove',mv);tr.addEventListener('pointerup',up);
+  });
+  tr.addEventListener('keydown',e=>{
+    const step=e.shiftKey?7:1;
+    if(e.key==='ArrowRight'){e.preventDefault();setDay(Math.min(364,S.day+step))}
+    if(e.key==='ArrowLeft'){e.preventDefault();setDay(Math.max(6,S.day-step))}
+  });
+  $('#tlPlay').addEventListener('click',()=>$('#play').click());
+})();
 let playT=null;
-function setPlayIcon(){['#play','#play2'].forEach(s=>{const b=$(s);b.innerHTML=ico(playT?'pause':'play');b.setAttribute('aria-label',playT?'Pause replay':'Replay 2025')});$('#play2').classList.toggle('on',!!playT)}
+function setPlayIcon(){['#play','#play2','#tlPlay'].forEach(s=>{const b=$(s);b.innerHTML=ico(playT?'pause':'play');b.setAttribute('aria-label',playT?'Pause replay':'Replay 2025')});$('#play2').classList.toggle('on',!!playT)}
 $('#play').addEventListener('click',()=>{
   if(playT){clearInterval(playT);playT=null;setPlayIcon();return}
   if(S.day>=360)setDay(6);
@@ -2141,7 +2644,7 @@ function selectAsset(aid,o={}){
   if(o.fly!==false)camGoal({yaw:-0.35,pitch:0.95,dist:20,tx:POS[a.site][0],tz:POS[a.site][1]});
   renderInsp();openInsp();renderDock();
 }
-function focusEvidence(){setTimeout(()=>{const root=UI.page==='work'?$('#pg-work'):$('#inspBody'),n=root&&root.querySelector('.f-note');if(n)n.focus()},380)}
+function focusEvidence(){setTimeout(()=>{const n=$('#dlg .f-note');if(n)n.focus()},80)}
 const EVIDENCE=[
   [/H2S|gas/i,'Fixed H2S detectors bump-tested and alarms verified at the panel; calibration log GT-114 signed.'],
   [/isolation|LOTO/i,'All isolation points walked down; LOTO procedure LOTO-07 signed off and witnessed by the operations lead.'],
@@ -2160,8 +2663,9 @@ function verifyFormHtml(g){
     <label>Closure date (today or earlier)</label><input type="date" class="f-date" aria-label="Closure date" value="${TODAY}" max="${TODAY}">
     <label>Evidence (required)</label><textarea class="f-note" aria-label="Evidence" rows="3" placeholder="What was inspected and the permit or checklist number, e.g. GT-114…"></textarea>
     <button class="linkbtn" data-act="fillEv" data-ev="${esc(ev)}" style="margin-top:6px;font-size:12px" title="${esc(ev)}">${ico('book')} Insert the demo field note (${esc(ref)}) and check it</button>
+    <label class="chk-row"><input type="checkbox" class="f-confirm"> I confirm this control was verified in the field and the evidence is accurate.</label>
     <div class="consequence${rest.length?'':' unlock'}">${consequence}</div>
-    <div class="row"><button class="commit" data-act="verify">${ico('check')} Record verified closure</button></div>
+    <div class="row"><button data-act="closeDlg">Cancel</button><button class="commit" data-act="verify">Sign &amp; verify ${g.id}</button></div>
     <div class="msg f-msg" role="alert"></div></div>`;
 }
 function decideFormHtml(aid){
@@ -2170,7 +2674,7 @@ function decideFormHtml(aid){
     ${hold?`<div class="banner red" style="margin:10px 0 0">${s.name} is on safety hold. Approve is disabled; you can reject or log an advisory.</div>`:''}
     <label>Reason (required)</label><textarea class="d-reason" aria-label="Reason" placeholder="Why approve, edit or reject?"></textarea>
     <label>Kit</label><input type="text" class="d-kit" aria-label="Kit" value="Bearing/seal kit for ${a.type}">
-    <div class="row"><button class="primary" data-act="decide" data-d="Approve pre-stage" ${hold?'disabled':''}>Approve</button><button data-act="decide" data-d="Edit" ${hold?'disabled':''}>Approve with edit</button><button class="warn" data-act="decide" data-d="Reject">Reject</button></div>
+    <div class="row"><button data-act="closeDlg">Cancel</button><button class="warn" data-act="decide" data-d="Reject" title="Keep monitoring; the reason is logged">Defer</button><button data-act="decide" data-d="Edit" ${hold?'disabled':''}>Stage with changes</button><button class="primary" data-act="decide" data-d="Approve pre-stage" ${hold?'disabled':''}>Stage the kit</button></div>
     <div class="msg bad small d-msg" role="alert"></div></div>`;
 }
 function openVerifyFor(gid){UI.verifyOpen=gid;UI.workOpen='g:'+gid;refreshViews();focusEvidence()}
@@ -2180,6 +2684,7 @@ function doVerify(form){
   const r=canVerify(S.role,sid,gate,name,date,note);
   if(!r.ok){q('.f-msg').textContent=r.why;q('.f-note').focus();return}
   if(wit.length<3){q('.f-msg').textContent='Add who witnessed the closure.';q('.f-wit').focus();return}
+  if(!q('.f-confirm').checked){q('.f-msg').textContent='Confirm the control was verified in the field.';q('.f-confirm').focus();return}
   const before=stat(sid);
   S.verified={...S.verified,[gid]:{name:name.trim(),date,note:note.trim(),witness:wit}};save();
   addLog({action:'Verified closure',site:sid,gate:gid,name:name.trim(),reason:`${note.trim()} Witness: ${wit}.`});
@@ -2194,7 +2699,7 @@ function doDecide(b){
   if(d!=='Reject'){const r=canApprove(S.role,stat(a.site),reason);if(!r.ok){msg.textContent=r.why;return}}
   else if(!reason.trim()||reason.trim().length<3){msg.textContent='A reason is required.';return}
   addLog({action:d,asset:aid,site:a.site,reason:reason.trim(),kit:form.querySelector('.d-kit').value,asOf:dayStr(S.day)});
-  UI.workOpen=null;
+  UI.workOpen=null;UI.decideOpen=null;
   toast(`${ico('check')}<span>${d} logged for ${aid}.</span>`);refreshViews();
 }
 function handleAction(b){
@@ -2202,88 +2707,193 @@ function handleAction(b){
   if(act==='fillEv'){const f=b.closest('.vform'),n=f.querySelector('.f-note'),w=f.querySelector('.f-wit');n.value=b.dataset.ev;if(!w.value.trim())w.value='Operations lead (demo)';n.focus();return true}
   if(act==='verify'){doVerify(b.closest('.vform'));return true}
   if(act==='decide'){doDecide(b);return true}
+  if(act==='openVerify'){UI.verifyOpen=b.dataset.g;renderDialog();return true}
+  if(act==='openDecide'){UI.decideOpen=b.dataset.a;renderDialog();return true}
+  if(act==='closeDlg'){closeDialog();return true}
   if(act==='beHSE'){setRole('Site HSE supervisor');openVerifyFor(b.dataset.g);return true}
-  if(act==='bePL'){setRole('Planner');if(b.dataset.k)UI.workOpen=b.dataset.k;refreshViews();return true}
+  if(act==='bePL'){
+    setRole('Planner');const k=b.dataset.k;if(k)UI.workOpen=k;
+    const aid=b.dataset.a||(k&&k.startsWith('f:')?k.slice(2):null);if(aid)UI.decideOpen=aid;
+    refreshViews();return true}
   return false;
 }
 function refreshViews(){
-  renderInsp();renderDock();renderStory();renderWorkBadge();
+  renderInsp();renderDock();renderStory();renderWorkBadge();renderTimeline();
   if(UI.page==='work')renderWork();
   if(UI.page==='overview')renderOverview();
 }
-function gateItem(g,isHSE){
-  const v=S.verified[g.id],over=isOverdue(g)&&!v,open=UI.verifyOpen===g.id;
-  return `<div class="gate ${v?'done':''}">
-    <div class="gate-row"><span class="chk">${v?ico('check'):''}</span>
-      <div class="gt"><b>${g.id} · ${esc(g.hazard)}</b><span>${esc(g.gap)}</span>
-        <span>${v?`Verified by ${esc(v.name)} · ${prettyDate(v.date)}`:`Due ${prettyDate(g.due)}${over?' · <b class="bad">overdue</b>':''} · ${usd(g.setup)} · ${g.hrs} person-h`}</span></div>
-      ${v?'':isHSE?`<button class="${open?'':'brand'}" data-act="openVerify" data-g="${g.id}">${open?'Cancel':'Verify'}</button>`
-        :`<button class="locked" data-act="beHSE" data-g="${g.id}" title="Only a site HSE supervisor can verify. Click to act as one.">${ico('lock')} HSE only</button>`}
+/* line drawings of the three machine types (from the design), stroked in the asset's state colour */
+function lineIcon(type,col,w=48,h=30,sw=1.8){
+  const p=type==='Lift pump'?'<path d="M3 37h58"/><path d="M22 37 30 15 38 37"/><path d="M25.5 28h9"/><path d="M9 13 52 17"/><path d="M11 8c-6 1-7 10-1 13"/><path d="M8 21v16"/><path d="M49 17v8"/><circle cx="49" cy="29" r="4.5"/><rect x="54" y="31" width="7" height="6"/>'
+    :type==='Compressor'?'<path d="M3 37h58"/><rect x="6" y="23" width="31" height="11"/><rect x="10" y="11" width="9" height="12"/><rect x="24" y="11" width="9" height="12"/><path d="M8 11h13M22 11h13"/><rect x="42" y="8" width="17" height="26"/><circle cx="50.5" cy="21" r="6"/><path d="M50.5 15v12M44.5 21h12"/><path d="M37 28h5"/>'
+    :'<path d="M3 37h58"/><path d="M7 37v-3h50v3"/><circle cx="17" cy="22" r="8"/><circle cx="17" cy="22" r="2.4"/><path d="M1 22h8"/><path d="M17 14V7h9"/><path d="M26 4v6"/><path d="M25 20h5v4h-5"/><rect x="30" y="15" width="26" height="14"/><path d="M35 15v14M40 15v14M45 15v14M50 15v14"/>';
+  return `<svg viewBox="0 0 64 40" width="${w}" height="${h}" fill="none" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="stroke:${col}" aria-hidden="true">${p}</svg>`;
+}
+const C_INK='var(--ink)',C_RED='var(--red)',C_AMB='var(--amber)',C_GRN='var(--green)';
+const spareCol=v=>v<50?C_RED:v<70?C_AMB:C_INK;
+// one place that turns an asset's replay day into a colour, a short label and a plain sentence
+function assetState(a){
+  const st=stoppedNow(a.id,S.day),fl=flagFor(D.series[a.id],S.day);
+  if(st)return {k:st.pw>0?'wait':'stop',col:C_RED,label:st.pw>0?'NO PART':'STOPPED',sub:`Stopped ${shortDay(st.s)} · ${st.c.toLowerCase()}${st.pw>0?', waiting for a part':''}`,st,fl};
+  if(fl.flag){const p=a.crit==='High'?'P2':'P3',dec=decidedFlag(a.id);
+    if(dec)return {k:'dec',col:C_GRN,label:/Reject/.test(dec.action)?'DEFERRED':'STAGED',sub:`${dec.action} · logged by ${dec.role==='Site HSE supervisor'?'HSE supervisor':dec.role}`,fl,dec,p};
+    return {k:'flag',col:C_AMB,label:'WARN '+p,sub:`Vibration over 1.3× on ${fl.alerts} of 7 days${fl.noise?` · ${nOf(fl.noise,'noise note','noise notes')}`:''}`,fl,p};}
+  return {k:'run',col:C_INK,label:'RUNNING',sub:`Running · ${a.crit.toLowerCase()} criticality`,fl};
+}
+function siteState(sid){
+  const hold=stat(sid)==='HOLD',as=D.assets.filter(a=>a.site===sid).map(assetState),down=as.filter(x=>x.k==='stop'||x.k==='wait').length,fl=as.filter(x=>x.k==='flag').length;
+  return {hold,as,down,fl,text:hold?'SAFETY HOLD':down?`${down} DOWN`:fl?`${nOf(fl,'FLAG','FLAGS')}`:'CLEARED',col:hold||down?C_RED:fl?C_AMB:C_GRN};
+}
+const lockSvg='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" aria-hidden="true"><rect x="4" y="11" width="16" height="10"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+function inspOverview(){
+  const holds=SITE_ORDER.filter(s=>stat(s)==='HOLD'),stopped=D.assets.map(a=>stoppedNow(a.id,S.day)).filter(Boolean),waiting=stopped.filter(e=>e.pw>0).length;
+  const fl=allFlags(S.day),flags=D.assets.filter(a=>fl[a.id].flag&&!stoppedNow(a.id,S.day)&&!decidedFlag(a.id)).length,p=problemFacts();
+  const head=`${holds.length?`${holds.length} of 6 sites on safety hold (${lst(holds.map(s=>siteBy[s].name))}).`:'All 6 sites cleared.'} ${nOf(stopped.length,'machine','machines')} down${waiting?`, ${waiting} waiting for a part`:''}. ${nOf(flags,'early-warning flag','early-warning flags')} open.`;
+  const rows=SITE_ORDER.map(sid=>{const s=siteBy[sid],x=siteState(sid),n=openGates(sid).length;
+    return `<button class="srow" data-act="site" data-site="${sid}"><span class="d" style="background:${x.col}"></span><span class="nm"><b>${s.name}</b><span style="color:${x.hold?C_RED:'var(--n700)'}">${x.hold?`Safety hold · ${nOf(n,'check','checks')} to verify`:x.down?`Cleared · ${x.down} down`:x.fl?`Cleared · ${nOf(x.fl,'flag','flags')}`:'Cleared · all running'}</span></span><span class="sp" title="Spare fill ${s.spare}%"><i style="width:${s.spare}%;background:${spareCol(s.spare)}"></i></span><span class="hy">${fmt(steady(sid))} h/yr</span></button>`}).join('');
+  const m=workModel(),nx=(bar,text,sub,cta,attrs)=>`<button class="nx" ${attrs}><span class="nb" style="background:${bar}"></span><span class="t"><b>${text}</b><span>${sub}</span></span><span class="c">${cta} →</span></button>`;
+  let next=[];
+  if(S.role==='Site HSE supervisor')next=m.now.filter(it=>it.type==='gate').map(it=>nx(C_RED,`Verify ${it.g.id} at ${siteBy[it.sid].name}`,`${esc(it.g.gap)} · ${isOverdue(it.g)?'overdue since':'due'} ${prettyDate(it.g.due)}`,'OPEN',`data-act="site" data-site="${it.sid}"`));
+  else if(S.role==='Planner'){next=m.now.filter(it=>it.type==='flag').map(it=>nx(C_AMB,`Decide on ${it.a.id} · ${it.a.type}, ${siteBy[it.sid].name}`,`${it.a.crit==='High'?'P2':'P3'} · have a bearing/seal kit ready`,'DECIDE',`data-act="asset" data-a="${it.a.id}"`));
+    if(m.blocked.length)next.push(nx('var(--n400)',`${nOf(m.blocked.length,'more flag','more flags')} behind safety holds`,'Actionable once the site is cleared','VIEW',`data-act="site" data-site="${m.blocked[0].sid}"`));}
+  else next=[nx(C_INK,`${fmt(unlockedH())} of ${fmt(sumSteady())} h/yr unlocked`,`${6-holds.length} of 6 sites cleared · ${nOf(S.log.filter(l=>l.asset).length,'planner decision','planner decisions')} logged`,'WORK','data-act="page" data-p="work"')];
+  if(!next.length)next=[nx('var(--n400)','Nothing waiting for this role','Switch role to see other work','WORK','data-act="page" data-p="work"')];
+  const log=S.log.slice(-4).reverse().map(l=>`<div class="act"><time>${l.ts.slice(11,16)}</time><i style="background:${l.action==='Verified closure'?C_GRN:C_INK}"></i><span>${esc(l.role==='Site HSE supervisor'?'HSE supervisor':l.role)} · ${esc(l.action.toLowerCase())} ${esc(l.gate||l.asset||'')} at ${esc(siteBy[l.site]?.name||'')}.</span></div>`);
+  const field=D.events.filter(e=>Math.floor(e.s)<=S.day&&Math.floor(e.s)>S.day-10).sort((a,b)=>b.s-a.s).slice(0,6).map(e=>{const a=assetBy[e.a];
+    return `<div class="act"><time>${shortDay(e.s).toUpperCase()}</time><i style="background:${e.pw>0?C_RED:C_INK}"></i><span>${siteBy[a.site].name} ${a.type.toLowerCase()} ${e.a} stopped (${esc(e.c.toLowerCase())})${e.pw>0?', waited for parts':''}.</span></div>`});
+  return `<div class="iv">
+    <div class="iv-h"><span class="mono">FIELD OVERVIEW · SELECT A SITE OR ASSET</span><h2>Lone Mesa field</h2><p class="iv-lead">${head}</p></div>
+    <div class="kgrid">
+      <div><b>${fmt(p.tot)} h</b><span>unplanned downtime, 2025</span></div>
+      <div><b>${p.ev.length}</b><span>unplanned stops, 2025</span></div>
+      <div class="hot"><b>${p.share}%</b><span>of it spent waiting for parts</span></div>
+      <div class="mod"><b>$5.6M</b><span>lost contribution · modeled</span></div>
     </div>
-    ${!v&&isHSE&&open?verifyFormHtml(g):''}
+    <div><div class="sh mono"><span>SITE</span><span>SPARES · UNLOCK</span></div>${rows}</div>
+    <div class="ivs"><span class="mono">NEXT FOR ${(S.role==='Site HSE supervisor'?'HSE supervisor':S.role).toUpperCase()}</span>${next.join('')}</div>
+    <div class="ivs"><span class="mono">ACTIVITY</span>${log.concat(field).join('')||'<div class="is-note">Nothing logged yet, and no stops in the last 10 days.</div>'}</div>
   </div>`;
+}
+function gateItem(g,isHSE,isMgr,left){
+  const s=siteBy[g.site],over=isOverdue(g);
+  const btn=isHSE?`<button class="primary" data-act="openVerify" data-g="${g.id}">Verify ${g.id}</button>`
+    :isMgr?`<button disabled title="Managers can view checks but not sign them">View only · HSE supervisor signs</button>`
+    :`<button class="locked" data-act="beHSE" data-g="${g.id}" title="Only a site HSE supervisor can verify. Click to act as one.">${ico('lock')} Act as HSE supervisor</button>`;
+  return `<div class="chk-card"><div class="cc-top"><span class="p1b">P1</span><b>${g.id}</b><span>Safety check</span></div>
+    <div class="cc-title">${esc(g.gap)} <span>(${esc(g.hazard)})</span></div>
+    <div class="cc-meta"><span class="${over?'bad':''}">${over?'Overdue since':'Due'} ${prettyDate(g.due)}</span><span>${usd(g.setup)} · ${g.hrs} person-hours</span></div>
+    <div class="cc-imp">${left===1?`Last open check at ${s.name}: closing it unlocks ${fmt(steady(g.site))} h/yr ${tagM}`:`${left} checks left before ${s.name} can stock spare parts.`}</div>
+    <div class="cc-act">${btn}</div></div>`;
 }
 function assetCard(a){
   const st=stoppedNow(a.id,S.day),fl=flagFor(D.series[a.id],S.day),cls=st?(st.pw>0?'wait':'stop'):fl.flag?'flag':'';
   return `<button class="asset-card" data-act="asset" data-a="${a.id}"><span class="dot ${cls}"></span><span class="at"><b>${a.id} · ${a.type}</b><span>${st?(st.pw>0?'Stopped, waiting for parts':'Stopped'):fl.flag?'Readiness flag':'Normal'} · ${a.crit} criticality</span></span>${ico('chev','chev')}</button>`;
 }
 function siteView(sid){
-  const s=siteBy[sid],hold=stat(sid)==='HOLD',gates=D.gates.filter(g=>g.site===sid),crit=gates.filter(g=>g.block),other=gates.filter(g=>!g.block);
-  const ev=eventsUpTo(S.day).filter(e=>assetBy[e.a].site===sid),waited=ev.filter(e=>e.pw>0),isHSE=S.role==='Site HSE supervisor';
-  return `<div class="ins-head"><span class="eyebrow">Site · ${s.tech} technicians · uptime ${s.uptime}%</span>
-    <h2>${s.name} <span class="pill ${hold?'hold':'elig'}">${hold?'SAFETY HOLD':'ELIGIBLE'}</span></h2>
-    <button class="sd-open" data-act="siteDash" data-site="${sid}">${ico('wave')} Trends for ${s.name}: sensors, stops, parts</button>
-    <div class="ins-stats"><div class="${hold?'':'good'}"><b>${fmt(steady(sid))}</b><span>h/yr prize${hold?', locked':', unlocked'}</span></div><div class="${s.spare<50?'hot':''}"><b>${s.spare}%</b><span>spare fill</span></div><div><b>${Math.round(s.waited*100)}%</b><span>breakdowns waited for parts</span></div></div></div>
-    ${hold?`<h4>What's locking it</h4>
-      ${isHSE?'':`<div class="rule-note">${ico('lock')}<span>Only a site HSE supervisor can record a verified closure. You're acting as <b>${S.role}</b>.</span></div>`}
-      ${crit.filter(g=>!S.verified[g.id]).concat(crit.filter(g=>S.verified[g.id])).map(g=>gateItem(g,isHSE)).join('')}`
-    :`<div class="unlocked">${ico('unlock')}<div><b>Unlocked</b>${crit.length?'All severity-5 actions verified. ':'No critical actions open. '}${s.name} joins its wave in month ${rollout(mCur(),1,pCur(),cCur()).gl[sid]}.</div></div>
-      ${crit.length?`<details class="more"><summary>Verified closures (${crit.length})</summary><div>${crit.map(g=>gateItem(g,isHSE)).join('')}</div></details>`:''}`}
-    ${other.length?`<details class="more"><summary>Other open HSE actions (${other.length})</summary><div>${other.map(g=>`<div class="small" style="margin:4px 0"><b>${g.id}</b> ${esc(g.hazard)} · sev ${g.sev} · due ${g.due}</div>`).join('')}</div></details>`:''}
-    <h4>Assets</h4><div class="assets">${D.assets.filter(a=>a.site===sid).map(assetCard).join('')}</div>
+  const s=siteBy[sid],x=siteState(sid),hold=x.hold,gates=D.gates.filter(g=>g.site===sid),crit=gates.filter(g=>g.block),other=gates.filter(g=>!g.block);
+  const open=crit.filter(g=>!S.verified[g.id]),done=crit.filter(g=>S.verified[g.id]),isHSE=S.role==='Site HSE supervisor',isMgr=S.role==='Manager';
+  const ev=eventsUpTo(S.day).filter(e=>assetBy[e.a].site===sid),waited=ev.filter(e=>e.pw>0),as=D.assets.filter(a=>a.site===sid);
+  const cur=hold?(isHSE?2:1):(x.fl?4:5),labels=['Check overdue','Evidence','HSE sign-off','Site cleared','Spares staged'];
+  const steps=labels.map((l,i)=>`<div><i style="background:${i<cur?(hold?C_RED:C_INK):i===cur?(hold?'repeating-linear-gradient(90deg,var(--red) 0 4px,transparent 4px 7px)':C_AMB):'var(--n300)'}"></i><span style="color:${i<=cur?'var(--ink)':'var(--n600)'}">${l}</span></div>`).join('');
+  return `<div class="is-top"><button data-act="desel">${ico('back')} All sites</button><span class="mono">SITE · ${as[0].id}–${as[as.length-1].id}</span></div>
+    <div class="is-title"><h2>${s.name}</h2><span class="st" style="color:${x.col}">${x.text}</span></div>
+    ${hold?`<div class="is-hold">${lockSvg}<div><b>SAFETY HOLD IN EFFECT</b><span>The spares program at ${s.name} is locked until ${lst(open.map(g=>g.id))} ${open.length>1?'are':'is'} verified by an HSE supervisor. ${fmt(steady(sid))} h/yr of avoidable downtime (modeled) is waiting on this.</span></div></div>`:''}
+    <div class="is-cells">
+      <div><div class="k">UNLOCK · MODELED</div><div class="v mod">${fmt(steady(sid))} h/yr</div></div>
+      <div><div class="k">SPARES</div><div class="v" style="color:${spareCol(s.spare)}">${s.spare}%</div></div>
+      <div><div class="k">PROGRAM START</div><div class="v">${hold?'Locked':'Month '+rollout(mCur(),1,pCur(),cCur()).gl[sid]}</div></div>
+    </div>
+    <button class="is-trend" data-act="siteDash" data-site="${sid}"><span>Trends · sensors, stops, parts</span>${ico('arrow')}</button>
+    <div class="is-sec"><span class="mono">EQUIPMENT</span><span class="mono">${s.tech} TECHNICIANS · UPTIME ${s.uptime}%</span></div>
+    ${as.map((a,i)=>{const y=x.as[i];return `<button class="eq" data-act="asset" data-a="${a.id}"><span class="i">${lineIcon(a.type,y.col)}</span><span class="t"><b>${a.id} · ${a.type}</b><span>${y.sub}</span></span><span class="l" style="color:${y.col}">${y.label}</span></button>`}).join('')}
+    <div class="is-sec"><span class="mono">HSE APPROVAL WORKFLOW</span><span class="mono">${crit.length?`${done.length} OF ${crit.length} VERIFIED`:'NO CRITICAL CHECKS'}</span></div>
+    <div class="wf">${steps}</div>
+    <div class="chk-list">
+      ${!isHSE&&open.length?`<div class="rule-note">${ico('lock')}<span>Only a site HSE supervisor can record a verified closure. You're acting as <b>${S.role}</b>.</span></div>`:''}
+      ${open.map(g=>gateItem(g,isHSE,isMgr,open.length)).join('')}
+      ${done.map(g=>{const v=S.verified[g.id];return `<div class="chk-done"><div class="top"><span class="vtag">VERIFIED</span><b>${g.id}</b><time>${prettyDate(v.date)}</time></div><p>${esc(v.note)}${v.witness?` Witness: ${esc(v.witness)}.`:''} Signed by ${esc(v.name)}.</p></div>`}).join('')}
+      ${crit.length?'':'<div class="is-note">No critical safety checks at this site. The spares program is cleared to run.</div>'}
+    ${other.length?`<details class="more"><summary>Other open HSE actions (${other.length})</summary><div>${other.map(g=>`<div class="small" style="margin:4px 0"><b>${g.id}</b> ${esc(g.hazard)} · sev ${g.sev} · due ${prettyDate(g.due)}</div>`).join('')}</div></details>`:''}
     <details class="more"><summary>Site facts</summary><div><div class="kv">
       <span>Unplanned events to ${dayStr(S.day)}</span><span>${ev.length}, ${waited.length} waited for parts</span>
       <span>Average wait</span><span>${s.avgWait} h</span>
       <span>Avoided downtime range</span><span>${Math.round(steady(sid,'low'))}–${Math.round(steady(sid,'high'))} h/yr ${tagM}</span>
       <span>Modeled margin</span><span>${usd(steady(sid)*VPH)}/yr</span>
       <span>Person-hours needed</span><span>${20+gates.reduce((a,g)=>a+g.hrs,0)} of ${s.hours} available</span></div>
-      <div class="banner" style="margin-top:10px">Recording a closure here does not perform the work. The supervisor verifies in the field per site procedure.</div></div></details>`;
+      <div class="banner" style="margin-top:10px">Recording a closure here does not perform the work. The supervisor verifies in the field per site procedure.</div></div></details>
+    </div><div style="height:22px"></div>`;
 }
 function assetView(aid){
   const a=assetBy[aid],s=siteBy[a.site],fl=flagFor(D.series[aid],S.day),st=stoppedNow(aid,S.day),hold=stat(a.site)==='HOLD',isPL=S.role==='Planner';
   const dec=S.log.filter(l=>l.asset===aid).slice(-3).reverse(),rows=[];
   for(let i=S.day;i>S.day-7&&i>=0;i--){const ser=D.series[aid],got=ser.r[i]<=S.day;rows.push(`<tr><td>${dayStr(i).slice(5)}</td><td class="n">${got?(ser.v[i]!==null?ser.v[i].toFixed(2)+'×':'<span class="muted">n/a</span>'):'<span class="muted">not yet received</span>'}</td><td>${got&&ser.n[i]?'noise note':''}</td></tr>`)}
-  const pl=n=>n==1?'':'s';
-  return `<div class="ins-head" style="display:flex;gap:12px;align-items:center"><div class="art-icon">${equipIcon(a.type)}</div>
-      <div><span class="eyebrow">${s.name} · ${a.crit} criticality · ${a.age} yrs</span><h2 style="margin:2px 0 0">${aid} · ${a.type}</h2></div></div>
-    <div style="margin:10px 0;display:flex;gap:6px;flex-wrap:wrap"><span class="pill ${st?'hold':fl.flag?'flag':'elig'}">${st?(st.pw>0?'STOPPED · WAITING FOR PARTS':'STOPPED'):fl.flag?'READINESS FLAG':'NORMAL'}</span><span class="pill ${hold?'hold':'elig'}">${s.name} ${hold?'on hold':'eligible'}</span></div>
-    ${st?`<div class="banner red">Stopped ${st.c.toLowerCase()}: ${st.h} h total${st.pw>0?`, including ${st.pw} h waiting for parts`:''}. ${tagO}</div>`:''}
-    <canvas id="aChart" height="150" style="margin:8px 0"></canvas>
-    <div class="muted small">Vibration ÷ normal, last 60 days. Dashed line = 1.3× flag level. Red ticks = unplanned stops.</div>
-    ${fl.flag?`<div class="suggest"><b>Suggestion: pre-stage a bearing/seal kit</b><div class="muted">${fl.alerts} vibration alert${pl(fl.alerts)}, ${fl.noise} noise note${pl(fl.noise)} in the last 7 days. Advisory only. It never authorizes work.</div>
-      ${isPL?decideFormHtml(aid)
-      :`<div class="row"><button class="locked" data-act="bePL">${ico('lock')} Planner decides · act as Planner</button></div>`}</div>`
-    :`<div class="muted small" style="margin:12px 0">No readiness flag. Nothing to pre-stage.</div>`}
-    <details class="more"><summary>Evidence: last 7 days (received readings only)</summary><div><table><tr><th>Day</th><th class="n">Vibration</th><th>Note</th></tr>${rows.join('')}</table>${fl.gap?'<div class="banner">Data gap: fewer than 6 of the last 7 readings have been received.</div>':''}</div></details>
-    ${dec.length?`<h4>Decisions on this asset</h4>${dec.map(l=>`<div class="small">${l.ts.slice(0,16).replace('T',' ')} · ${esc(l.role)} · <b>${esc(l.action)}</b> · ${esc(l.reason||'')}</div>`).join('')}`:''}`;
+  const y=assetState(a),isMgr=S.role==='Manager',ser=D.series[aid],o=openGates(a.site),fd=decidedFlag(aid);
+  const days=[];for(let i=Math.max(0,S.day-6);i<=S.day;i++){const got=ser.r[i]<=S.day,v=ser.v[i];
+    days.push(`<i class="${!got||v===null?'na':v>1.3?'on':ser.n[i]?'nz':''}" title="${shortDay(i)}: ${!got?'not yet received':v===null?'no valid reading':v.toFixed(2)+'× normal'}${got&&ser.n[i]?' · noise note':''}"></i>`)}
+  const who=isPL?`<button class="primary" data-act="openDecide" data-a="${aid}" style="align-self:flex-start">Decide intervention</button>`
+    :isMgr?`<button disabled style="align-self:flex-start">View only · the planner decides</button>`
+    :`<button class="locked" data-act="bePL" data-a="${aid}" style="align-self:flex-start">${ico('lock')} Act as planner</button>`;
+  const decide=hold?`<div class="blk"><i></i><div><b>Blocked: ${s.name} is on safety hold. Waiting on ${lst(o.map(g=>g.id))}.</b><span>Parts can't be staged until the site clears its HSE checks. A deferral can still be logged.</span><button data-act="site" data-site="${a.site}">See the checks</button></div></div>${who}`
+    :fd?`<div class="decbox"><b>${esc(fd.action)}</b><span class="muted">Logged by ${esc(fd.role==='Site HSE supervisor'?'HSE supervisor':fd.role)} · ${esc(fd.reason||'')}${fd.kit?' · '+esc(fd.kit):''}</span></div>`
+    :`<p>${s.name} is cleared. This flag is ready for a planner decision.</p>${who}`;
+  return `<div class="is-top"><button data-act="back">${ico('back')} ${s.name}</button><span class="mono">ASSET</span></div>
+    <div class="a-frame" style="border-color:${y.k==='run'?'var(--divider)':y.col}">${lineIcon(a.type,y.col,190,119,1)}<span class="ty mono">${a.type}</span><span class="lb" style="color:${y.col}">${y.label}</span></div>
+    <div class="ia-title"><h2>${aid}</h2><span>${a.type} · ${s.name}</span></div>
+    <div class="is-cells"><div><div class="k">PRIORITY</div><div class="v">${y.p||'–'}</div></div><div><div class="k">CRITICALITY</div><div class="v">${a.crit}</div></div><div><div class="k">AGE</div><div class="v">${a.age} yrs</div></div></div>
+    <div class="ia-body">
+      ${st?`<div class="stopbox"><b>Stopped ${shortDay(st.s)} · ${esc(st.c.toLowerCase())}</b><span>${h1(st.h)} h total${st.pw>0?`, including ${h1(st.pw)} h waiting for a part that wasn't on the shelf`:''}. ${tagO}</span></div>`:''}
+      ${fl.flag&&!st?`<span class="mono">EARLY WARNING · VIBRATION, LAST 7 DAYS</span>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="days" aria-label="Last 7 days">${days.join('')}</div><b style="font-size:13px">${fl.alerts} of 7 days above 1.3× normal</b></div>
+        <p>Signals: ${flagEvidence(fl)}. Recommendation on file: <b>have a bearing/seal kit ready.</b> Advisory only; it never authorizes work.</p>
+        <span class="mono" style="margin-top:4px">INTERVENTION DECISION · PLANNER</span>${decide}`:''}
+      ${!st&&!fl.flag?`<p>Running. No early-warning flag or stoppage as of ${prettyDay(S.day)}.</p>`:''}
+      <span class="mono" style="margin-top:6px">VIBRATION · LAST 60 DAYS</span>
+      <canvas id="aChart" height="150"></canvas>
+      <p class="muted small">Vibration ÷ normal, readings received by the replay day only. Dashed line = 1.3× flag level. Red ticks = unplanned stops.</p>
+      <details class="more"><summary>Evidence: last 7 days (received readings only)</summary><div><table><tr><th>Day</th><th class="n">Vibration</th><th>Note</th></tr>${rows.join('')}</table>${fl.gap?'<div class="banner">Data gap: fewer than 6 of the last 7 readings have been received.</div>':''}</div></details>
+      ${dec.length?`<span class="mono" style="margin-top:6px">DECISIONS ON THIS ASSET</span>${dec.map(l=>`<div class="small">${l.ts.slice(0,16).replace('T',' ')} · ${esc(l.role)} · <b>${esc(l.action)}</b> · ${esc(l.reason||'')}</div>`).join('')}`:''}
+    </div>`;
 }
 function renderInsp(){
-  if(!S.sel){$('#inspBody').innerHTML='';$('#inspCrumb').innerHTML='';return}
-  const isA=S.sel.type==='asset';
-  $('#inspCrumb').innerHTML=isA?`<button class="crumb ghost" data-act="back">${ico('back')} ${siteBy[assetBy[S.sel.id].site].name}</button>`:`<span class="eyebrow">Inspector</span>`;
-  const keep=$('#inspBody').scrollTop;
-  $('#inspBody').innerHTML=isA?assetView(S.sel.id):siteView(S.sel.id);
-  $('#inspBody').scrollTop=keep;
-  if(isA)drawAssetChart();
+  const body=$('#inspBody'),keep=body.scrollTop,key=S.sel?S.sel.type+':'+S.sel.id:'overview';
+  $('#inspCrumb').innerHTML='';
+  body.innerHTML=!S.sel?inspOverview():S.sel.type==='asset'?assetView(S.sel.id):siteView(S.sel.id);
+  body.scrollTop=body._key===key?keep:0;body._key=key;
+  if(S.sel&&S.sel.type==='asset')drawAssetChart();
+  renderDialog();renderAI(false);
 }
 function onInspClick(e){
   const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act;
   if(act==='back'){selectSite(assetBy[S.sel.id].site);return}
+  if(act==='desel'){deselect();S.hl=[];return}
+  if(act==='site'){selectSite(b.dataset.site);return}
   if(act==='asset'){selectAsset(b.dataset.a);return}
+  if(act==='page'){nav(b.dataset.p);return}
   if(act==='siteDash'){nav('site/'+b.dataset.site);return}
-  if(act==='openVerify'){UI.verifyOpen=UI.verifyOpen===b.dataset.g?null:b.dataset.g;renderInsp();if(UI.verifyOpen)focusEvidence();return}
   handleAction(b);
 }
+/* ---------- dialogs: HSE sign-off and planner decision share one modal, keyed so a replay tick never wipes a half-typed form ---------- */
+let dlgKey=null;
+const dlgOpen=()=>!!dlgKey;
+function renderDialog(){
+  const g=UI.verifyOpen&&S.role==='Site HSE supervisor'?D.gates.find(x=>x.id===UI.verifyOpen&&!S.verified[x.id]):null;
+  const aid=!g&&UI.decideOpen&&S.role==='Planner'?UI.decideOpen:null,key=g?'v:'+g.id:aid?'d:'+aid:null;
+  if(key===dlgKey)return;
+  dlgKey=key;const box=$('#dlg'),scrim=$('#dlgScrim');
+  if(!key){scrim.classList.remove('on');box.innerHTML='';return}
+  if(g){const s=siteBy[g.site];
+    box.innerHTML=`<div class="dlg-h">HSE SIGN-OFF · ${s.name.toUpperCase()} SAFETY HOLD<span>${g.id}</span></div>
+      <div class="dlg-b"><h2 class="dlg-t" id="dlgTitle">${esc(g.gap)}</h2><p class="dlg-s">${esc(g.hazard)} · ${isOverdue(g)?'overdue since':'due'} ${prettyDate(g.due)} · ${usd(g.setup)} · ${g.hrs} person-hours</p>${verifyFormHtml(g)}</div>`;
+  }else{const a=assetBy[aid],s=siteBy[a.site],fl=flagFor(D.series[aid],S.day);
+    box.innerHTML=`<div class="dlg-h ink">INTERVENTION DECISION · ${a.crit==='High'?'P2':'P3'}</div>
+      <div class="dlg-b"><h2 class="dlg-t big2" id="dlgTitle">${aid} · ${a.type}, ${s.name}</h2><p class="dlg-s">${fl.flag?`Early warning: ${flagEvidence(fl)}.`:'No readiness flag on the replay day.'} ${a.crit} criticality, ${a.age} years old. Recommendation on file: have a bearing/seal kit ready.</p>${decideFormHtml(aid)}</div>`;
+  }
+  scrim.classList.add('on');
+  setTimeout(()=>{const f=box.querySelector(g?'.f-note':'.d-reason');if(f)f.focus()},40);
+}
+function closeDialog(){UI.verifyOpen=null;UI.decideOpen=null;UI.workOpen=null;renderDialog();refreshViews()}
+$('#dlgScrim').addEventListener('click',e=>{if(e.target.id==='dlgScrim')closeDialog()});
+$('#dlg').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b)handleAction(b)});
 $('#inspBody').addEventListener('click',onInspClick);
 $('#inspCrumb').addEventListener('click',onInspClick);
 function celebrate(sid){
@@ -2404,6 +3014,7 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();palOpen?closePalette():openPalette();return}
   if(e.key==='Escape'){
     stopSpeaking();
+    if(dlgOpen()){closeDialog();return}
     if(palOpen)closePalette();else if(sheetOpen)closeSheet();else if($('#bellPop').classList.contains('on'))closeBell();
     else if(document.body.classList.contains('insp-open')){deselect();S.hl=[]}else if(UI.presenter)togglePresenter(false);
     return;
@@ -2428,8 +3039,10 @@ function go(p){
   if(!PAGES[p]||(p==='site'&&!UI.siteId))p='overview';
   const was=UI.route;UI.page=p;UI.route=p==='site'?'site/'+UI.siteId:p;
   Object.keys(PAGES).forEach(x=>document.body.classList.toggle('page-'+x,x===p));
-  const navP=p==='site'?'map':p;
-  $$('#side [data-page]').forEach(a=>{const on=a.dataset.page===navP;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  $$('#side [data-page]').forEach(a=>{const on=a.dataset.page===(p==='site'?'map':p);a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  $$('.hnav [data-page]').forEach(a=>{const on=a.dataset.page===p;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  const selSid=S.sel?(S.sel.type==='site'?S.sel.id:assetBy[S.sel.id].site):null;
+  $('#navTrends').setAttribute('href','#/site/'+(p==='site'?UI.siteId:selSid||UI.siteId||'S04'));
   const title=p==='site'?siteBy[UI.siteId].name+' trends':PAGES[p];
   $('#crumbPage').textContent=title;document.title=p==='overview'?'Parvius':`${title} · Parvius`;
   if(p==='map')requestAnimationFrame(()=>{resize3d();frameTargets(true);drawSpark()});else stopTour();
@@ -2439,7 +3052,9 @@ function go(p){
   if(was!==UI.route){const pg=$('#pg-'+p);if(pg)pg.scrollTop=0}
 }
 function nav(p){go(p);if(location.hash!=='#/'+UI.route)location.hash='#/'+UI.route}
-$('#side').addEventListener('click',e=>{const b=e.target.closest('[data-sheet-open]');if(b)openSheet(b.dataset.sheetOpen)});
+['#side','.hnav'].forEach(s=>$(s).addEventListener('click',e=>{const b=e.target.closest('[data-sheet-open]');if(b)openSheet(b.dataset.sheetOpen)}));
+// the Trends link follows whatever site is in view, so it is current when clicked
+$('#navTrends').addEventListener('click',()=>{const sid=S.sel?(S.sel.type==='site'?S.sel.id:assetBy[S.sel.id].site):UI.siteId||'S04';$('#navTrends').setAttribute('href','#/site/'+sid)});
 window.addEventListener('hashchange',()=>{const p=location.hash.replace(/^#\/?/,'');if(p!==UI.route)go(p)});
 function showOnMap(kind,id){nav('map');if(UI.mode!=='explore')setMode('explore');kind==='site'?selectSite(id):selectAsset(id)}
 function updateDateChip(){$('#dateLbl').textContent=prettyDay(S.day);$('#dayBack').disabled=S.day<=6;$('#dayFwd').disabled=S.day>=364}
@@ -2613,10 +3228,10 @@ function gateCard(it){
     <p class="wc-say">Confirm closed: <b>${esc(g.gap)}</b> <span class="muted">(${esc(g.hazard)})</span></p>
     <div class="wc-meta"><span>${isHSE?'You':'HSE supervisor'}</span><span class="${over?'bad':''}">${over?'Overdue since':'Due'} ${prettyDate(g.due)}</span><span>${usd(g.setup)} · ${g.hrs} person-hours</span></div>
     <div class="wc-impact${it.last?'':' muted'}">${it.last?`Last check at ${s.name}: closing it unlocks ${fmt(steady(it.sid))} h/yr ${tagM}`:`${it.left} checks left before ${s.name} can stock spare parts`}</div>
-    <div class="wc-act">${isHSE?`<button class="${open?'':'brand'}" data-wk="toggle" data-k="${it.k}">${open?'Cancel':'Verify'}</button>`
+    <div class="wc-act">${isHSE?`<button class="brand" data-act="openVerify" data-g="${g.id}">Verify ${g.id}</button>`
+      :S.role==='Manager'?`<button disabled title="Managers can view checks but not sign them">View only · HSE supervisor signs</button>`
       :`<button class="locked" data-act="beHSE" data-g="${g.id}" title="Only a site HSE supervisor can verify. Click to act as one.">${ico('lock')} Verify as HSE supervisor</button>`}
       <button class="ghost" data-wk="map" data-site="${it.sid}">Show on map</button></div>
-    ${isHSE&&open?verifyFormHtml(g):''}
   </div>`;
 }
 function flagCard(it){
@@ -2627,10 +3242,10 @@ function flagCard(it){
     <span class="spark-wrap">${sparkSvg(a.id)}<span>vibration, last 30 days</span></span>
     <div class="wc-meta"><span>${isPL?'You':'Planner'}</span><span>${a.crit} criticality</span><span>${a.age} years old</span></div>
     ${hold?`<div class="wc-wait">Blocked: ${s.name} is on safety hold. Waiting on ${o.map(g=>g.id).join(' and ')}. <button data-wk="jump" data-k="g:${o[0].id}">See the checks</button></div>`:''}
-    <div class="wc-act">${isPL?`<button class="${open?'':'primary'}" data-wk="toggle" data-k="${it.k}">${open?'Cancel':'Decide'}</button>`
+    <div class="wc-act">${isPL?`<button class="primary" data-act="openDecide" data-a="${a.id}">Decide</button>`
+      :S.role==='Manager'?`<button disabled title="Managers can view flags but not decide them">View only · the planner decides</button>`
       :`<button class="locked" data-act="bePL" data-k="${it.k}" title="Only the planner decides. Click to act as the planner.">${ico('lock')} Decide as Planner</button>`}
       <button class="ghost" data-wk="map" data-asset="${a.id}">Show on map</button></div>
-    ${isPL&&open?decideFormHtml(a.id):''}
   </div>`;
 }
 function doneCard(l){
@@ -2645,7 +3260,7 @@ function doneCard(l){
     <p class="wc-say">${esc(l.role)} chose to <b>${esc(l.action.toLowerCase())}</b> for the ${esc(s.name)} ${esc(assetBy[l.asset].type.toLowerCase())}.</p>
     <div class="wc-meta"><span>Reason: ${esc(l.reason)}</span>${l.kit?`<span>Kit: ${esc(l.kit)}</span>`:''}</div></div>`;
 }
-function renderWorkBadge(){const m=workModel();$('#workBadge').textContent=m.now.length||''}
+function renderWorkBadge(){const n=workModel().now.length||'';$$('#workBadge,#workBadge2').forEach(e=>e.textContent=n)}
 const ownerOf=it=>it.type==='gate'?'Site HSE supervisor':'Planner';
 $('#wkFilter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;UI.wkMine=b.dataset.f==='mine';renderWork()});
 function renderWork(){
@@ -2669,7 +3284,7 @@ function renderWork(){
     <div class="prog"><span>Sites cleared</span><b>${el} of 6</b></div><div class="pbar"><i style="width:${el/6*100}%"></i></div>
     <div class="prog"><span>Prize unlocked ${tagM}</span><b>${fmt(unl)} of ${fmt(tot)} h/yr</b></div><div class="pbar"><i style="width:${unl/tot*100}%"></i></div>
     <div class="prog"><span>Planner decisions logged</span><b>${dec}</b></div>`;
-  $('#workBadge').textContent=all.now.length||'';
+  $$('#workBadge,#workBadge2').forEach(e=>e.textContent=all.now.length||'');
 }
 function flashCard(k){const el=document.getElementById(cardId(k));if(!el)return;el.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'center'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
 $('#pg-work').addEventListener('click',e=>{
@@ -2691,7 +3306,7 @@ $('#pg-work').addEventListener('click',e=>{
 UI.sd={grain:'month',upTo:false,peaks:false,hide:{},pick:null,cmpA:null,cmpB:null,sort:{k:'s',dir:-1}};
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTH_RANGES=MON.map((m,k)=>[Math.round((Date.UTC(2025,k,1)-BASE)/864e5),Math.round((Date.UTC(2025,k+1,1)-BASE)/864e5)-1]);
-const SD_COLS=[PAL.info,PAL.violet,'#1F8A8A'];
+const SD_COLS=['#1d1f20','#5980a6','#98989b'];
 const PERIODS=[
   ...MON.map((m,k)=>({id:'m'+k,lbl:m+' 2025',r:MONTH_RANGES[k]})),
   ...[0,1,2,3].map(q=>({id:'q'+q,lbl:`Q${q+1} (${MON[q*3]}–${MON[q*3+2]})`,r:[MONTH_RANGES[q*3][0],MONTH_RANGES[q*3+2][1]]})),
@@ -2857,7 +3472,7 @@ function renderSite(){
       <div class="panel-h"><h2>Vibration by ${g}</h2><span class="muted small">× each asset's normal level</span></div>
       <div class="sd-legend">${assets.map((a,k)=>`<button data-sd="toggle" data-a="${a.id}" class="${UI.sd.hide[a.id]?'off':''}" aria-pressed="${!UI.sd.hide[a.id]}"><i class="sd-sw" style="background:${SD_COLS[k%3]}"></i>${a.id} · ${a.type}</button>`).join('')}${g==='day'?'':`<span class="spacer"></span><button data-sd="peaks" class="${UI.sd.peaks?'':'off'}" aria-pressed="${UI.sd.peaks}" style="text-decoration:none">Highest reading each ${g}</button>`}</div>
       <div class="sd-chart"><canvas id="sdVib" role="img" aria-label="Vibration by ${g} for each ${s.name} asset"></canvas><div class="sd-tip"></div></div>
-      <div class="sd-key"><span>${g==='day'?'One line per asset, one point per daily reading':`Solid line = ${g}ly average${UI.sd.peaks?', dashed = highest reading':''}`}</span><span><i class="sd-sw" style="background:${PAL.flag}"></i>1.3× flag level</span><span><i class="sd-sw" style="background:${PAL.brand}"></i>stop</span><span><i class="sd-sw" style="background:${PAL.magenta}"></i>stop that waited for parts</span><span><i class="sd-sw" style="background:${PAL.brand};width:2px"></i>replay day</span></div>
+      <div class="sd-key"><span>${g==='day'?'One line per asset, one point per daily reading':`Solid line = ${g}ly average${UI.sd.peaks?', dashed = highest reading':''}`}</span><span><i class="sd-sw" style="background:${PAL.flag}"></i>1.3× flag level</span><span><i class="sd-sw" style="background:${MAPC.ink}"></i>stop</span><span><i class="sd-sw" style="background:${MAPC.red}"></i>stop that waited for parts</span><span><i class="sd-sw" style="background:${MAPC.red};width:2px"></i>replay day</span></div>
     </div>
     <div class="sd-grid">
       <div class="panel"><div class="panel-h"><h2>Downtime by ${g}</h2><span class="muted small">hours by stage · click a bar to list its stops</span></div>
@@ -2900,7 +3515,7 @@ function drawSiteCharts(){
   const evAt=i=>ev.filter(e=>{const d=Math.floor(e.s);return d>=B[i].d0&&d<=B[i].d1});
   drawChart($('#sdVib'),{n,h:280,yMin:Math.max(0,Math.floor(lo*10)/10-0.1),yMax:Math.ceil(hi*10)/10+0.1,yFmt:v=>v.toFixed(1)+'×',xTicks,series,band,cursor,cursorLbl,
     refs:[{y:1,color:PAL.faint},{y:1.3,color:PAL.flag,dash:[5,4],label:'1.3× flag level'}],
-    marks:ev.map(e=>({x:sdPos(B,e.s),color:e.pw>0?PAL.magenta:PAL.brand})),
+    marks:ev.map(e=>({x:sdPos(B,e.s),color:e.pw>0?MAPC.red:MAPC.ink})),
     hover:i=>`<b>${B[i].lbl}</b>`+assets.map((a,k)=>{const x=vs[k][i];return `<div><i class="sd-sw" style="background:${SD_COLS[k%3]}"></i>${a.id} ${x.mean==null?'<span class="muted">no reading</span>':grain==='day'?x.mean.toFixed(2)+'×':`avg ${x.mean.toFixed(2)}× · peak ${x.max.toFixed(2)}×${x.flag?` · ${nOf(x.flag,'day','days')} over 1.3×`:''}`}</div>`}).join('')+(()=>{const e2=evAt(i);return e2.length?`<div class="muted">${nOf(e2.length,'stop','stops')}: ${e2.map(e=>e.a).join(', ')}</div>`:''})()});
   // downtime and parts
   const evB=B.map((b,i)=>evStats(evAt(i)));
@@ -2937,13 +3552,66 @@ $('#pg-site').addEventListener('change',e=>{
   if(id==='sdCmpA'||id==='sdCmpB'){UI.sd[id==='sdCmpA'?'cmpA':'cmpB']=e.target.value;$('#sdCmp').innerHTML=sdCompare(UI.siteId)}
 });
 
+/* ======================= Parvis analysis column ======================= */
+// Answers come from the same engine as the Ctrl K palette (interpret), so the column adds no new figures.
+UI.aiOpen=false;UI.aiAns=null;
+try{UI.aiOpen=localStorage.getItem('pv-ai-open')==='1'}catch(e){}
+function aiChips(){
+  const holds=SITE_ORDER.filter(s=>stat(s)==='HOLD'),selSid=S.sel?(S.sel.type==='site'?S.sel.id:assetBy[S.sel.id].site):null;
+  const hs=selSid&&stat(selSid)==='HOLD'?selSid:holds.slice().sort((a,b)=>steady(b)-steady(a))[0];
+  const q=[['What should happen next?','What should I do?'],
+    [hs?`Why is ${siteBy[hs].name} on hold?`:'Which sites are on hold?',hs?`What unlocks ${siteBy[hs].name}?`:'What is blocking the sites?'],
+    ['How much downtime is parts-related?','What is the biggest problem?'],['Brief me','Brief me']];
+  if(S.sel&&S.sel.type==='asset')q.push([`Explain ${S.sel.id}`,`Tell me about ${S.sel.id}`]);
+  else if(selSid)q.push([`Explain ${siteBy[selSid].name}`,`Tell me about ${siteBy[selSid].name}`]);
+  return q;
+}
+function aiRun(label,q,apply){
+  let ans;try{ans=interpret(q)}catch(e){console.error(e);ans={say:'I hit an error reading the plant data, so I am staying quiet rather than guess.'}}
+  if(!ans||ans.stop||ans.silent)return;
+  if(ans.ctx){if(ans.ctx.site)agLast.site=ans.ctx.site;if(ans.ctx.asset)agLast.asset=ans.ctx.asset}
+  UI.aiAns={label,q,ans,day:S.day};renderAI(true);
+  if(apply)applyAct(ans.act);
+}
+function renderAI(full){
+  document.body.classList.toggle('ai-open',!!UI.aiOpen);
+  $('#aiTab').setAttribute('aria-expanded',!!UI.aiOpen);
+  const holds=SITE_ORDER.filter(s=>stat(s)==='HOLD').length;
+  $('#aiTeaser').textContent=holds?`${nOf(holds,'hold','holds')} · ${fmt(sumSteady()-unlockedH())} h/yr locked`:'All sites cleared';
+  if(!UI.aiOpen)return;
+  const chips=aiChips(),cur=UI.aiAns&&UI.aiAns.label;
+  $('#aiChips').innerHTML=chips.map(([l,q])=>`<button class="${l===cur?'on':''}" data-aiq="${esc(q)}" data-ail="${esc(l)}">${esc(l)}</button>`).join('');
+  if(!UI.aiAns){aiRun(chips[0][0],chips[0][1],false);return}
+  const stale=UI.aiAns.day!==S.day,asOf=`AS OF ${prettyDay(UI.aiAns.day).toUpperCase()}${stale?' · <button class="linkbtn" data-airef style="font:inherit;min-height:0">REFRESH FOR '+prettyDay(S.day).toUpperCase()+'</button>':''}`;
+  if(!full){const el=$('#aiAsOf');if(el)el.innerHTML=asOf;return}
+  const {label,ans}=UI.aiAns,card=ans.card||'',sents=((ans.say||'').match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)/g)||[ans.say]).map(s=>s.trim()).filter(Boolean);
+  const hasO=/tag obs/.test(card),hasM=/tag mod/.test(card);
+  $('#aiAns').innerHTML=`<h3 class="ai-q">${esc(label)}</h3><span class="mono" id="aiAsOf">${asOf}</span>
+    ${sents.map((s,i)=>`<div class="ai-ln"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${esc(s)}</span></div>`).join('')}
+    ${hasO||hasM?`<div class="ai-tags">${hasO?'<span class="tag obs">RECORDED</span>':''}${hasM?'<span class="tag mod">MODELED</span>':''}</div>`:''}
+    ${card?`<details class="more ai-src"><summary>Show figures &amp; sources</summary><div>${card}</div></details>`:''}
+    ${ans.follow&&ans.follow.length?`<div class="ai-follow">${ans.follow.map(f=>`<button data-aiq="${esc(f)}" data-ail="${esc(f)}">${esc(f)}</button>`).join('')}</div>`:''}`;
+}
+function setAI(open){
+  UI.aiOpen=open;try{localStorage.setItem('pv-ai-open',open?'1':'0')}catch(e){}
+  renderAI(true);setTimeout(()=>{resize3d();frameTargets();drawSiteCharts();if(UI.page==='site')renderSite()},30);
+  if(open)setTimeout(()=>$('#aiClose').focus(),40);else $('#aiTab').focus();
+}
+$('#aiTab').addEventListener('click',()=>setAI(true));
+$('#aiClose').addEventListener('click',()=>setAI(false));
+$('#ai').addEventListener('click',e=>{
+  const b=e.target.closest('[data-aiq]');if(b){aiRun(b.dataset.ail,b.dataset.aiq,false);return}
+  if(e.target.closest('[data-airef]')&&UI.aiAns)aiRun(UI.aiAns.label,UI.aiAns.q,false);
+});
+$('#aiAsk').addEventListener('submit',e=>{e.preventDefault();const v=$('#aiQ').value.trim();if(!v)return;$('#aiQ').value='';aiRun(v,v,true)});
+
 /* ---------- boot ---------- */
 function renderAll(){
   Object.keys(vis).forEach(s=>{vis[s]=stat(s)==="HOLD"?1:vis[s]});
-  renderPrize(false);renderDock();renderInsp();renderLog();renderHSE();renderPlan();renderRoll();renderStory();renderWorkBadge();
+  renderPrize(false);renderDock();renderInsp();renderLog();renderHSE();renderPlan();renderRoll();renderStory();renderWorkBadge();renderTimeline();renderAI(true);
   if(UI.page==='overview')renderOverview();if(UI.page==='work')renderWork();if(UI.page==='site')renderSite();
 }
-window.addEventListener("resize",()=>{resize3d();drawSpark();drawSiteCharts()});
+window.addEventListener("resize",()=>{resize3d();drawSpark();drawSiteCharts();if(S.sel&&S.sel.type==='asset')drawAssetChart()});
 resize3d();frameTargets(true);setRole(S.role);setDay(S.day);renderAll();setPlayIcon();setMode(UI.mode);go(location.hash.replace(/^#\/?/,''));requestAnimationFrame(loop);
 </script>
 </body>
