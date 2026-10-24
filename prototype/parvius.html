@@ -1460,6 +1460,17 @@ function aFlags(){
   const f=facts(),ok=f.flagged.filter(id=>stat(assetBy[id].site)!=='HOLD'),hd=f.flagged.filter(id=>stat(assetBy[id].site)==='HOLD');
   return {say:`${f.flagged.length} readiness flags on ${f.dn}. ${ok.length?`Actionable at cleared sites: ${lst(ok.map(aName))}. `:'None at cleared sites. '}${hd.length?`Advisory only at held sites: ${lst(hd.map(aName))}. `:''}A flag means vibration above 1.3 times normal or an operator noise note in the last 7 days. It suggests pre-staging a bearing and seal kit; it never authorizes work.`,card:basis(`${tagO} readings received by ${f.dn}`),act:{hl:f.flagged},follow:ok.length?[`Tell me about ${aName(ok[0])}`,'What does it cost?']:['What is blocking the sites?','What should we do?']};
 }
+function aTasks(){
+  const m=workModel(),role=S.role,gates=m.now.filter(it=>it.type==='gate'),flags=m.now.filter(it=>it.type==='flag');
+  const bySite={};gates.forEach(it=>{bySite[it.sid]=(bySite[it.sid]||0)+1});
+  const sites=Object.keys(bySite),top=sites[0];
+  const b=m.blocked.length,held=b?` ${flags.length?`${b} more`:b} readiness flag${b>1?'s are':' is'} waiting behind safety holds.`:'';
+  let say;
+  if(role==='Manager') say=`As a manager you don't own tasks. ${m.now.length?`Open right now: ${gates.length} safety check${gates.length===1?'':'s'} for the HSE supervisor and ${flags.length} readiness flag${flags.length===1?'':'s'} for the planner.`:'Nothing is open right now.'}${held}`;
+  else if(role==='Site HSE supervisor') say=gates.length?`You have ${gates.length} safety check${gates.length===1?'':'s'} to verify: ${lst(sites.map(s=>`${siteBy[s].name}'s ${bySite[s]}`))}. Start with ${siteBy[top].name}: clearing it unlocks about ${Math.round(steady(top))} hours a year of avoided downtime.`:'You have no safety checks left to verify. Every site is cleared.';
+  else say=flags.length?`You have ${flags.length} readiness flag${flags.length===1?'':'s'} to decide: ${lst(flags.map(it=>aName(it.a.id)))}. Each one asks whether to have a bearing or seal kit ready.${held}`:`You have no readiness flags to decide at cleared sites.${held}`;
+  return {say,act:{page:'work'},follow:['What is blocking the sites?','Brief me']};
+}
 function aHelp(){return {say:`I'm Parvis, the plant's briefing agent. Ask me what's going on, about any site or asset, what the problem is, what we should do and what it costs, what's blocking the sites, or what if the closures slip. Pick a stakeholder above and I'll tailor the briefing: plant manager, parts planner, HSE supervisor or executive.`,card:'',follow:['Brief me','What is the biggest problem?','What should we do?','What is blocking the sites?']}}
 function aRefuse(q){return {say:`I can't do that. I brief and recommend, but I never lift a hold, verify a closure, approve work, or authorize maintenance. Only a site HSE supervisor can record verified closure, and only a planner can approve pre-staging, with a logged reason. I can tell you exactly what would unlock the site.`,follow:['What is blocking the sites?','What unlocks Arroyo?']}}
 
@@ -1516,6 +1527,7 @@ function interpret(raw){
   if(day!==null&&!/month\s*\d/.test(q)){setDay(day);const r=aBrief(sk);r.say=`Jumped to ${dayStr(day)}. `+r.say;return r}
   if(/\b(replay|play the year|play 2025|start the replay)\b/.test(q)){$('#play').click();return {say:'Replaying 2025. Say stop, or use the pause button, whenever you like.',act:{overview:true},follow:['Brief me']}}
   if(/\bwhat if\b|\bsuppose\b|\bif we\b|\bif the\b|\bif closures\b|\bif .* slip|\bdelay|\bslip/.test(q)&&(/month|low|high|base|pilot|optimis|pessimis|conservative|slip|delay/.test(q))) return aWhatIf(q);
+  if(/\b(my (tasks?|list|work|jobs?|to ?do)|to ?do list|what (should|do|can) i do|what('s| is) on my (plate|list)|who (needs|has) to do|work board|open tasks|tasks)\b/.test(q)) return aTasks();
   if(asset&&!/\b(cost|rollout)\b/.test(q)) return aAsset(asset,sk);
   const sc={};for(const [k,words] of Object.entries(KW)){sc[k]=words.reduce((a,w)=>a+(q.includes(w)?w.length:0),0)}
   let best=Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
@@ -1537,6 +1549,8 @@ function goMap(){closeSheet()}
 function camGoal(g){cam.goal=g}
 function applyAct(a){
   if(!a) return;
+  if(a.page){nav(a.page);return}
+  if((a.focus||a.hl)&&UI.page!=='map'){nav('map');if(UI.mode!=='explore')setMode('explore')}
   S.hl=[];
   if(a.overview){goMap();camGoal({yaw:-0.55,pitch:0.78,dist:56,tx:0,tz:0});deselect()}
   if(a.focus){goMap();const isA=/^A\d/.test(a.focus),sid=isA?assetBy[a.focus].site:a.focus;
