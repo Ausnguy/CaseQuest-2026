@@ -123,7 +123,7 @@ The AI field-report chat is **not** on this diagram. It's an optional prototype 
 
 - **Training:** console training for planners and storekeepers (within the 20 install hours per site; our assumption). HSE supervisors get the verification step.
 - **Pilot measures** (our proposal):
-  - **Leading KPI: Canyon spare fill %**, measured weekly. Baseline 78%. Across sites, the share of breakdowns that wait ≈ 1 − fill, so a fill of about 90% points to about 10% waiting.
+  - **Leading KPI: Canyon spare fill %**, measured weekly. Baseline 78%. Across sites, the share of breakdowns that wait ≈ 1 − fill, so a fill of about 90% points to roughly 10% waiting. This is approximate: it applies the six-site pattern to one site.
   - **Outcome KPI: parts-wait hours per breakdown**, baseline 4.24. Treat it as directional only. Canyon has about 4 breakdowns a month and only about 1 in 5 waits, so a 3-month average is too noisy to decide on.
 
 | Decision | Condition |
@@ -211,7 +211,7 @@ The AI field-report chat is **not** on this diagram. It's an optional prototype 
 3. **HSE gate:** as a Planner, try to unlock, and it can't be done. Switch to Supervisor, verify both actions, and Arroyo turns ELIGIBLE.
 4. **Business case:** move the verification month from 3 to 6, and year 1 drops from 666 h to 483 h.
 
-The AI chat is only shown if it's working by the 12:00 freeze. Otherwise the video covers it.
+The AI chat is only shown if it's working by the 12:00 freeze. Otherwise skip it.
 
 ## Q&A (3:00): who takes what
 | Topic | Lead |

@@ -26,7 +26,7 @@ Highlighted Arroyo card (red): "Arroyo: 30% of all downtime · 40% of parts-wait
 
 SLIDE 2 — tag "Data analysis · Austin"
 Headline: "Six messy exports → clean, checked, reproducible."
-Left list: "6,594 duplicate sensor rows removed" · "8 scrambled IDs fixed" · "4 °F temps converted" · "4 missing durations + 3 missing potentials rebuilt with the case formulas" · "339 missing readings left blank — never guessed" · "14 unpaid parts invoices kept unknown, not $0".
+Left list: "6,594 duplicate sensor rows removed" · "8 scrambled IDs fixed" · "4 °F temps converted" · "4 missing durations + 3 missing potentials rebuilt with the case formulas" · "339 missing readings left blank — never guessed" · "14 pending parts invoices kept unknown, not $0".
 Right: green badge "39 / 39 checks pass · 99 automated tests · AI-agent skeptical audit (4 rounds)".
 Footer (small): "Limits: synthetic data · daily snapshots · 6 sites (n=6)".
 
