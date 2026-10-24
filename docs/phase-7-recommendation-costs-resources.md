@@ -31,13 +31,14 @@
 | Critical spares (O4) × 6 sites, $28,000 + $3,000/yr each | $168,000 | $18,000 |
 | HSE backlog, 11 open actions (needed regardless of the recommendation) | $59,500 | $1,500 |
 | of which the 6 severity-5 actions that unlock the pilot | $33,000 | $1,500 |
-| Training (306 person-hours, see section 3) | absorbed in project hours | absorbed |
+| Training effort (306 person-hours, see section 3) | in project hours | in project hours |
 | Extra help | $0 in base case | $0 |
 | **Total ask** | **$227,500** | **$19,500** |
 
-**Prerequisites.** O4 has none (Solutions sheet). Digital training (O6) is required only for O1 or O3, so its fees are not charged. **Training effort is still counted in hours** (technicians × training hours per person, once per site) and is charged against each site's project hours. This **corrects phase 4**, which assumed training fit inside the 20 install hours.
+**Prerequisites.** O4 has none (Solutions sheet). Digital training (O6) is required only for O1 or O3, so its fees are not charged in the base case. **Training effort is the base case in hours** (technicians × training hours per person, once per site, 306 in total) and is charged against each site's project hours, as the ReadMe's resource and training rows require. Phase 4 uses the same figures.
 
 **Sensitivities (not in the ask):**
+- Charge O6 digital-training fees anyway: +$36,000 upfront, +$7,200/yr ($6,000 + $1,200 per site), with no extra modeled hours.
 - Live ERP/historian integration in Phase 1 (O2): $267,500 upfront, $37,500/yr, no extra modeled hours.
 - Site cleanup at all six sites, if a reviewer treats the planner review step as the O3 workflow: +$68,000 upfront.
 
@@ -61,7 +62,7 @@ Every site fits its project-hour budget. **Arroyo is the tight one**: two techni
 
 - **Annual avoided unplanned downtime:** 968 hours at full implementation (14.7% of the 6,599 hours), range 565 to 1,210 (35% to 75% parts-wait reduction).
 - **Assumptions:** the base 60% parts-wait reduction applies to all unplanned events at live sites; stage hours are original × (1 − reduction); protected repair time is untouched; one-month lead time per site; benefit begins the month after a site goes live.
-- **Margin:** about $842k a year, valued at about $870 per avoided hour using the ReadMe contribution formula. A modeled margin, not cash. No repair-cost savings are claimed (maintenance cost data is incomplete: pending invoices stay unknown, not zero).
+- **Margin:** about $842k a year, valued at about $870 per avoided hour using the ReadMe contribution formula. A modeled margin, not cash. No repair-cost savings are claimed (14 of 385 work orders have pending parts invoices, which stay unknown, not zero, and historical maintenance is not automatically avoided).
 - **First year is lower than steady state:** 666 hours if closures are verified by month 3 (range 483 at month 6 to 788 at month 1; low-to-high reduction case 388 to 832).
 
 | Site | Steady-state h/yr | Modeled margin | Upfront (O4 + site HSE) | Annual | Payback at steady state |

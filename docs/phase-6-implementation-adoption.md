@@ -19,7 +19,7 @@ Year-one result: 666 hours if closures are verified by month 3. If verification 
 
 ## 2. Training and resources (slide 9)
 
-The ReadMe defines training effort as technicians × training hours per person, once per site. Install and HSE hours come from phase 4.
+The ReadMe defines training effort as technicians × training hours per person, once per site. Install and HSE hours come from phase 4, which uses the same table.
 
 | Site | Training h | Install + HSE h | Total h | Available h | Headroom |
 |---|---:|---:|---:|---:|---:|
@@ -31,7 +31,7 @@ The ReadMe defines training effort as technicians × training hours per person, 
 | Prairie | 54 | 44 | 98 | 165 | 67 |
 | **Total** | **306** | **208** | **514** | **1,065** | |
 
-Correction to phase 4: training was assumed to fit inside the 20 install hours per site. It does not. Training is 306 hours in total. Every site still fits its budget, but Arroyo has only 20 hours of headroom with two technicians, so schedule its training around the HSE work.
+Training effort (306 hours in total) is the base case and is counted against each site's project hours. Digital-training fees (O6) are not charged, because O6 is required only for O1 or O3; if a reviewer wants them, add $36,000 upfront and $7,200 a year. Every site still fits its budget, but Arroyo has only 20 hours of headroom with two technicians, so schedule its training around the HSE work.
 
 **Training format:** one hour per role on the console, plus a walkthrough of the phone app for engineers.
 
