@@ -131,3 +131,60 @@ CaseQuest2026Dataset.xlsx (raw, read-only, SHA-256 pinned)
 ## 7. Open questions
 - Hosting for judges: a local laptop is enough. Optionally use Streamlit Community Cloud from the public repo. That's a deploy decision for Saturday, and needs the team's OK because it publishes the app.
 - Backup: if the live demo fails, use screenshots of each step (taken by 3:30 PM).
+
+## 8. Additions agreed on 2026-10-24: site map and AI field-report chat
+
+The rationale is in `docs/decisions-log.md`, entry 10.
+
+### Site map (must-have; Austin or Wali, about 1 hour)
+
+On the Overview page, draw six site markers, colored:
+- **red, HOLD:** `sites.pilot_blocked`
+- **amber, issues:** any readiness flag, open HSE action, or spare fill below 70%
+- **green, OK:** none of the above
+
+Clicking or hovering a marker shows a text box with:
+- the site name and gate status
+- its open HSE actions
+- spare fill %
+- parts-wait hours per event
+- the current readiness flags
+- any open field tickets
+- the next step
+
+The layout can be a schematic: no real coordinates are needed, since the sites are fictional.
+
+### AI field-report chat: optional prototype concept, outside the ask (one owner, 9:00–11:00; form fallback if it isn't working by 11:00)
+
+**Scope (per audit):** this is not part of the $227.5k ask and not on the architecture slide. If shown, caption it "prototype concept". It is not O3: it doesn't change detect or dispatch time, and it claims zero hours. A production version (phone-to-operator queue, automatic HSE routing) needs live integration, which comes with Phase 2's O2 data platform.
+
+**Technician page (mobile-friendly).** The tech describes the problem. Claude Haiku 5.5 extracts a ticket with these fields:
+- site
+- asset
+- part
+- condition: missing / worn / corroded / leaking / other
+- urgency
+- an optional photo
+- free text
+
+The tech confirms the ticket before it is submitted.
+
+**Safety backstop (deterministic, in code, not left to the AI; a backstop, not a hazard detector).** Case-insensitive **word-stem** match on `corro`, `rust`, `leak`, `drip`, `gas`, `h2s`, `pressur`, `hiss`, `smell`, `odor`/`odour`, `spill`, `fire`, `smoke` or `spark`. Test it with the demo phrase "compressor A012 at Arroyo, seal looks corroded and leaking" and with "corroded" on its own. When it matches:
+- show a **Stop. Make the area safe and contact your HSE supervisor** banner
+- set the urgency to red
+- route the ticket to both the HSE and operator queues
+
+**Operator page (PC).** A ticket queue. The operator can acknowledge, resolve with a note, or link the ticket to a pre-stage decision. Every action goes to the append-only log.
+
+**Fallback.** If the API is unavailable or no key is set, show the same fields as a plain form.
+
+**Additional rules (acceptance criteria)**
+
+| # | Rule |
+|---|---|
+| R10 | The AI never authorizes work, orders parts, or changes the HSE gate. It only drafts tickets |
+| R11 | The hazard-keyword safety routing is deterministic code with tests. It works even if the AI is down |
+| R12 | No API key in the repo. Read it from the environment, and if it's missing, use the form fallback |
+| R13 | Field tickets claim no avoided hours |
+
+**Cost:** about $2–25 a year of Haiku 5.5 usage at 200–2,000 reports a month (`docs/financial-case.md`).

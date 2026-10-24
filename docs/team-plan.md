@@ -15,21 +15,21 @@
 | **Wali** | Full-stack | Streamlit prototype lead: app structure, deploy and run on the demo laptop | Live demo and architecture (slides 6–7) |
 | **Sidra** | Product | HSE gate, rollout roadmap, training and KPIs; the employee-review workflow in the app | "Safe rollout, training and KPIs" (slides 8–9) |
 
-## Slide skeleton (content set after the strategy decision)
+## Presentation format (updated Oct 24)
 
-| # | Slide | Speaker | Time | Rubric points it earns |
-|---:|---|---|---:|---|
-| 1 | Hook: the cost of downtime at Lone Mesa | Aayan | 0:30 | Problem 15 |
-| 2 | Where the downtime comes from (cause × stage × site) | Austin | 0:45 | Data 20 |
-| 3 | What we checked: data cleaning, reconciliation, early-warning backtest | Austin | 0:40 | Data 20, Bonus 5 |
-| 4 | Our recommendation (one primary plus required supports) | Nick | 0:45 | Recommendation, costs & resources 10 |
-| 5 | Costs, resources and avoided hours (modeled, labeled) | Nick | 0:40 | Recommendation, costs & resources 10 |
-| 6 | Live demo: how an employee uses it | Wali | 1:15 | Tech 20 |
-| 7 | Architecture and workflow visual | Wali | 0:30 | Tech 20 |
-| 8 | HSE gate and responsible use (humans approve; no bypass) | Sidra | 0:45 | HSE 15 |
-| 9 | 12-month roadmap, training, KPIs | Sidra | 0:35 | Implementation 10 |
-| 10 | The ask and expected impact | Aayan | 0:20 | Presentation 10 |
-| | **Total** | | **6:45** | 15-second buffer |
+**Superseded:** the old 10-slide skeleton is replaced by **`docs/presentation-plan.md`**. The new format is:
+- 1-minute video
+- about 1 minute of live demo
+- **10 slides in 5 minutes, in judge-rubric order**
+- 3 minutes of Q&A, separate from the 7 minutes
+
+| Speaker | Slides |
+|---|---|
+| Aayan | 1, 5, 9 |
+| Austin | 2–3 |
+| Wali | 4 + the demo |
+| Nick | 7–8 |
+| Sidra | 6, 10 |
 
 ## Schedule
 
