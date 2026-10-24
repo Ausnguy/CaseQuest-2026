@@ -120,21 +120,29 @@ The full spec is `docs/phase-5-product-design.md`. Build in `app/`, and run with
 
 **Backup:** take screenshots of every demo step by 3:30 PM in case the live demo fails.
 
-## 6. Saturday afternoon
+## 6. Saturday afternoon: the presentation
 
-The slide skeleton, speakers and timing (6:45 total) are in `docs/team-plan.md`.
+**Full plan: `docs/presentation-plan.md`.**
+
+| Segment | Time |
+|---|---:|
+| Video | 1:00 |
+| Live demo | ~1:00 |
+| **10 slides, in judge-rubric order** | **5:00** |
+| Q&A (separate) | 3:00 |
 
 | Speaker | Slides |
 |---|---|
-| Aayan | 1 and 10 |
+| Aayan | 1, 5, 9 |
 | Austin | 2–3 |
-| Nick | 4–5 |
-| Wali | 6–7 |
-| Sidra | 8–9 |
+| Wali | 4 + the demo |
+| Nick | 7–8 |
+| Sidra | 6, 10 |
 
+- ⚠️ **The judge rubric differs from the PDF.** Storytelling is 15 points and HSE is a 5-point bonus. Confirm on Discord which one is final.
 - At least one person must attend the 2:30 pitch workshop.
-- Do 2 or more full dry runs.
-- Everyone should be able to answer the Q&A list at the bottom of `docs/team-plan.md`.
+- Do 2 or more full timed dry runs.
+- Take backup screenshots of the demo by 3:30.
 
 ## 7. Team process rules we agreed
 

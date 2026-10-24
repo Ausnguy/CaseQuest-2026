@@ -15,6 +15,7 @@ This log is for the group. It lists every question Aayan asked, what we decided,
 | 9 | Handoff for the group | `HANDOFF.md` | `HANDOFF.md` |
 | 10 | Add a **site map that shows each site's issues**, plus an **AI chat** where field staff report missing or corroded parts from their phone for an operator to resolve on a PC. Good idea? | **Site map: yes, must-have.** **AI chat: yes, as a timeboxed nice-to-have with guardrails** (see below) | Below, and `docs/phase-5-product-design.md` §8 |
 | 11 | Cost, benefit, payback "and all that jazz", with real sources, planned for the presentation | **$227.5k + $19.5k/yr. Payback in month 8. 3-year net about +$1.98M. Worst case pays back in month 16** | `docs/financial-case.md` |
+| 12 | Plan the 10 slides for 5 minutes (after a 1-minute video and the app demo; Q&A is a separate 3 minutes), in the order of the judges' rubric | Done. **Note:** the judge rubric makes storytelling 15 base points and HSE a 5-point bonus, the reverse of the PDF. We follow the judge rubric; confirm on Discord | `docs/presentation-plan.md` |
 
 ## Entry 10 in full: site map and AI field-report chat
 
