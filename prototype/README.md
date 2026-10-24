@@ -19,6 +19,7 @@ Parvius is Lone Mesa's operations console for the gate-first spare-parts program
 - **Map**: the 3D command center.
   - **Story mode**: six beats (Problem → Why parts → The gate → Unlock it → Payoff → Plan) that fly the camera. In "Unlock it" you verify Arroyo's checks yourself and watch the cage drop and the prize meter count up.
   - **Explore mode**: click any site or asset to open the inspector.
+  - **Site trends** (`#/site/S04`): double-click a site, or use the button in its inspector, to open a full-page dashboard for that site. It shows vibration, downtime by stage and parts-wait by day, week or month; this month against last; any two periods side by side; causes; per-asset stats; and a sortable list of stops. It uses observed 2025 data only. There is one year of data, so there is no year-on-year view. Spare-parts stock has no history, so parts are measured by time spent waiting for them.
   - **Briefings**: Why, Business case (rollout sliders reproduce 666 h year 1 and 968 h steady state at month 3 / base), Safety & guardrails (self-test), Plan & KPIs.
 
 Everywhere:

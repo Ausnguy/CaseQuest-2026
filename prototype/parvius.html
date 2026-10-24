@@ -404,7 +404,7 @@ body.page-map.insp-open .toasts{right:calc(var(--inspW) + 32px)}
 .datechip button.on{background:var(--text);color:#fff}
 body:not(.page-map) .stage,body:not(.page-map) #modeSeg{display:none}
 .page{position:fixed;top:var(--top);left:var(--sideW);right:0;bottom:var(--tabH);overflow:auto;display:none;background:var(--bg)}
-body.page-overview #pg-overview,body.page-work #pg-work{display:block}
+body.page-overview #pg-overview,body.page-work #pg-work,body.page-site #pg-site{display:block}
 .page-inner{max-width:1240px;margin:0 auto;padding:24px 24px 48px}
 .page-inner.wide{max-width:1560px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
@@ -415,6 +415,37 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block}
 .panel-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
 .panel-h h2{margin:0;font-size:16px;font-weight:800}
 .foot-note{font-size:12px;color:var(--muted);max-width:860px;line-height:1.6}
+
+/* site dashboard */
+.sd-back{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;margin:0 0 2px -8px;font-size:13px;color:var(--muted)}
+.sd-ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sd-ctl label{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);white-space:nowrap}
+.sd-ctl select{width:auto;padding:5px 8px}
+.sd-ctl input[type=checkbox]{width:16px;height:16px;margin:0;accent-color:var(--text)}
+.sd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:16px;margin-bottom:16px}
+.sd-grid>.panel{margin-bottom:0}
+.sd-chart{position:relative}
+.sd-chart canvas{display:block;width:100%}
+.sd-tip{position:absolute;display:none;pointer-events:none;z-index:3;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow-lg);padding:7px 10px;font-size:12px;line-height:1.5;white-space:nowrap}
+.sd-sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.sd-legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sd-legend button{font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+.sd-legend button.off{opacity:.45;text-decoration:line-through}
+.sd-key{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.tile .sd-delta{display:block;margin-top:4px;font-size:12px;font-weight:700;color:var(--muted)}
+.tile .sd-delta.bad{color:var(--brand)}.tile .sd-delta.ok{color:var(--ok)}
+.sd-scroll{max-height:440px;overflow:auto}
+.sd-scroll th{position:sticky;top:0;background:#fff;z-index:1}
+.sd-sort{background:none;border:0;padding:0;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;font-weight:inherit}
+.sd-sort:hover:not(:disabled){border:0;color:var(--text)}
+.sd-link{background:none;border:0;padding:0;font-weight:700;color:var(--info)}
+.sd-link:hover:not(:disabled){border:0;text-decoration:underline}
+.sd-chip{display:inline-flex;align-items:center;gap:6px;background:var(--info-tint);color:var(--info);border-radius:99px;padding:2px 3px 2px 10px;font-size:12px;font-weight:700}
+.sd-chip button{padding:2px 8px;font-size:12px;border-radius:99px}
+.sd-cmp-pick{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.sd-cmp-pick select{width:auto;padding:5px 8px}
+td .bad,td .ok{font-weight:700}
+.sd-open{display:inline-flex;align-items:center;gap:6px;margin:0 0 12px}
 
 /* overview */
 .headline{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px 24px 22px;margin-bottom:16px}
@@ -581,7 +612,7 @@ button.who.me{background:var(--panel2);border-radius:8px;padding:8px;margin:0 -8
 body.page-map #play2{display:none}
 /* touch: 44px targets for every standalone control (inline text links stay inline) */
 @media(max-width:620px),(pointer:coarse){
-  button:not(.linkbtn):not(.site):not(.pal-item):not(.dots button):not(.wc-wait button){min-height:44px}
+  button:not(.linkbtn):not(.site):not(.pal-item):not(.dots button):not(.wc-wait button):not(.sd-sort):not(.sd-link){min-height:44px}
   .datechip button,.bell,#vgFab,#roleSeg button,.mapctl button,#narrateBtn,#presentBtn,#vgMic{min-width:44px}
   .seg button{padding:5px 12px}
   .dots button{height:32px}.dots button::before{top:14px}
@@ -776,6 +807,10 @@ body.page-map #play2{display:none}
       </aside>
     </div>
   </div>
+</section>
+
+<section class="page" id="pg-site" aria-label="Site dashboard">
+  <div class="page-inner wide" id="sdRoot"></div>
 </section>
 
 <div class="scrim" id="sheetScrim"></div>
@@ -1186,11 +1221,15 @@ cv.addEventListener('pointerup',e=>{
   drag=null;cv.style.cursor='grab';
 });
 cv.addEventListener('pointerleave',()=>{$('#tip').style.display='none'});
+cv.addEventListener('dblclick',e=>{
+  const r=cv.getBoundingClientRect(),tag=pickAt(e.clientX-r.left,e.clientY-r.top);if(!tag)return;
+  const [t,id]=tag.split(':');nav('site/'+(t==='site'?id:assetBy[id].site));
+});
 cv.addEventListener('wheel',e=>{e.preventDefault();cam.goal=null;cam.dist=Math.min(80,Math.max(18,cam.dist+e.deltaY*0.03))},{passive:false});
 $('#resetCam').addEventListener('click',()=>{cam.goal={yaw:-0.55,pitch:0.78,dist:56,tx:0,tz:0}});
 function tipHtml(tag){
   const [t,id]=tag.split(':');
-  if(t==='site'){const s=siteBy[id];return `<b>${s.name}</b> · ${stat(id)}<br>${Math.round(steady(id))} avoided h/yr (modeled) · spares ${s.spare}%`}
+  if(t==='site'){const s=siteBy[id];return `<b>${s.name}</b> · ${stat(id)}<br>${Math.round(steady(id))} avoided h/yr (modeled) · spares ${s.spare}%<br><span class="muted">Double-click for its trends</span>`}
   const a=assetBy[id],fl=flagFor(D.series[id],S.day),st=stoppedNow(id,S.day);
   return `<b>${id} ${a.type}</b> · ${siteBy[a.site].name}<br>${st?'Stopped ('+st.c+')':fl.flag?'Readiness flag':'Normal'} · max ${fl.maxv?fl.maxv.toFixed(2)+'× normal':'no valid reading'}`;
 }
@@ -2193,6 +2232,7 @@ function siteView(sid){
   const ev=eventsUpTo(S.day).filter(e=>assetBy[e.a].site===sid),waited=ev.filter(e=>e.pw>0),isHSE=S.role==='Site HSE supervisor';
   return `<div class="ins-head"><span class="eyebrow">Site · ${s.tech} technicians · uptime ${s.uptime}%</span>
     <h2>${s.name} <span class="pill ${hold?'hold':'elig'}">${hold?'SAFETY HOLD':'ELIGIBLE'}</span></h2>
+    <button class="sd-open" data-act="siteDash" data-site="${sid}">${ico('wave')} Trends for ${s.name}: sensors, stops, parts</button>
     <div class="ins-stats"><div class="${hold?'':'good'}"><b>${fmt(steady(sid))}</b><span>h/yr prize${hold?', locked':', unlocked'}</span></div><div class="${s.spare<50?'hot':''}"><b>${s.spare}%</b><span>spare fill</span></div><div><b>${Math.round(s.waited*100)}%</b><span>breakdowns waited for parts</span></div></div></div>
     ${hold?`<h4>What's locking it</h4>
       ${isHSE?'':`<div class="rule-note">${ico('lock')}<span>Only a site HSE supervisor can record a verified closure. You're acting as <b>${S.role}</b>.</span></div>`}
@@ -2240,6 +2280,7 @@ function onInspClick(e){
   const b=e.target.closest('[data-act]');if(!b)return;const act=b.dataset.act;
   if(act==='back'){selectSite(assetBy[S.sel.id].site);return}
   if(act==='asset'){selectAsset(b.dataset.a);return}
+  if(act==='siteDash'){nav('site/'+b.dataset.site);return}
   if(act==='openVerify'){UI.verifyOpen=UI.verifyOpen===b.dataset.g?null:b.dataset.g;renderInsp();if(UI.verifyOpen)focusEvidence();return}
   handleAction(b);
 }
@@ -2380,21 +2421,26 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ======================= pages: router + date ======================= */
-const PAGES={overview:'Overview',map:'Map',work:'Work'};
+const PAGES={overview:'Overview',map:'Map',work:'Work',site:'Site'};
 function go(p){
-  if(!PAGES[p])p='overview';
-  const was=UI.page;UI.page=p;
+  p=p||'';
+  if(p.startsWith('site/')){const sid=p.slice(5).toUpperCase();if(siteBy[sid]){p='site';if(UI.siteId!==sid){UI.sd.pick=null;UI.sd.hide={}}UI.siteId=sid}else{p='map';history.replaceState(null,'','#/map')}}
+  if(!PAGES[p]||(p==='site'&&!UI.siteId))p='overview';
+  const was=UI.route;UI.page=p;UI.route=p==='site'?'site/'+UI.siteId:p;
   Object.keys(PAGES).forEach(x=>document.body.classList.toggle('page-'+x,x===p));
-  $$('#side [data-page]').forEach(a=>{const on=a.dataset.page===p;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
-  $('#crumbPage').textContent=PAGES[p];document.title=p==='overview'?'Parvius':`${PAGES[p]} · Parvius`;
+  const navP=p==='site'?'map':p;
+  $$('#side [data-page]').forEach(a=>{const on=a.dataset.page===navP;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  const title=p==='site'?siteBy[UI.siteId].name+' trends':PAGES[p];
+  $('#crumbPage').textContent=title;document.title=p==='overview'?'Parvius':`${title} · Parvius`;
   if(p==='map')requestAnimationFrame(()=>{resize3d();frameTargets(true);drawSpark()});else stopTour();
   if(p==='overview')renderOverview();
   if(p==='work')renderWork();
-  if(was!==p){const pg=$('#pg-'+p);if(pg)pg.scrollTop=0}
+  if(p==='site')renderSite();
+  if(was!==UI.route){const pg=$('#pg-'+p);if(pg)pg.scrollTop=0}
 }
-function nav(p){go(p);if(location.hash!=='#/'+p)location.hash='#/'+p}
+function nav(p){go(p);if(location.hash!=='#/'+UI.route)location.hash='#/'+UI.route}
 $('#side').addEventListener('click',e=>{const b=e.target.closest('[data-sheet-open]');if(b)openSheet(b.dataset.sheetOpen)});
-window.addEventListener('hashchange',()=>{const p=location.hash.replace(/^#\/?/,'');if(p!==UI.page)go(p)});
+window.addEventListener('hashchange',()=>{const p=location.hash.replace(/^#\/?/,'');if(p!==UI.route)go(p)});
 function showOnMap(kind,id){nav('map');if(UI.mode!=='explore')setMode('explore');kind==='site'?selectSite(id):selectAsset(id)}
 function updateDateChip(){$('#dateLbl').textContent=prettyDay(S.day);$('#dayBack').disabled=S.day<=6;$('#dayFwd').disabled=S.day>=364}
 $('#dayBack').addEventListener('click',()=>setDay(Math.max(6,S.day-1)));
@@ -2403,8 +2449,8 @@ $('#play2').addEventListener('click',()=>$('#play').click());
 let pageT=null;
 function schedulePageRender(){
   if(UI.page==='map'||pageT)return;
-  const pg=$('#pg-'+UI.page);if(pg&&pg.contains(document.activeElement)&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName))return;
-  pageT=setTimeout(()=>{pageT=null;if(UI.page==='overview')renderOverview();if(UI.page==='work')renderWork()},playT?250:0);
+  const pg=$('#pg-'+UI.page),ae=document.activeElement;if(pg&&pg.contains(ae)&&(/^(TEXTAREA|SELECT)$/.test(ae.tagName)||(ae.tagName==='INPUT'&&ae.type!=='checkbox')))return;
+  pageT=setTimeout(()=>{pageT=null;if(UI.page==='overview')renderOverview();if(UI.page==='work')renderWork();if(UI.page==='site')refreshSiteDay()},playT?250:0);
 }
 
 /* ---------- shared plain-language helpers ---------- */
@@ -2640,13 +2686,264 @@ $('#pg-work').addEventListener('click',e=>{
   if(w==='role')setRole(b.dataset.role);
 });
 
+/* ======================= Site dashboard (#/site/<id>) ======================= */
+// Observed 2025 data only: daily vibration per asset and every unplanned stop. Nothing is modeled or filled in.
+UI.sd={grain:'month',upTo:false,peaks:false,hide:{},pick:null,cmpA:null,cmpB:null,sort:{k:'s',dir:-1}};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_RANGES=MON.map((m,k)=>[Math.round((Date.UTC(2025,k,1)-BASE)/864e5),Math.round((Date.UTC(2025,k+1,1)-BASE)/864e5)-1]);
+const SD_COLS=[PAL.info,PAL.violet,'#1F8A8A'];
+const PERIODS=[
+  ...MON.map((m,k)=>({id:'m'+k,lbl:m+' 2025',r:MONTH_RANGES[k]})),
+  ...[0,1,2,3].map(q=>({id:'q'+q,lbl:`Q${q+1} (${MON[q*3]}–${MON[q*3+2]})`,r:[MONTH_RANGES[q*3][0],MONTH_RANGES[q*3+2][1]]})),
+  {id:'h0',lbl:'H1 (Jan–Jun)',r:[0,MONTH_RANGES[5][1]]},{id:'h1',lbl:'H2 (Jul–Dec)',r:[MONTH_RANGES[6][0],364]},{id:'y',lbl:'All of 2025',r:[0,364]}];
+const periodBy=Object.fromEntries(PERIODS.map(p=>[p.id,p]));
+const sdLim=()=>UI.sd.upTo?S.day:364;
+const h1=x=>x<10&&x%1?x.toFixed(1):fmt(x);
+function sdBuckets(grain){
+  if(grain==='day')return Array.from({length:365},(_,i)=>({d0:i,d1:i,lbl:prettyDay(i)}));
+  if(grain==='week'){const out=[];for(let d=0;;d+=7){const d1=d+13>364?364:d+6;out.push({d0:d,d1,lbl:'Week of '+shortDay(d)});if(d1===364)break}return out}
+  return MONTH_RANGES.map(([d0,d1],k)=>({d0,d1,lbl:MON[k]+' 2025'}));
+}
+const sdPos=(B,d)=>{const i=B.findIndex(b=>d>=b.d0&&d<b.d1+1);return i<0?null:i+(d-B[i].d0)/(B[i].d1-B[i].d0+1)};
+const siteAssets=sid=>D.assets.filter(a=>a.site===sid);
+const siteEv=sid=>D.events.filter(e=>assetBy[e.a].site===sid);
+// a stop counts in the period it started; "up to" honours the replay day
+const evIn=(list,d0,d1,lim)=>list.filter(e=>{const d=Math.floor(e.s);return d>=d0&&d<=Math.min(d1,lim)});
+function vibStats(aid,d0,d1,lim){
+  const s=D.series[aid];let n=0,sum=0,max=null,flag=0,miss=0,noise=0;
+  for(let i=Math.max(0,d0);i<=Math.min(d1,lim);i++){
+    if(s.r[i]>lim){miss++;continue}
+    if(s.n[i])noise++;
+    const v=s.v[i];if(v===null){miss++;continue}
+    n++;sum+=v;if(max===null||v>max)max=v;if(v>1.3)flag++;
+  }
+  return {n,mean:n?sum/n:null,max,flag,miss,noise};
+}
+function evStats(list){
+  const o={n:list.length,h:0,det:0,dis:0,pw:0,rep:0,res:0,waited:0,cause:{}};
+  list.forEach(e=>{o.h+=e.h;STAGES.forEach(([k])=>o[k]+=e[k]);if(e.pw>0)o.waited++;o.cause[e.c]=(o.cause[e.c]||0)+e.h});
+  o.share=o.n?o.waited/o.n:null;o.avgWait=o.waited?o.pw/o.waited:null;return o;
+}
+function periodStats(sid,d0,d1){
+  const lim=sdLim(),ev=evStats(evIn(siteEv(sid),d0,d1,lim)),vib=siteAssets(sid).map(a=>({a,...vibStats(a.id,d0,d1,lim)})),n=vib.reduce((a,v)=>a+v.n,0);
+  return {...ev,vib,vibMean:n?vib.reduce((a,v)=>a+(v.mean||0)*v.n,0)/n:null,flagDays:vib.reduce((a,v)=>a+v.flag,0),miss:vib.reduce((a,v)=>a+v.miss,0),notYet:d0>lim};
+}
+
+function niceMax(v){if(v<=0)return 1;const p=Math.pow(10,Math.floor(Math.log10(v))),m=v/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p}
+function niceTicks(a,b,k=4){const raw=(b-a)/k||1,p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p,st=(m<1.5?1:m<3?2:m<7?5:10)*p,out=[];for(let v=Math.ceil(a/st-1e-9)*st;v<=b+1e-9;v+=st)out.push(+v.toFixed(6));return out}
+// one canvas chart for this page: bars, stacked bars and lines on a shared bucket axis, with hover and click-to-pick
+function drawChart(c,o){
+  if(!c)return;
+  const w=c.clientWidth||600,h=o.h||220,dpr=window.devicePixelRatio||1;
+  c.width=w*dpr;c.height=h*dpr;c.style.height=h+'px';
+  const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const L=52,R=o.y2?44:14,T=20,Bm=24,n=o.n,pw=w-L-R,ph=h-T-Bm,y0=o.yMin||0;
+  const X=x=>L+x/n*pw,Y=v=>T+ph-(v-y0)/(o.yMax-y0)*ph,Y2=o.y2?v=>T+ph-v/o.y2.max*ph:Y;
+  g.font='11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';g.lineWidth=1;
+  if(o.band){g.fillStyle='rgba(47,93,168,.10)';g.fillRect(X(o.band[0]),T,Math.max(3,X(o.band[1])-X(o.band[0])),ph)}
+  g.textAlign='right';g.fillStyle=PAL.muted;g.strokeStyle=PAL.line;
+  niceTicks(y0,o.yMax,4).forEach(t=>{const y=Math.round(Y(t))+.5;g.beginPath();g.moveTo(L,y);g.lineTo(w-R,y);g.stroke();g.fillText(o.yFmt?o.yFmt(t):t,L-6,y+4)});
+  if(o.y2){g.textAlign='left';[0,.5,1].forEach(f=>g.fillText(o.y2.fmt(o.y2.max*f),w-R+6,Y2(o.y2.max*f)+4))}
+  g.textAlign='center';let lastX=-1e9;(o.xTicks||[]).forEach(([x,l])=>{if(x==null)return;const px=Math.min(w-R-10,Math.max(L+10,X(x)));if(px-lastX<g.measureText(l).width+8)return;g.fillText(l,px,h-7);lastX=px});
+  (o.refs||[]).forEach(r=>{const y=Math.round(Y(r.y))+.5;g.strokeStyle=r.color;g.setLineDash(r.dash||[]);g.beginPath();g.moveTo(L,y);g.lineTo(w-R,y);g.stroke();g.setLineDash([]);if(r.label){g.fillStyle=r.color;g.textAlign='left';g.fillText(r.label,L+6,y-5)}});
+  const bw=Math.max(1,pw/n*(n>100?0.9:0.7));
+  o.series.forEach(s=>{
+    const yy=s.axis==='y2'?Y2:Y,top=s.axis==='y2'?Infinity:o.yMax;
+    if(s.kind==='stack'){for(let i=0;i<n;i++){let acc=0;s.parts.forEach(p=>{const v=p.data[i]||0;if(v<=0)return;g.fillStyle=p.color;g.fillRect(X(i+.5)-bw/2,Y(acc+v),bw,Y(acc)-Y(acc+v));acc+=v})}}
+    else if(s.kind==='bar'){g.fillStyle=s.color;for(let i=0;i<n;i++){const v=s.data[i];if(!v)continue;g.fillRect(X(i+.5)-bw/2,yy(v),bw,yy(0)-yy(v))}}
+    else{
+      g.strokeStyle=s.color;g.lineWidth=s.width||1.8;g.setLineDash(s.dash||[]);g.lineJoin='round';g.beginPath();let pen=false;
+      for(let i=0;i<n;i++){const v=s.data[i];if(v==null){pen=false;continue}const px=X(i+.5),py=yy(Math.min(v,top));pen?g.lineTo(px,py):g.moveTo(px,py);pen=true}
+      g.stroke();g.setLineDash([]);g.lineWidth=1;
+      if(s.dots){g.fillStyle=s.color;for(let i=0;i<n;i++){const v=s.data[i];if(v==null)continue;g.beginPath();g.arc(X(i+.5),yy(Math.min(v,top)),2.6,0,7);g.fill()}}
+    }
+  });
+  (o.marks||[]).forEach(m=>{if(m.x==null)return;g.fillStyle=m.color;g.fillRect(Math.round(X(m.x))-1,T+ph-8,2,8)});
+  if(o.cursor!=null){const x=Math.round(X(o.cursor))+.5,right=x>w-90;g.strokeStyle=PAL.brand;g.lineWidth=1.5;g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();g.lineWidth=1;g.fillStyle=PAL.brand;g.textAlign=right?'right':'left';g.fillText(o.cursorLbl||'',x+(right?-4:4),T-7)}
+  c._o={...o,_L:L,_pw:pw};
+  if(c._wired)return;c._wired=1;
+  const idx=e=>{const q=c._o,r=c.getBoundingClientRect();return Math.floor((e.clientX-r.left-q._L)/q._pw*q.n)};
+  c.addEventListener('mousemove',e=>{
+    const q=c._o,tip=c.parentElement.querySelector('.sd-tip'),i=idx(e);if(!q.hover||!tip)return;
+    if(i<0||i>=q.n){tip.style.display='none';c.style.cursor='default';return}
+    tip.innerHTML=q.hover(i);tip.style.display='block';
+    const r=c.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+    tip.style.left=Math.max(0,Math.min(x+14,r.width-tip.offsetWidth))+'px';tip.style.top=Math.max(0,Math.min(y+14,r.height-tip.offsetHeight))+'px';
+    c.style.cursor=q.onPick?'pointer':'crosshair';
+  });
+  c.addEventListener('mouseleave',()=>{const t=c.parentElement.querySelector('.sd-tip');if(t)t.style.display='none'});
+  c.addEventListener('click',e=>{const q=c._o,i=idx(e);if(q.onPick&&i>=0&&i<q.n)q.onPick(i)});
+}
+
+function sdDelta(cur,prev,o){
+  if(prev==null||cur==null)return `<span class="sd-delta">${o.none||'nothing earlier to compare'}</span>`;
+  const d=cur-prev;if(Math.abs(d)<(o.eps||1e-9))return `<span class="sd-delta">same as ${o.vs}</span>`;
+  const pct=prev&&!o.noPct?` (${d>0?'+':'−'}${Math.round(Math.abs(d)/prev*100)}%)`:'';
+  return `<span class="sd-delta ${d>0?'bad':'ok'}">${d>0?'▲':'▼'} ${(o.fmt||fmt)(Math.abs(d))}${pct} vs ${o.vs}</span>`;
+}
+function sdKpis(sid){
+  const g=UI.sd.grain==='week'?'week':'month',B=sdBuckets(g),i=B.findIndex(b=>S.day>=b.d0&&S.day<=b.d1),cur=B[i],prev=i>0?B[i-1]:null;
+  const C=periodStats(sid,cur.d0,cur.d1),P=prev?periodStats(sid,prev.d0,prev.d1):null,vs=prev?(g==='week'?'the week before':MON[i-1]):'';
+  const pv=f=>P?f(P):null,partial=UI.sd.upTo&&S.day<cur.d1?` so far (to ${shortDay(S.day)})`:'';
+  const t=(val,lbl,c,p,o={})=>`<div class="tile"><b>${val}</b><span>${lbl}</span>${sdDelta(c,p,{vs,...o})}</div>`;
+  return `<div class="panel-h"><h2>${cur.lbl}${partial}</h2><span class="muted small">the ${g} containing the replay day, against the ${g} before. ${tagO}</span></div>
+  <div class="tiles">
+    ${t(h1(C.h)+' h','unplanned downtime',C.h,pv(x=>x.h),{fmt:x=>h1(x)+' h'})}
+    ${t(C.n,'unplanned stops',C.n,pv(x=>x.n))}
+    ${t(h1(C.pw)+' h','spent waiting for parts',C.pw,pv(x=>x.pw),{fmt:x=>h1(x)+' h'})}
+    ${t(C.share==null?'–':Math.round(C.share*100)+'%','of stops waited for parts',C.share==null?null:C.share*100,P&&P.share!=null?P.share*100:null,{fmt:x=>Math.round(x)+' pts',noPct:1,none:C.share==null?'no stops this '+g:'no stops the '+g+' before'})}
+    ${t(C.vibMean==null?'–':C.vibMean.toFixed(2)+'×','average vibration vs normal',C.vibMean,pv(x=>x.vibMean),{fmt:x=>x.toFixed(2)+'×',eps:.005})}
+    ${t(C.flagDays,'asset-days over the 1.3× flag',C.flagDays,pv(x=>x.flagDays))}
+  </div>`;
+}
+function sdCompare(sid){
+  const mIdx=new Date(BASE.getTime()+S.day*864e5).getUTCMonth();
+  const A=periodBy[UI.sd.cmpA||'m'+Math.max(0,mIdx-1)],Bp=periodBy[UI.sd.cmpB||'m'+Math.max(1,mIdx)];
+  const a=periodStats(sid,A.r[0],A.r[1]),b=periodStats(sid,Bp.r[0],Bp.r[1]);
+  const rows=[
+    ['Unplanned downtime',x=>x.h,x=>h1(x)+' h'],
+    ['Unplanned stops',x=>x.n,fmt],
+    ['Hours waiting for parts',x=>x.pw,x=>h1(x)+' h'],
+    ['Stops that waited for parts',x=>x.waited,fmt],
+    ['Share of stops that waited',x=>x.share==null?null:x.share*100,x=>Math.round(x)+'%',1],
+    ['Average wait, when it waited',x=>x.avgWait,x=>h1(x)+' h'],
+    ...STAGES.filter(s=>s[0]!=='pw').map(([k,l])=>[l+' hours',x=>x[k],x=>h1(x)+' h']),
+    ['Average vibration',x=>x.vibMean,x=>x.toFixed(2)+'×',0,.005],
+    ['Asset-days over 1.3×',x=>x.flagDays,fmt],
+    ['Days without a reading',x=>x.miss,fmt],
+    ...a.vib.map((v,k)=>[`${v.a.id} average vibration`,x=>x.vib[k].mean,x=>x.toFixed(2)+'×',0,.005])
+  ];
+  const opt=sel=>PERIODS.map(p=>`<option value="${p.id}"${p.id===sel.id?' selected':''}>${p.lbl}</option>`).join('');
+  const cell=(v,f)=>v==null?'<span class="muted">–</span>':f(v);
+  return `<div class="sd-cmp-pick"><select id="sdCmpA" aria-label="First period">${opt(A)}</select><span>against</span><select id="sdCmpB" aria-label="Second period">${opt(Bp)}</select></div>
+    ${a.notYet||b.notYet?`<div class="banner">${(b.notYet?Bp:A).lbl} is after the replay day, so it has no data yet. Turn off "Only count data received by" to compare the whole year.</div>`:''}
+    <table><tr><th></th><th class="n">${A.lbl}</th><th class="n">${Bp.lbl}</th><th class="n">Change</th></tr>
+    ${rows.map(([l,f,fm,pts,eps])=>{const va=f(a),vb=f(b);let ch='<span class="muted">–</span>';
+      if(va!=null&&vb!=null){const d=vb-va;ch=Math.abs(d)<(eps||1e-9)?'<span class="muted">no change</span>':`<span class="${d>0?'bad':'ok'}">${d>0?'+':'−'}${pts?Math.round(Math.abs(d))+' pts':fm(Math.abs(d))}${!pts&&va?` (${d>0?'+':'−'}${Math.round(Math.abs(d)/va*100)}%)`:''}</span>`}
+      return `<tr><td>${l}</td><td class="n">${cell(va,fm)}</td><td class="n">${cell(vb,fm)}</td><td class="n">${ch}</td></tr>`}).join('')}</table>
+    <p class="foot-note" style="margin:8px 0 0">Red means more downtime, waiting or vibration; green means less.</p>`;
+}
+function renderSite(){
+  const sid=UI.siteId,s=siteBy[sid];if(!s||UI.page!=='site')return;
+  const hold=stat(sid)==='HOLD',assets=siteAssets(sid),lim=sdLim(),g=UI.sd.grain,pick=UI.sd.pick;
+  const fleetSpare=Math.round(D.sites.reduce((a,x)=>a+x.spare,0)/D.sites.length);
+  const evAll=siteEv(sid).filter(e=>Math.floor(e.s)<=lim);
+  const evList=pick?evAll.filter(e=>{const d=Math.floor(e.s);return d>=pick.d0&&d<=pick.d1}):evAll;
+  const allS=evStats(evAll),rangeLbl=pick?pick.lbl:(UI.sd.upTo?'Jan 1 to '+shortDay(S.day):'all of 2025');
+  const assetRows=assets.map((a,k)=>{
+    const v=vibStats(a.id,0,364,lim),r1=vibStats(a.id,lim-29,lim,lim),r0=vibStats(a.id,lim-59,lim-30,lim),ae=evStats(evAll.filter(e=>e.a===a.id));
+    const tr=r1.mean!=null&&r0.mean!=null?r1.mean-r0.mean:null;
+    return `<tr><td><button class="sd-link" data-sd="asset" data-a="${a.id}" title="Show on the map"><i class="sd-sw" style="background:${SD_COLS[k%3]}"></i>${a.id}</button> <span class="muted">${a.type} · ${a.crit}</span></td>
+      <td class="n">${v.mean==null?'–':v.mean.toFixed(2)+'×'}</td><td class="n">${v.max==null?'–':v.max.toFixed(2)+'×'}</td><td class="n">${v.flag}</td><td class="n">${v.miss}</td><td class="n">${v.noise}</td>
+      <td class="n">${tr==null?'–':`<span class="${tr>0.02?'bad':tr<-0.02?'ok':'muted'}">${tr>0.005?'▲ ':tr<-0.005?'▼ ':''}${Math.abs(tr).toFixed(2)}×</span>`}</td>
+      <td class="n">${ae.n}</td><td class="n">${h1(ae.h)}</td><td class="n">${h1(ae.pw)}</td></tr>`}).join('');
+  const cRows=Object.entries(evStats(evList).cause).sort((x,y)=>y[1]-x[1]),cMax=cRows.length?cRows[0][1]:1,cTot=cRows.reduce((a,c)=>a+c[1],0);
+  const sk=UI.sd.sort,get={s:e=>e.s,a:e=>e.a,c:e=>e.c,pw:e=>e.pw,h:e=>e.h};
+  const sorted=evList.slice().sort((x,y)=>{const p=get[sk.k](x),q=get[sk.k](y);return (p<q?-1:p>q?1:0)*sk.dir});
+  const sh=(k,l,n)=>`<th${n?' class="n"':''}><button class="sd-sort" data-sd="sort" data-k="${k}">${l}${sk.k===k?(sk.dir>0?' ↑':' ↓'):''}</button></th>`;
+  const chip=pick?`<span class="sd-chip">${esc(pick.lbl)}<button class="ghost" data-sd="clearPick" aria-label="Show all stops">${ico('x')}</button></span>`:'';
+  $('#sdRoot').innerHTML=`
+    <div class="page-head"><div>
+        <button class="ghost sd-back" data-sd="back">${ico('back')} Map</button>
+        <h1 tabindex="-1">${s.name} <span class="pill ${hold?'hold':'elig'}">${hold?'SAFETY HOLD':'ELIGIBLE'}</span></h1>
+        <p class="page-sub">${s.tech} technicians · network uptime ${s.uptime}% · ${assets.length} assets · ${allS.n} unplanned stops and ${h1(allS.h)} h of downtime in ${UI.sd.upTo?'2025 so far':'2025'}</p></div>
+      <div class="sd-ctl">
+        <label>Site <select id="sdSite">${D.sites.map(x=>`<option value="${x.id}"${x.id===sid?' selected':''}>${x.name}</option>`).join('')}</select></label>
+        <div class="seg" role="group" aria-label="Group by">${['day','week','month'].map(k=>`<button data-sd="grain" data-g="${k}" class="${g===k?'on':''}" aria-pressed="${g===k}">${k[0].toUpperCase()+k.slice(1)}</button>`).join('')}</div>
+        <label title="Ignore readings and stops that hadn't arrived by the replay day"><input type="checkbox" id="sdUpTo"${UI.sd.upTo?' checked':''}> Only count data received by <b id="sdUpToLbl">${prettyDay(S.day)}</b></label>
+      </div></div>
+    <div class="panel" id="sdKpis">${sdKpis(sid)}</div>
+    <div class="panel">
+      <div class="panel-h"><h2>Vibration by ${g}</h2><span class="muted small">× each asset's normal level</span></div>
+      <div class="sd-legend">${assets.map((a,k)=>`<button data-sd="toggle" data-a="${a.id}" class="${UI.sd.hide[a.id]?'off':''}" aria-pressed="${!UI.sd.hide[a.id]}"><i class="sd-sw" style="background:${SD_COLS[k%3]}"></i>${a.id} · ${a.type}</button>`).join('')}${g==='day'?'':`<span class="spacer"></span><button data-sd="peaks" class="${UI.sd.peaks?'':'off'}" aria-pressed="${UI.sd.peaks}" style="text-decoration:none">Highest reading each ${g}</button>`}</div>
+      <div class="sd-chart"><canvas id="sdVib" role="img" aria-label="Vibration by ${g} for each ${s.name} asset"></canvas><div class="sd-tip"></div></div>
+      <div class="sd-key"><span>${g==='day'?'One line per asset, one point per daily reading':`Solid line = ${g}ly average${UI.sd.peaks?', dashed = highest reading':''}`}</span><span><i class="sd-sw" style="background:${PAL.flag}"></i>1.3× flag level</span><span><i class="sd-sw" style="background:${PAL.brand}"></i>stop</span><span><i class="sd-sw" style="background:${PAL.magenta}"></i>stop that waited for parts</span><span><i class="sd-sw" style="background:${PAL.brand};width:2px"></i>replay day</span></div>
+    </div>
+    <div class="sd-grid">
+      <div class="panel"><div class="panel-h"><h2>Downtime by ${g}</h2><span class="muted small">hours by stage · click a bar to list its stops</span></div>
+        <div class="sd-chart"><canvas id="sdDown" role="img" aria-label="Unplanned downtime hours by ${g}, split by stage"></canvas><div class="sd-tip"></div></div>
+        <div class="sd-key">${STAGES.map(([,l,c])=>`<span><i class="sd-sw" style="background:${c}"></i>${l}</span>`).join('')}</div></div>
+      <div class="panel"><div class="panel-h"><h2>Parts by ${g}</h2><span class="muted small">spare fill today ${s.spare}% · fleet average ${fleetSpare}%</span></div>
+        <div class="sd-chart"><canvas id="sdParts" role="img" aria-label="Hours waiting for parts by ${g}"></canvas><div class="sd-tip"></div></div>
+        <div class="sd-key"><span><i class="sd-sw" style="background:${PAL.brand}"></i>hours waiting for parts</span>${g==='day'?'':`<span><i class="sd-sw" style="background:${PAL.text}"></i>share of stops that waited (right axis)</span>`}</div>
+        <p class="foot-note" style="margin:8px 0 0">Spare-parts stock isn't recorded over time, so parts show up here as time spent waiting for them.</p></div>
+    </div>
+    <div class="sd-grid">
+      <div class="panel"><div class="panel-h"><h2>Compare two periods</h2><span class="muted small">${tagO}</span></div><div id="sdCmp">${sdCompare(sid)}</div></div>
+      <div class="panel"><div class="panel-h"><h2>What caused the downtime</h2><span class="muted small">${rangeLbl}</span></div>
+        ${cRows.length?cRows.map(([c,hh])=>`<div class="hrow" style="grid-template-columns:110px minmax(0,1fr) 110px"><span>${esc(c)}</span><div class="bar"><i style="display:block;width:${hh/cMax*100}%;background:${PAL.muted}"></i></div><span class="n">${h1(hh)} h · ${Math.round(hh/cTot*100)}%</span></div>`).join(''):'<div class="empty">No unplanned stops in this range.</div>'}</div>
+    </div>
+    <div class="panel"><div class="panel-h"><h2>Assets</h2><span class="muted small">${UI.sd.upTo?'Jan 1 to '+shortDay(S.day):'all of 2025'} · click an asset to see it on the map</span></div>
+      <div style="overflow:auto"><table><tr><th>Asset</th><th class="n">Avg vibration</th><th class="n">Peak</th><th class="n">Days over 1.3×</th><th class="n">Days without a reading</th><th class="n">Noise notes</th><th class="n">Last 30 days vs 30 before</th><th class="n">Stops</th><th class="n">Downtime h</th><th class="n">Parts wait h</th></tr>${assetRows}</table></div></div>
+    <div class="panel"><div class="panel-h"><h2>Unplanned stops ${chip}</h2><span class="muted small">${nOf(sorted.length,'stop','stops')} · ${rangeLbl}</span></div>
+      ${sorted.length?`<div class="sd-scroll"><table><tr>${sh('s','Started')}${sh('a','Asset')}${sh('c','Cause')}<th class="n">Detect</th><th class="n">Dispatch</th>${sh('pw','Parts wait',1)}<th class="n">Repair</th><th class="n">Restart</th>${sh('h','Total h',1)}</tr>
+        ${sorted.map(e=>`<tr><td>${shortDay(e.s)}</td><td><button class="sd-link" data-sd="asset" data-a="${e.a}">${e.a}</button></td><td>${esc(e.c)}</td><td class="n">${h1(e.det)}</td><td class="n">${h1(e.dis)}</td><td class="n">${e.pw>0?`<span class="bad">${h1(e.pw)}</span>`:'0'}</td><td class="n">${h1(e.rep)}</td><td class="n">${h1(e.res)}</td><td class="n"><b>${h1(e.h)}</b></td></tr>`).join('')}</table></div>`:'<div class="empty">No unplanned stops in this range.</div>'}</div>
+    <p class="foot-note">Everything here is observed 2025 data: one vibration reading per asset per day, and every unplanned stop with its hours by stage. A stop counts in the ${g==='day'?'day':g} it started. There's only one year of data, so there's no year-on-year view. Spare-parts stock isn't recorded over time; parts are measured by time spent waiting for them, plus today's fill %.</p>`;
+  drawSiteCharts();
+}
+function drawSiteCharts(){
+  const sid=UI.siteId;if(UI.page!=='site'||!siteBy[sid])return;
+  const grain=UI.sd.grain,B=sdBuckets(grain),n=B.length,lim=sdLim(),assets=siteAssets(sid),ev=siteEv(sid).filter(e=>Math.floor(e.s)<=lim);
+  const cursor=sdPos(B,S.day+0.5),cursorLbl=shortDay(S.day),pick=UI.sd.pick;
+  const band=pick?[sdPos(B,pick.d0),sdPos(B,pick.d1+0.999)]:null;
+  const xTicks=grain==='month'?B.map((b,i)=>[i+.5,MON[i]]):MONTH_RANGES.map(([d0],k)=>[sdPos(B,d0),MON[k]]);
+  const onPick=i=>{const b=B[i];UI.sd.pick=pick&&pick.d0===b.d0&&pick.d1===b.d1?null:{d0:b.d0,d1:b.d1,lbl:b.lbl};renderSite()};
+  // vibration
+  const vs=assets.map(a=>B.map(b=>vibStats(a.id,b.d0,b.d1,lim)));
+  let lo=1,hi=1.4;const series=[];
+  assets.forEach((a,k)=>{if(UI.sd.hide[a.id])return;const col=SD_COLS[k%3],mean=vs[k].map(x=>x.mean),max=vs[k].map(x=>x.max);
+    const peaks=grain!=='day'&&UI.sd.peaks;
+    mean.concat(peaks?max:[]).forEach(v=>{if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v)}});
+    if(peaks)series.push({kind:'line',data:max,color:col,width:1,dash:[3,3]});
+    series.push({kind:'line',data:mean,color:col,width:grain==='day'?1.3:2,dots:grain==='month'});
+  });
+  const evAt=i=>ev.filter(e=>{const d=Math.floor(e.s);return d>=B[i].d0&&d<=B[i].d1});
+  drawChart($('#sdVib'),{n,h:280,yMin:Math.max(0,Math.floor(lo*10)/10-0.1),yMax:Math.ceil(hi*10)/10+0.1,yFmt:v=>v.toFixed(1)+'×',xTicks,series,band,cursor,cursorLbl,
+    refs:[{y:1,color:PAL.faint},{y:1.3,color:PAL.flag,dash:[5,4],label:'1.3× flag level'}],
+    marks:ev.map(e=>({x:sdPos(B,e.s),color:e.pw>0?PAL.magenta:PAL.brand})),
+    hover:i=>`<b>${B[i].lbl}</b>`+assets.map((a,k)=>{const x=vs[k][i];return `<div><i class="sd-sw" style="background:${SD_COLS[k%3]}"></i>${a.id} ${x.mean==null?'<span class="muted">no reading</span>':grain==='day'?x.mean.toFixed(2)+'×':`avg ${x.mean.toFixed(2)}× · peak ${x.max.toFixed(2)}×${x.flag?` · ${nOf(x.flag,'day','days')} over 1.3×`:''}`}</div>`}).join('')+(()=>{const e2=evAt(i);return e2.length?`<div class="muted">${nOf(e2.length,'stop','stops')}: ${e2.map(e=>e.a).join(', ')}</div>`:''})()});
+  // downtime and parts
+  const evB=B.map((b,i)=>evStats(evAt(i)));
+  drawChart($('#sdDown'),{n,h:230,yMax:niceMax(Math.max(1,...evB.map(x=>x.h))),yFmt:v=>fmt(v)+' h',xTicks,band,cursor,cursorLbl,onPick,
+    series:[{kind:'stack',parts:STAGES.map(([k,,c])=>({data:evB.map(x=>x[k]),color:c}))}],
+    hover:i=>{const x=evB[i];return `<b>${B[i].lbl}</b><div>${x.n?`${h1(x.h)} h over ${nOf(x.n,'stop','stops')}`:'No unplanned stops'}</div>`+(x.n?STAGES.map(([k,l,c])=>x[k]?`<div><i class="sd-sw" style="background:${c}"></i>${l} ${h1(x[k])} h</div>`:'').join('')+'<div class="muted">Click to list these stops</div>':'')}});
+  drawChart($('#sdParts'),{n,h:230,yMax:niceMax(Math.max(1,...evB.map(x=>x.pw))),yFmt:v=>fmt(v)+' h',xTicks,band,cursor,cursorLbl,onPick,
+    y2:grain==='day'?null:{max:100,fmt:v=>Math.round(v)+'%'},
+    series:[{kind:'bar',data:evB.map(x=>x.pw),color:PAL.brand}].concat(grain==='day'?[]:[{kind:'line',axis:'y2',data:evB.map(x=>x.share==null?null:x.share*100),color:PAL.text,width:1.6,dots:true}]),
+    hover:i=>{const x=evB[i];return `<b>${B[i].lbl}</b><div>${h1(x.pw)} h waiting for parts</div><div>${x.n?`${x.waited} of ${nOf(x.n,'stop','stops')} waited (${Math.round(x.share*100)}%)`:'No unplanned stops'}</div>${x.waited?`<div class="muted">Average wait ${h1(x.avgWait)} h</div>`:''}`}});
+}
+function refreshSiteDay(){
+  if(UI.page!=='site')return;
+  if(UI.sd.upTo){renderSite();return}
+  const k=$('#sdKpis');if(k)k.innerHTML=sdKpis(UI.siteId);
+  const l=$('#sdUpToLbl');if(l)l.textContent=prettyDay(S.day);
+  drawSiteCharts();
+}
+$('#pg-site').addEventListener('click',e=>{
+  const b=e.target.closest('[data-sd]');if(!b)return;const a=b.dataset.sd;
+  if(a==='back'){showOnMap('site',UI.siteId);return}
+  if(a==='asset'){showOnMap('asset',b.dataset.a);return}
+  if(a==='grain'){UI.sd.grain=b.dataset.g;UI.sd.pick=null}
+  if(a==='toggle')UI.sd.hide[b.dataset.a]=!UI.sd.hide[b.dataset.a];
+  if(a==='peaks')UI.sd.peaks=!UI.sd.peaks;
+  if(a==='clearPick')UI.sd.pick=null;
+  if(a==='sort'){const k=b.dataset.k;UI.sd.sort={k,dir:UI.sd.sort.k===k?-UI.sd.sort.dir:(k==='a'||k==='c'?1:-1)}}
+  renderSite();
+});
+$('#pg-site').addEventListener('change',e=>{
+  const id=e.target.id;
+  if(id==='sdSite'){nav('site/'+e.target.value);return}
+  if(id==='sdUpTo'){UI.sd.upTo=e.target.checked;UI.sd.pick=null;renderSite();return}
+  if(id==='sdCmpA'||id==='sdCmpB'){UI.sd[id==='sdCmpA'?'cmpA':'cmpB']=e.target.value;$('#sdCmp').innerHTML=sdCompare(UI.siteId)}
+});
+
 /* ---------- boot ---------- */
 function renderAll(){
   Object.keys(vis).forEach(s=>{vis[s]=stat(s)==="HOLD"?1:vis[s]});
   renderPrize(false);renderDock();renderInsp();renderLog();renderHSE();renderPlan();renderRoll();renderStory();renderWorkBadge();
-  if(UI.page==='overview')renderOverview();if(UI.page==='work')renderWork();
+  if(UI.page==='overview')renderOverview();if(UI.page==='work')renderWork();if(UI.page==='site')renderSite();
 }
-window.addEventListener("resize",()=>{resize3d();drawSpark()});
+window.addEventListener("resize",()=>{resize3d();drawSpark();drawSiteCharts()});
 resize3d();frameTargets(true);setRole(S.role);setDay(S.day);renderAll();setPlayIcon();setMode(UI.mode);go(location.hash.replace(/^#\/?/,''));requestAnimationFrame(loop);
 </script>
 </body>
