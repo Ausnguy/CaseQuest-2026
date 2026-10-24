@@ -113,17 +113,22 @@
 
 ### Resources and training
 
-| Site | Required person-hours (O4 install 20 + HSE actions) | Available project hours | Shortfall |
-|---|---:|---:|---:|
-| Cedar | 28 | 210 | 0 |
-| Mesa | 44 | 170 | 0 |
-| Juniper | 20 | 220 | 0 |
-| **Arroyo** | 44 | 120 | 0 (but only 2 technicians, so schedule carefully) |
-| Canyon | 28 | 180 | 0 |
-| Prairie | 44 | 165 | 0 |
+Training effort follows the ReadMe: technicians × `training_hours_per_person`, once per site. It is counted in hours against each site's project hours.
 
-- No digital-training prerequisite (O6) is required for O4.
-- *Assumption:* storekeeper and planner training on the parts console fits inside O4's 20 install hours per site. Site HSE supervisors own the verified closures.
+| Site | Install 20 + HSE actions | Training | Total required | Available project hours | Headroom |
+|---|---:|---:|---:|---:|---:|
+| Cedar | 28 | 48 | 76 | 210 | 134 |
+| Mesa | 44 | 60 | 104 | 170 | 66 |
+| Juniper | 20 | 40 | 60 | 220 | 160 |
+| **Arroyo** | 44 | 56 | 100 | 120 | 20 (only 2 technicians, so schedule carefully) |
+| Canyon | 28 | 48 | 76 | 180 | 104 |
+| Prairie | 44 | 54 | 98 | 165 | 67 |
+| **Total** | 208 | 306 | 514 | 1,065 | 551 |
+
+- No digital-training **fees** (O6) are charged for O4: O6 is required only for O1 or O3. If a reviewer wants them charged anyway, add $36,000 upfront and $7,200 a year (O6, $6,000 + $1,200 per site).
+- Training **effort** is still counted (306 h in total, the base case). Every site fits its budget; Arroyo has 20 h of headroom, so its training goes after its HSE closures.
+- *Assumption:* console setup for the planner and storekeeper is covered by O4's 20 install hours per site. Site HSE supervisors own the verified closures.
+- Training is paid once. Phase 2 reuses Arroyo's 56 training hours, so its 214 h total and +94 h of help are unchanged.
 
 ### KPIs: 2025 baseline (OBSERVED), tracked monthly
 
