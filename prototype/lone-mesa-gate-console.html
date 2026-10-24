@@ -82,7 +82,7 @@ ul.tight{margin:6px 0;padding-left:18px}ul.tight li{margin:3px 0}
 #vgBar{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line)}
 #vgBar input{flex:1;min-width:0}#vgMic{width:40px;padding:0;font-size:16px}#vgMic.rec{background:#7f1d1d;border-color:#f87171;animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 6px #f8717133}}
-#vgFoot{display:flex;justify-content:space-between;gap:6px;padding:0 10px 8px;font-size:11px}#vgFoot button{font-size:11px;padding:2px 8px}
+#vgFoot{display:flex;gap:6px;padding:0 10px 8px;font-size:11px;flex-wrap:wrap}#vgFoot button,#vgFoot select{font-size:11px;padding:2px 8px}#vgFoot select{flex:1;min-width:0}
 @media(max-width:520px){#vg{right:8px;bottom:90px}}
 </style>
 </head>
@@ -212,13 +212,13 @@ ul.tight{margin:6px 0;padding-left:18px}ul.tight li{margin:3px 0}
 </section>
 </main>
 
-<button id="vgFab" title="Ask VIGIL"><canvas id="vgFabOrb" width="56" height="56"></canvas><span>VIGIL</span></button>
-<div id="vg" role="dialog" aria-label="VIGIL voice agent">
-  <header><canvas id="vgOrb" width="44" height="44"></canvas><div style="flex:1"><b>VIGIL</b><span id="vgStatus">Standing by</span></div><button id="vgClose" aria-label="Close">✕</button></header>
+<button id="vgFab" title="Ask PARVIS"><canvas id="vgFabOrb" width="56" height="56"></canvas><span>PARVIS</span></button>
+<div id="vg" role="dialog" aria-label="PARVIS voice agent">
+  <header><canvas id="vgOrb" width="44" height="44"></canvas><div style="flex:1"><b>PARVIS</b><span id="vgStatus">Standing by</span></div><button id="vgClose" aria-label="Close">✕</button></header>
   <div id="vgRoles"></div>
   <div id="vgMsgs"></div>
   <div id="vgBar"><button id="vgMic" title="Click to talk, click again to send" aria-label="Microphone">🎙</button><input id="vgIn" type="text" placeholder="Ask about any site, cost or risk…"><button id="vgSend" class="primary">Ask</button></div>
-  <div id="vgFoot"><button id="vgVoice"></button><button id="vgPrep" title="Download the Whisper speech model now so voice works offline later">Prepare Whisper</button><span class="muted">advisory only · grounded in the data</span></div>
+  <div id="vgFoot"><button id="vgVoice"></button><select id="vgVoiceSel" title="Voice"></select><button id="vgPrep" title="Download the speech models now so mic and voice work smoothly later">Prepare voices (~370 MB)</button></div>
 </div>
 <script>
 "use strict";
@@ -769,11 +769,11 @@ function renderPlan(){
   <ul class="tight small"><li>Primary KPI: unplanned parts-wait hours, fleet total ${fmt(D.sites.reduce((a,s)=>a+s.pw,0))} h → ${fmt(D.sites.reduce((a,s)=>a+s.pw*0.4,0))} h at the base case.</li><li>Safety KPI: overdue severity-5 actions, 6 → 0 before any stocking at a held site; zero approvals logged on a HOLD site.</li><li>Leading KPI: share of readiness flags reviewed within 24 hours, and flag-to-failure hit rate.</li></ul>`;
 }
 
-/* =================== VIGIL · voice agent =================== */
+/* =================== PARVIS · voice agent =================== */
 const SK={pm:'Plant manager',sc:'Parts planner',hse:'HSE supervisor',exec:'Executive'};
 let agRole='auto',voiceOn=true,agState='idle',agAmp=0,agLast={site:null,asset:null};
-try{const o=JSON.parse(localStorage.getItem('vigil-prefs')||'{}');if(o.role)agRole=o.role;if(o.voice===false)voiceOn=false}catch(e){}
-function agSave(){try{localStorage.setItem('vigil-prefs',JSON.stringify({role:agRole,voice:voiceOn}))}catch(e){}}
+try{const o=JSON.parse(localStorage.getItem('parvis-prefs')||'{}');if(o.role)agRole=o.role;if(o.voice===false)voiceOn=false}catch(e){}
+function agSave(){try{localStorage.setItem('parvis-prefs',JSON.stringify({role:agRole,voice:voiceOn,hd:hdVoice}))}catch(e){}}
 function curSK(){return agRole!=='auto'?agRole:(S.role==='Planner'?'sc':S.role==='Site HSE supervisor'?'hse':'pm')}
 const mUsd=n=>{if(n>=1e6)return '$'+(n/1e6).toFixed(1)+' million';if(n>=1000){const k=n<250000?Math.round(n/500)/2:Math.round(n/1000);return '$'+k+' thousand'}return '$'+Math.round(n)};
 const lst=a=>a.length<2?(a[0]||''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
@@ -913,15 +913,16 @@ function aFlags(){
   const f=facts(),ok=f.flagged.filter(id=>stat(assetBy[id].site)!=='HOLD'),hd=f.flagged.filter(id=>stat(assetBy[id].site)==='HOLD');
   return {say:`${f.flagged.length} readiness flags on ${f.dn}. ${ok.length?`Actionable at cleared sites: ${lst(ok.map(aName))}. `:'None at cleared sites. '}${hd.length?`Advisory only at held sites: ${lst(hd.map(aName))}. `:''}A flag means vibration above 1.3 times normal or an operator noise note in the last 7 days. It suggests pre-staging a bearing and seal kit; it never authorizes work.`,card:basis(`${tagO} readings received by ${f.dn}`),act:{hl:f.flagged},follow:ok.length?[`Tell me about ${aName(ok[0])}`,'What does it cost?']:['What is blocking the sites?','What should we do?']};
 }
-function aHelp(){return {say:`I'm Vigil, the plant's briefing agent. Ask me what's going on, about any site or asset, what the problem is, what we should do and what it costs, what's blocking the sites, or what if the closures slip. Pick a stakeholder above and I'll tailor the briefing: plant manager, parts planner, HSE supervisor or executive.`,card:'',follow:['Brief me','What is the biggest problem?','What should we do?','What is blocking the sites?']}}
+function aHelp(){return {say:`I'm Parvis, the plant's briefing agent. Ask me what's going on, about any site or asset, what the problem is, what we should do and what it costs, what's blocking the sites, or what if the closures slip. Pick a stakeholder above and I'll tailor the briefing: plant manager, parts planner, HSE supervisor or executive.`,card:'',follow:['Brief me','What is the biggest problem?','What should we do?','What is blocking the sites?']}}
 function aRefuse(q){return {say:`I can't do that. I brief and recommend, but I never lift a hold, verify a closure, approve work, or authorize maintenance. Only a site HSE supervisor can record verified closure, and only a planner can approve pre-staging, with a logged reason. I can tell you exactly what would unlock the site.`,follow:['What is blocking the sites?','What unlocks Arroyo?']}}
 
 /* ---------- parsing ---------- */
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
-const SITE_ALIAS={cedar:'S01',mesa:'S02',juniper:'S03',arroyo:'S04',aroyo:'S04',canyon:'S05',prairie:'S06',prarie:'S06'};
+const SITE_ALIAS={cedar:'S01',ceder:'S01',seeder:'S01',mesa:'S02',mace:'S02',messa:'S02',juniper:'S03',junaper:'S03',arroyo:'S04',aroyo:'S04',aroya:'S04',arroya:'S04',royal:'S04',arrow:'S04',canyon:'S05',cannon:'S05',canon:'S05',prairie:'S06',prarie:'S06',praire:'S06',prairy:'S06'};
 function entSite(q){
   const toks=q.toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/).filter(Boolean);
   for(const t of toks){if(SITE_ALIAS[t])return SITE_ALIAS[t]}
+  for(let i=0;i<toks.length-1;i++){const j=toks[i]+toks[i+1];if(SITE_ALIAS[j])return SITE_ALIAS[j]}
   for(const t of toks){if(t.length<4)continue;for(const [n,id] of Object.entries(SITE_ALIAS)){if(lev(t,n)<=(n.length>=6?2:1)&&t[0]===n[0])return id}}
   return null;
 }
@@ -940,7 +941,7 @@ const KW={
   compare:['monitoring','sensor','condition','alternative','versus',' vs ','why not','work order','refurb','compare','other option'],
   limits:['risk','caveat','limit','trust','accurate','confident','assumption','honest','wrong','uncertain','how sure','confidence','downside'],
   flags:['flag','alert','warning','vibration','readiness','pre-stage','prestage','pre stage','rattl','noise','early warning'],
-  help:['help','what can you','who are you','your name','introduce','hello','hi vigil','hey vigil','what do you do']
+  help:['help','what can you','who are you','your name','introduce','hello','hi parvis','hey parvis','hello parvis','what do you do']
 };
 function roleFrom(q){
   if(/\b(for|as|to|brief|explain|tell)\b.*\b(cfo|ceo|executive|exec|finance|board|investor)/.test(q)) return 'exec';
@@ -1018,11 +1019,11 @@ function ask(q,viaVoice){
 msgs.addEventListener('click',e=>{const b=e.target.closest('button[data-q]');if(b)ask(b.dataset.q)});
 $('#vgSend').addEventListener('click',()=>{const i=$('#vgIn');ask(i.value);i.value=''});
 $('#vgIn').addEventListener('keydown',e=>{if(e.key==='Enter'){ask(e.target.value);e.target.value=''}});
-$('#vgFab').addEventListener('click',()=>{const open=vg.style.display==='flex';vg.style.display=open?'none':'flex';if(!open&&!msgs.children.length)greet()});
+$('#vgFab').addEventListener('click',()=>{const open=vg.style.display==='flex';vg.style.display=open?'none':'flex';if(!open){if(!msgs.children.length)greet();ensureAudio();prepareAll()}});
 $('#vgClose').addEventListener('click',()=>{vg.style.display='none';stopSpeaking()});
 function renderChips(){
   $('#vgRoles').innerHTML=[['auto','Auto'],...Object.entries(SK)].map(([k,v])=>`<button data-r="${k}" class="${agRole===k?'on':''}">${k==='auto'?'Auto · '+SK[curSK()]:v}</button>`).join('');
-  $('#vgVoice').textContent=voiceOn?'🔊 Voice on':'🔇 Voice off';
+  $('#vgVoice').textContent=voiceOn?'🔊 On':'🔇 Off';const vs=$('#vgVoiceSel');if(vs&&!vs.options.length){HD_VOICES.forEach(v=>vs.add(new Option(v[1],v[0])));vs.addEventListener('change',()=>{hdVoice=vs.value;agSave();stopSpeaking();if(hdVoice!=='browser')loadHD().catch(()=>{});speak('This is how I sound now.')})}if(vs)vs.value=hdVoice;
 }
 $('#vgRoles').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;agRole=b.dataset.r;agSave();renderChips()});
 $('#vgVoice').addEventListener('click',()=>{voiceOn=!voiceOn;agSave();if(!voiceOn)stopSpeaking();renderChips()});
@@ -1030,98 +1031,203 @@ $('#role').addEventListener('change',renderChips);
 function greet(){
   const h=new Date().getHours(),g=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
   const f=facts();
-  const say=`${g}. I'm Vigil. I'm watching all six sites. ${f.holds.length} are on safety hold, ${f.flagged.length} assets carry readiness flags on ${f.dn}. Ask me anything, or tap a suggestion.`;
+  const say=`${g}. I'm Parvis. I'm watching all six sites. ${f.holds.length} are on safety hold, ${f.flagged.length} assets carry readiness flags on ${f.dn}. Ask me anything, or tap a suggestion.`;
   addMsg('bot',say,'',['Brief me','What is the biggest problem?','What should we do?','What is blocking the sites?']);speak(say);
 }
 
-/* ---------- speech out ---------- */
+/* ---------- speech out: Kokoro HD British voice (WebGPU) with browser fallback ---------- */
+const HD_VOICES=[['bm_george','George · British male (HD)'],['bm_lewis','Lewis · British male (HD)'],['bm_daniel','Daniel · British male (HD)'],['bm_fable','Fable · British male (HD)'],['browser','Browser voice (instant)']];
+let hdVoice='bm_george';
+try{const o=JSON.parse(localStorage.getItem('parvis-prefs')||'{}');if(o.hd)hdVoice=o.hd}catch(e){}
+let tts=null,ttsLoading=null,ttsFail=false,actx=null,spkAn=null,genLock=Promise.resolve();
+const spk={token:0,srcs:[],next:0};
+function ensureAudio(){
+  if(!actx){const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();spkAn=actx.createAnalyser();spkAn.fftSize=256;spkAn.connect(actx.destination)}
+  if(actx.state==='suspended')actx.resume();return actx;
+}
+function spkLvl(){if(!spkAn||!spk.srcs.length)return 0;const d=new Uint8Array(spkAn.frequencyBinCount);spkAn.getByteTimeDomainData(d);let s=0;for(const v of d)s+=((v-128)/128)**2;return Math.sqrt(s/d.length)}
+function prepLabel(t){const b=$('#vgPrep');if(b)b.textContent=t}
+function loadHD(){
+  if(tts) return Promise.resolve(tts);
+  if(ttsLoading) return ttsLoading;
+  if(!navigator.gpu){ttsFail=true;prepLabel('HD voice needs WebGPU');return Promise.reject(new Error('no WebGPU'))}
+  ttsLoading=(async()=>{
+    prepLabel('Loading HD voice…');
+    await (asrLoading||Promise.resolve()).catch(()=>{});
+    const m=await import('https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm');
+    tts=await m.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX',{dtype:'fp32',device:'webgpu',progress_callback:p=>{if(p.status==='progress'&&p.total>5e6)prepLabel('HD voice '+Math.round(p.progress||0)+'%')}});
+    prepLabel(asr?'✔ Voices ready':'HD voice ready');return tts;
+  })().catch(e=>{ttsLoading=null;ttsFail=true;console.warn('HD voice failed',e);prepLabel('HD voice unavailable');throw e});
+  return ttsLoading;
+}
 let voice=null;
 function pickVoice(){
   const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));
-  const pref=[/Daniel/,/Arthur/,/Google UK English Male/,/Oliver/,/Microsoft (Ryan|George|Guy)/,/Alex/,/en-GB/];
+  const pref=[/Ryan.*Natural|Natural.*Ryan/i,/Thomas.*Natural/i,/Google UK English Male/i,/Oliver/i,/Daniel/i,/Arthur/i,/Microsoft (Ryan|George)/i,/en-GB/i,/Alex/i];
   for(const p of pref){const v=vs.find(v=>p.test(v.name)||p.test(v.lang));if(v){voice=v;return}}
   voice=vs[0]||null;
 }
 try{speechSynthesis.onvoiceschanged=pickVoice;pickVoice()}catch(e){}
-function speakable(t){return t.replace(/\$(\d+(?:\.\d+)?)\s*k\b/g,'$1 thousand dollars').replace(/(\d)\s*×/g,'$1 times ').replace(/\bA0*(\d{1,2})\b/g,'asset $1').replace(/\bLOTO\b/g,'lock out tag out').replace(/\bHSE\b/g,'H S E').replace(/\bh\/yr\b/g,'hours a year').replace(/\bO4\b/g,'the spares program')}
-function stopSpeaking(){try{speechSynthesis.cancel()}catch(e){}if(agState==='speaking')setState('idle')}
+function speakable(t){return t.replace(/\$(\d+(?:\.\d+)?)\s*k\b/g,'$1 thousand dollars').replace(/(\d)\s*×/g,'$1 times ').replace(/\bA0*(\d{1,2})\b/g,'asset $1').replace(/\bLOTO\b/g,'lock out tag out').replace(/\bHSE\b/g,'H S E').replace(/\bh\/yr\b/g,'hours a year').replace(/\bO4\b/g,'the spares program').replace(/(\d),(\d{3})/g,'$1$2').replace(/Parvis/g,'Parvis')}
+function stopSpeaking(){
+  spk.token++;spk.srcs.forEach(s=>{try{s.onended=null;s.stop()}catch(e){}});spk.srcs=[];
+  try{speechSynthesis.cancel()}catch(e){}
+  if(agState==='speaking')setState('idle');
+}
 function speak(text){
-  if(!voiceOn||!text||!('speechSynthesis' in window)){setState('idle');return}
-  speechSynthesis.cancel();
-  const chunks=(speakable(text).match(/[^.!?]+[.!?]*/g)||[text]).map(s=>s.trim()).filter(Boolean);
+  stopSpeaking();
+  if(!voiceOn||!text){setState('idle');return}
+  const t=speakable(text);
+  if(hdVoice!=='browser'&&tts) return speakHD(t);
+  if(hdVoice!=='browser'&&!ttsFail&&!ttsLoading) loadHD().catch(()=>{});
+  speakBrowser(t);
+}
+function speakBrowser(t){
+  if(!('speechSynthesis' in window)){setState('idle');return}
+  const chunks=(t.match(/[^.!?]+[.!?]*/g)||[t]).map(s=>s.trim()).filter(Boolean);
   setState('speaking');
   chunks.forEach((c,i)=>{
-    const u=new SpeechSynthesisUtterance(c);if(voice)u.voice=voice;u.rate=1.04;u.pitch=0.88;u.volume=1;
+    const u=new SpeechSynthesisUtterance(c);if(voice)u.voice=voice;u.rate=1.0;u.pitch=0.9;
     if(i===chunks.length-1){u.onend=()=>setState('idle');u.onerror=()=>setState('idle')}
     speechSynthesis.speak(u);
   });
 }
+async function speakHD(t){
+  const my=spk.token;ensureAudio();setState('thinking');spk.next=actx.currentTime+0.05;
+  const sents=(t.match(/[^.!?]+[.!?]*/g)||[t]).map(s=>s.trim()).filter(Boolean);
+  let last=null;
+  for(const s of sents){
+    if(my!==spk.token) return;
+    let a;
+    try{
+      const run=genLock.then(()=>tts.generate(s,{voice:hdVoice,speed:1.03}));genLock=run.catch(()=>{});a=await run;
+    }catch(e){console.warn('HD speak failed',e);ttsFail=true;if(my===spk.token){const rest=sents.slice(sents.indexOf(s)).join(' ');speakBrowser(rest)}return}
+    if(my!==spk.token) return;
+    if(a.audio.some(v=>v!==v)){console.warn('HD voice produced invalid audio on this GPU');ttsFail=true;tts=null;if(my===spk.token)speakBrowser(sents.slice(sents.indexOf(s)).join(' '));return}
+    setState('speaking');
+    const buf=actx.createBuffer(1,a.audio.length,a.sampling_rate);buf.copyToChannel(a.audio,0);
+    const src=actx.createBufferSource();src.buffer=buf;src.connect(spkAn);
+    const at=Math.max(actx.currentTime+0.02,spk.next);src.start(at);spk.next=at+buf.duration+0.1;spk.srcs.push(src);last=src;
+  }
+  if(last) last.onended=()=>{if(my===spk.token){spk.srcs=[];setState('idle')}};
+}
 
-/* ---------- speech in: Whisper (transformers.js) with browser fallback ---------- */
+/* ---------- speech in: Whisper (transformers.js) + browser recognition + clear diagnostics ---------- */
 let asr=null,asrLoading=null,asrFail=false;
 function loadWhisper(){
   if(asr) return Promise.resolve(asr);
   if(asrLoading) return asrLoading;
-  setStatus('Loading Whisper (one-time ~40 MB)…');
+  prepLabel('Loading Whisper…');
   asrLoading=(async()=>{
-    const mod=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/+esm');
+    await (ttsLoading||Promise.resolve()).catch(()=>{});
+    const mod=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm');
     mod.env.allowLocalModels=false;
-    asr=await mod.pipeline('automatic-speech-recognition','Xenova/whisper-tiny.en',{progress_callback:p=>{if(p.status==='progress')setStatus('Loading Whisper '+Math.round(p.progress||0)+'%')}});
-    setState('idle');$('#vgPrep').textContent='✔ Whisper ready';return asr;
-  })().catch(e=>{asrLoading=null;asrFail=true;console.warn('Whisper failed',e);setStatus('Whisper unavailable, using browser speech');$('#vgPrep').textContent='Whisper offline';throw e});
+    asr=await mod.pipeline('automatic-speech-recognition','Xenova/whisper-tiny.en',{progress_callback:p=>{if(p.status==='progress'&&p.total>5e6)prepLabel('Whisper '+Math.round(p.progress||0)+'%')}});
+    prepLabel(tts?'✔ Voices ready':'Whisper ready');return asr;
+  })().catch(e=>{asrLoading=null;asrFail=true;console.warn('Whisper failed',e);prepLabel('Whisper unavailable');throw e});
   return asrLoading;
 }
-$('#vgPrep').addEventListener('click',()=>{loadWhisper().catch(()=>{})});
-async function toF32(blob){
-  const ac=new (window.AudioContext||window.webkitAudioContext)();
-  const dec=await ac.decodeAudioData(await blob.arrayBuffer());ac.close();
-  const off=new OfflineAudioContext(1,Math.max(1,Math.ceil(dec.duration*16000)),16000),src=off.createBufferSource();
+function prepareAll(){loadWhisper().catch(()=>{}).finally(()=>{if(hdVoice!=='browser')loadHD().catch(()=>{})})}
+$('#vgPrep').addEventListener('click',prepareAll);
+async function blobToF32(blob){
+  const ab=await blob.arrayBuffer(),AC=window.AudioContext||window.webkitAudioContext,ac=new AC();
+  const dec=await new Promise((res,rej)=>{const p=ac.decodeAudioData(ab,res,rej);if(p&&p.then)p.then(res,rej)});
+  try{ac.close()}catch(e){}
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  const off=new OAC(1,Math.max(1,Math.ceil(dec.duration*16000)),16000),src=off.createBufferSource();
   src.buffer=dec;src.connect(off.destination);src.start();
-  return (await off.startRendering()).getChannelData(0);
+  const out=await new Promise((res,rej)=>{const p=off.startRendering();if(p&&p.then)p.then(res,rej);else off.oncomplete=e=>res(e.renderedBuffer)});
+  return out.getChannelData(0);
 }
 async function transcribe(f32){
   const m=await loadWhisper();
   const out=await m(f32,{chunk_length_s:30});
   return (out.text||'').replace(/\[.*?\]|\(.*?\)/g,'').trim();
 }
-let rec=null,recStream=null,recChunks=[],recTimer=null,lvl=null,ac2=null,recog=null;
-async function micToggle(){
-  if(rec){stopRec();return}
-  stopSpeaking();
-  if(!navigator.mediaDevices||!window.MediaRecorder){return browserSR()}
-  try{recStream=await navigator.mediaDevices.getUserMedia({audio:true})}catch(e){setStatus('Microphone blocked; type instead');return}
-  recChunks=[];rec=new MediaRecorder(recStream);
-  rec.ondataavailable=e=>recChunks.push(e.data);
-  rec.onstop=async()=>{
-    recStream.getTracks().forEach(t=>t.stop());clearTimeout(recTimer);try{ac2.close()}catch(e){}
-    $('#vgMic').classList.remove('rec');setState('thinking');
-    try{
-      const f32=await toF32(new Blob(recChunks,{type:rec.mimeType}));rec=null;
-      if(f32.length<8000){setState('idle');return}
-      const text=await transcribe(f32);
-      if(!text||text.length<3||/^(you|thank you\.?|bye\.?)$/i.test(text)){setStatus("Didn't catch that");return}
-      ask(text,true);
-    }catch(e){rec=null;console.warn(e);setStatus('Could not transcribe. Type or try again');}
+function micHelp(kind){
+  const file=location.protocol==='file:';
+  const serve=file?' You opened this as a local file, which some browsers block. In the project folder run: python3 -m http.server 8000 and open http://localhost:8000/lone-mesa-gate-console.html.':'';
+  const m={
+    NotAllowedError:'The microphone is blocked. Click the lock or camera icon in the address bar and allow the microphone for this page, and check your system microphone privacy settings for this browser.'+serve,
+    PermissionDeniedError:'The microphone is blocked. Allow it in the address bar and in your system privacy settings.'+serve,
+    NotFoundError:'No microphone was found. Plug one in or pick one in your system sound settings.',
+    NotReadableError:'The microphone is busy or unreadable. Close other apps using it and try again.',
+    insecure:'This page cannot use the microphone here (it needs https or localhost, and a browser with microphone support such as Chrome, Edge or Safari).'+serve,
+    whisper:'Whisper could not load, which needs internet once to download the speech model. Type your question instead, or use Chrome or Edge for built-in speech recognition.',
+    silent:"I didn't hear anything. Check that the right microphone is selected, then try again and speak after the orb turns amber."
   };
-  try{ac2=new AudioContext();const an=ac2.createAnalyser();an.fftSize=256;ac2.createMediaStreamSource(recStream).connect(an);lvl=()=>{const d=new Uint8Array(an.frequencyBinCount);an.getByteTimeDomainData(d);let s=0;for(const v of d)s+=((v-128)/128)**2;return Math.sqrt(s/d.length)}}catch(e){lvl=null}
-  rec.start();$('#vgMic').classList.add('rec');setState('listening');
+  return m[kind]||('The microphone failed ('+kind+'). Type your question instead.'+serve);
+}
+let rec=null,recStream=null,recChunks=[],recTimer=null,vadTimer=null,lvl=null,ac2=null,recog=null,micBusy=false;
+function micUI(on){$('#vgMic').classList.toggle('rec',!!on)}
+async function micToggle(){
+  ensureAudio();
+  if(recog){try{recog.stop()}catch(e){}return}
+  if(rec&&rec.state==='recording'){stopRec();return}
+  if(micBusy) return;
+  stopSpeaking();
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(asr||!SR) return recordPath();
+  loadWhisper().catch(()=>{});
+  return browserSR(SR);
+}
+function browserSR(SR){
+  let final='',err='';
+  try{recog=new SR();recog.lang='en-US';recog.interimResults=true;recog.maxAlternatives=1}catch(e){recog=null;return recordPath()}
+  recog.onresult=e=>{let t='';for(const r of e.results){t+=r[0].transcript;if(r.isFinal)final=t}$('#vgIn').value=t};
+  recog.onerror=e=>{err=e.error||'error'};
+  recog.onend=()=>{
+    micUI(false);recog=null;setState('idle');
+    const txt=(final||$('#vgIn').value).trim();
+    if(txt){$('#vgIn').value='';ask(txt,true);return}
+    if(err==='not-allowed'||err==='service-not-allowed') addMsg('bot',micHelp('NotAllowedError'));
+    else if(err==='network'||err==='language-not-supported'||err==='audio-capture') {addMsg('bot','Built-in speech recognition is not available here (it needs internet in Chrome). Switching to Whisper; click the microphone again in a moment.');loadWhisper().catch(()=>addMsg('bot',micHelp('whisper')))}
+    else if(err==='no-speech'||!err) addMsg('bot',micHelp('silent'));
+  };
+  try{recog.start();micUI(true);setState('listening')}catch(e){recog=null;recordPath()}
+}
+async function recordPath(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){addMsg('bot',micHelp('insecure'));return}
+  micBusy=true;
+  try{recStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}})}
+  catch(e){micBusy=false;addMsg('bot',micHelp(e.name||'error'));return}
+  micBusy=false;recChunks=[];
+  const mt=window.MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm;codecs=opus':'';
+  try{rec=mt?new MediaRecorder(recStream,{mimeType:mt}):new MediaRecorder(recStream)}catch(e){recStream.getTracks().forEach(t=>t.stop());addMsg('bot',micHelp('insecure'));return}
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)recChunks.push(e.data)};
+  rec.onstop=onRecStop;
+  let heard=false,quiet=0;lvl=null;
+  try{const AC=window.AudioContext||window.webkitAudioContext;ac2=new AC();const an=ac2.createAnalyser();an.fftSize=512;ac2.createMediaStreamSource(recStream).connect(an);
+    lvl=()=>{const d=new Uint8Array(an.fftSize);an.getByteTimeDomainData(d);let s=0;for(const v of d)s+=((v-128)/128)**2;return Math.sqrt(s/d.length)}}catch(e){lvl=null}
+  vadTimer=setInterval(()=>{const v=lvl?lvl():0;if(v>0.02){heard=true;quiet=0}else if(heard){quiet+=100;if(quiet>1500)stopRec()}},100);
+  rec.start(250);micUI(true);setState('listening');
   if(!asr&&!asrFail) loadWhisper().catch(()=>{});
   recTimer=setTimeout(stopRec,12000);
 }
-function stopRec(){if(rec&&rec.state!=='inactive')rec.stop()}
-function browserSR(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){setStatus('No speech input here; type instead');return}
-  recog=new SR();recog.lang='en-US';recog.onresult=e=>ask(e.results[0][0].transcript,true);recog.onend=()=>{$('#vgMic').classList.remove('rec');setState('idle')};recog.onerror=()=>setStatus('Speech input failed');
-  recog.start();$('#vgMic').classList.add('rec');setState('listening');
+function stopRec(){clearInterval(vadTimer);clearTimeout(recTimer);if(rec&&rec.state!=='inactive'){try{rec.stop()}catch(e){}}}
+async function onRecStop(){
+  const chunks=recChunks,mime=rec&&rec.mimeType;rec=null;recChunks=[];
+  clearInterval(vadTimer);clearTimeout(recTimer);try{recStream.getTracks().forEach(t=>t.stop())}catch(e){}try{ac2.close()}catch(e){}lvl=null;
+  micUI(false);setState('thinking');
+  try{
+    const blob=new Blob(chunks,{type:mime||'audio/webm'});
+    if(blob.size<1500){setState('idle');addMsg('bot',micHelp('silent'));return}
+    const f32=await blobToF32(blob);
+    if(f32.length<8000){setState('idle');addMsg('bot',micHelp('silent'));return}
+    setStatus(asr?'Transcribing…':'Waiting for Whisper to load…');
+    let text;try{text=await transcribe(f32)}catch(e){setState('idle');addMsg('bot',micHelp('whisper'));return}
+    if(!text||text.length<3||/^(you|bye|thank you)\.?$/i.test(text)){setState('idle');addMsg('bot',micHelp('silent'));return}
+    ask(text,true);
+  }catch(e){console.warn(e);setState('idle');addMsg('bot','I could not process that recording ('+(e.message||e.name)+'). Type your question instead.')}
 }
 $('#vgMic').addEventListener('click',micToggle);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&vg.style.display==='flex'){stopSpeaking()}});
 
 /* ---------- orb ---------- */
 function drawOrb(c,t,size){
   const g=c.getContext('2d'),w=c.width,h=c.height,cx=w/2,cy=h/2;g.clearRect(0,0,w,h);
   const col={idle:[45,212,191],listening:[251,191,36],thinking:[167,139,250],speaking:[96,230,255]}[agState]||[45,212,191];
-  let amp=agState==='speaking'?0.5+0.5*Math.sin(t/110)*Math.sin(t/230):agState==='listening'&&lvl?Math.min(1,lvl()*5):agState==='thinking'?0.5+0.5*Math.sin(t/160):0.15+0.1*Math.sin(t/700);
+  let amp=agState==='speaking'?(spk.srcs.length?Math.min(1,spkLvl()*6):0.5+0.5*Math.sin(t/110)*Math.sin(t/230)):agState==='listening'&&lvl?Math.min(1,lvl()*5):agState==='thinking'?0.5+0.5*Math.sin(t/160):0.15+0.1*Math.sin(t/700);
   agAmp+=(amp-agAmp)*0.2;
   const R=size*(0.28+agAmp*0.08);
   for(let i=3;i>=1;i--){g.beginPath();g.arc(cx,cy,R+i*size*0.06*(0.6+agAmp),0,7);g.strokeStyle=`rgba(${col},${0.12+0.05*(4-i)})`;g.lineWidth=1.5;g.stroke()}
@@ -1146,7 +1252,7 @@ setDay=function(d){
   }
   prevFlags=fl;prevStopped=st;
 };
-window.vigil={ask,interpret,transcribe,loadWhisper};
+window.parvis=window.vigil={ask,interpret,transcribe,loadWhisper,loadHD,speak,micToggle,blobToF32};
 
 /* ---------- boot ---------- */
 function renderAll(){
