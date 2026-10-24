@@ -669,7 +669,8 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 
 <section class="page" id="pg-overview" aria-label="Overview">
   <div class="page-inner">
-    <div class="page-head"><div><span class="eyebrow" id="ovEyebrow"></span><h1>What's going on at Lone Mesa</h1></div></div>
+    <div class="page-head"><div><span class="eyebrow" id="ovEyebrow"></span><h1>What's going on at Lone Mesa</h1></div>
+      <button class="primary" data-ov="story:" title="A guided six-step walkthrough on the 3D map" style="display:inline-flex;align-items:center;gap:8px"><svg class="ico"><use href="#i-play"/></svg>Play the 2-minute story</button></div>
     <div class="headline" id="ovHeadline"></div>
     <div class="panel"><div class="panel-h"><h2>Sites at a glance</h2><span class="muted small">click a site to see it on the map</span></div><div class="sites-grid" id="ovSites"></div></div>
     <div class="ov-grid">
@@ -690,7 +691,10 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 <section class="page" id="pg-work" aria-label="Work">
   <div class="page-inner wide">
     <div class="page-head"><div><span class="eyebrow" id="wkEyebrow"></span><h1>Who needs to do what</h1></div>
-      <p class="muted" style="margin:0;max-width:560px">Safety checks unlock sites. Unlocked sites can stock spare parts. Readiness flags tell the planner which part to have ready.</p></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+        <p class="muted" style="margin:0;max-width:560px;text-align:right">Safety checks unlock sites. Unlocked sites can stock spare parts. Readiness flags tell the planner which part to have ready.</p>
+        <div class="seg" id="wkFilter" aria-label="Show"><button data-f="all">Everyone's work</button><button data-f="mine">Just mine</button></div>
+      </div></div>
     <div class="board">
       <div class="col"><div class="col-h"><b>Do now</b><span class="cnt" id="cntNow"></span></div><div id="colNow"></div></div>
       <div class="col"><div class="col-h"><b>Blocked by a safety hold</b><span class="cnt" id="cntBlocked"></span></div><div id="colBlocked"></div></div>
@@ -2402,6 +2406,7 @@ $('#pg-overview').addEventListener('click',e=>{
   const b=e.target.closest('[data-ov]');if(!b)return;
   const parts=b.dataset.ov.split(':'),t=parts[0],id=parts.slice(1).join(':');
   if(t==='asset'||t==='site')showOnMap(t,id);
+  if(t==='story'){nav('map');setMode('story');goBeat(0)}
   if(t==='read'){ensureAudio();if(!voiceOn){voiceOn=true;agSave();renderChips()}stopSpeaking();speak(UI.ovSpeech||'')}
   if(t==='work'){nav('work');setTimeout(()=>flashCard(id),60)}
 });
@@ -2457,14 +2462,19 @@ function doneCard(l){
     <div class="wc-meta"><span>Reason: ${esc(l.reason)}</span>${l.kit?`<span>Kit: ${esc(l.kit)}</span>`:''}</div></div>`;
 }
 function renderWorkBadge(){const m=workModel();$('#workBadge').textContent=m.now.length||''}
+const ownerOf=it=>it.type==='gate'?'Site HSE supervisor':'Planner';
+$('#wkFilter').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;UI.wkMine=b.dataset.f==='mine';renderWork()});
 function renderWork(){
-  const m=workModel();
+  const all=workModel(),mine=UI.wkMine,m=mine?{...all,now:all.now.filter(it=>ownerOf(it)===S.role),blocked:all.blocked.filter(it=>ownerOf(it)===S.role)}:all;
+  $$('#wkFilter button').forEach(b=>b.classList.toggle('on',(b.dataset.f==='mine')===!!mine));
+  const mgr=mine&&S.role==='Manager';
   $('#wkEyebrow').textContent=`As of ${prettyDay(S.day)} · acting as ${S.role}`;
   $('#cntNow').textContent=m.now.length;$('#cntBlocked').textContent=m.blocked.length;$('#cntDone').textContent=m.done.length;
-  $('#colNow').innerHTML=m.now.length?m.now.map(it=>it.type==='gate'?gateCard(it):flagCard(it)).join(''):`<div class="col-empty">Nothing to do right now. Every site is cleared and every flag has a decision.</div>`;
+  $('#colNow').innerHTML=m.now.length?m.now.map(it=>it.type==='gate'?gateCard(it):flagCard(it)).join('')
+    :`<div class="col-empty">${mgr?'Managers don’t own tasks here. Switch to “Everyone’s work” to watch progress.':mine&&all.now.length?`Nothing for the ${S.role==='Site HSE supervisor'?'HSE supervisor':'planner'} right now. ${nOf(all.now.length,'task waits','tasks wait')} on someone else.`:'Nothing to do right now. Every site is cleared and every flag has a decision.'}</div>`;
   $('#colBlocked').innerHTML=m.blocked.length?m.blocked.map(flagCard).join(''):`<div class="col-empty">Nothing is stuck behind a safety hold.</div>`;
   $('#colDone').innerHTML=m.done.length?m.done.slice(0,30).map(doneCard).join(''):`<div class="col-empty">Nothing done yet in this session. Verified checks and planner decisions land here.</div>`;
-  const gN=m.now.filter(x=>x.type==='gate').length,fN=m.now.filter(x=>x.type==='flag').length,bN=m.blocked.length;
+  const gN=all.now.filter(x=>x.type==='gate').length,fN=all.now.filter(x=>x.type==='flag').length,bN=all.blocked.length;
   const who=[['Site HSE supervisor','hse','HS',gN?`${nOf(gN,'safety check','safety checks')} to verify`:'Nothing to verify'],
     ['Planner','pl','PL',(fN?`${nOf(fN,'flag','flags')} to decide`:'No flags to decide')+(bN?` (${bN} more behind holds)`:'')],
     ['Manager','','MG','Watches progress. Can’t verify or approve.']];
@@ -2474,7 +2484,7 @@ function renderWork(){
     <div class="prog"><span>Sites cleared</span><b>${el} of 6</b></div><div class="pbar"><i style="width:${el/6*100}%"></i></div>
     <div class="prog"><span>Prize unlocked ${tagM}</span><b>${fmt(unl)} of ${fmt(tot)} h/yr</b></div><div class="pbar"><i style="width:${unl/tot*100}%"></i></div>
     <div class="prog"><span>Planner decisions logged</span><b>${dec}</b></div>`;
-  $('#workBadge').textContent=m.now.length||'';
+  $('#workBadge').textContent=all.now.length||'';
 }
 function flashCard(k){const el=document.getElementById(cardId(k));if(!el)return;el.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'center'});el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}
 $('#pg-work').addEventListener('click',e=>{
