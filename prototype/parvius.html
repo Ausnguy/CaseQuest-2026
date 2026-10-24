@@ -401,6 +401,21 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 .hl-tiles span{font-size:12px;color:var(--muted)}
 .hl-tiles .hot{background:var(--brand-tint)}.hl-tiles .hot b{color:var(--brand)}
 .hl-tiles .good{background:var(--ok-tint)}.hl-tiles .good b{color:var(--ok)}
+.headline{position:relative}
+.read-btn{position:absolute;top:16px;right:16px;font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px}
+.headline .say{padding-right:150px}
+.sites-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.scard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:500;min-width:0}
+.scard.hold{background:var(--brand-tint);border-color:var(--brand-line)}
+.scard .sn{display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px}
+.scard.hold .sn{color:var(--brand-ink)}.scard:not(.hold) .sn .ico{color:var(--ok)}
+.scard .ss{font-size:12px;color:var(--muted);line-height:1.4}
+.scard .ss b{color:var(--text)}
+.scard .sf{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:auto}
+.scard .sb{height:4px;border-radius:2px;background:rgba(17,20,24,.08);overflow:hidden}
+.scard .sb i{display:block;height:100%;background:#2E9660}.scard .sb i.low{background:#EA7828}
+@media(max-width:1300px){.sites-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.sites-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.headline .say{padding-right:0}.read-btn{position:static;margin-bottom:10px}}
 .ov-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
 .ov-side{position:sticky;top:0}
 .orow{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
@@ -656,6 +671,7 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
   <div class="page-inner">
     <div class="page-head"><div><span class="eyebrow" id="ovEyebrow"></span><h1>What's going on at Lone Mesa</h1></div></div>
     <div class="headline" id="ovHeadline"></div>
+    <div class="panel"><div class="panel-h"><h2>Sites at a glance</h2><span class="muted small">click a site to see it on the map</span></div><div class="sites-grid" id="ovSites"></div></div>
     <div class="ov-grid">
       <div class="ov-main">
         <div class="panel"><div class="panel-h"><h2>What's broken right now</h2><span class="muted small" id="ovBrokenMeta"></span></div><div id="ovBroken"></div></div>
@@ -2316,13 +2332,26 @@ function renderOverview(){
     :`On ${day}, <b>${n} machines are down</b>${w===0?'. None is waiting for a part':w===n?(n===2?', and both are waiting for a part':`, and all ${n} are waiting for a part`):`, ${w} of them waiting for a part`}.`;
   if(flagged.length)say2+=` ${nOf(flagged.length,'more is','more are')} showing early warning signs.`;
   $('#ovHeadline').className='headline'+(holds.length||n?'':' ok');
-  $('#ovHeadline').innerHTML=`<p class="say">${say}</p><p class="say2">${say2}</p>
+  UI.ovSpeech=(say+' '+say2).replace(/<[^>]+>/g,'');
+  $('#ovHeadline').innerHTML=`<button class="read-btn" data-ov="read:">${ico('speaker')} Read this to me</button><p class="say">${say}</p><p class="say2">${say2}</p>
     <div class="hl-tiles">
       <div class="${n?'hot':'good'}"><b>${n}</b><span>machines down now</span></div>
       <div class="${w?'hot':''}"><b>${w}</b><span>of those waiting for a part</span></div>
       <div class="${holds.length?'hot':'good'}"><b>${holds.length} of 6</b><span>sites on safety hold</span></div>
       <div class="${unl>=tot?'good':''}"><b>${fmt(unl)}</b><span>of ${fmt(tot)} h/yr prize unlocked ${tagM}</span></div>
     </div>`;
+  // sites at a glance
+  const gl=rollout(mCur(),1,pCur(),cCur()).gl;
+  $('#ovSites').innerHTML=SITE_ORDER.map(sid=>{
+    const s=siteBy[sid],hold=stat(sid)==='HOLD',o=openGates(sid).length,down=stopped.filter(x=>x.a.site===sid).length,fN=flagged.filter(a=>a.site===sid).length;
+    const bits=[hold?`<b>${nOf(o,'safety check','safety checks')} to go</b>`:`<b>Cleared</b>, joins wave in month ${gl[sid]}`];
+    bits.push(down?nOf(down,'machine down','machines down'):'all running');
+    if(fN)bits.push(nOf(fN,'flag','flags'));
+    return `<button class="scard ${hold?'hold':''}" data-ov="site:${sid}" title="Show ${s.name} on the map">
+      <span class="sn">${ico(hold?'lock':'check')}${s.name}</span>
+      <span class="ss">${bits.join(' · ')}</span>
+      <span class="sf"><span>spares ${s.spare}%</span><span>${fmt(steady(sid))} h/yr</span></span>
+      <span class="sb"><i class="${s.spare<50?'low':''}" style="width:${s.spare}%"></i></span></button>`}).join('');
   // broken now
   $('#ovBrokenMeta').textContent=n?`${n} down · ${w} waiting for parts`:'';
   $('#ovBroken').innerHTML=n?stopped.map(({a,e})=>{const s=siteBy[a.site],hold=stat(a.site)==='HOLD';
@@ -2373,6 +2402,7 @@ $('#pg-overview').addEventListener('click',e=>{
   const b=e.target.closest('[data-ov]');if(!b)return;
   const parts=b.dataset.ov.split(':'),t=parts[0],id=parts.slice(1).join(':');
   if(t==='asset'||t==='site')showOnMap(t,id);
+  if(t==='read'){ensureAudio();if(!voiceOn){voiceOn=true;agSave();renderChips()}stopSpeaking();speak(UI.ovSpeech||'')}
   if(t==='work'){nav('work');setTimeout(()=>flashCard(id),60)}
 });
 
