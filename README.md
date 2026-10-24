@@ -30,15 +30,17 @@ Full reasoning, including how three blind AI grader agents ranked eight strategi
 | `src/casequest/` | Cleaning, 39 integrity checks, metrics, option modeling, rollout roadmap, readiness signals |
 | `tests/` | Automated tests for cleaning rules, dataset integrity, analysis and the recommendation |
 | `docs/` | Phase write-ups, cleaning log, reconciliation checks, fact pack, external research, team plan |
-| `prototype/` | Standalone 3D Gate Console with the Parvis voice agent (single HTML file) |
+| `prototype/` | Parvius, the standalone operations console with the Parvis voice agent (single HTML file) |
 
 Docs, in reading order: `phase-1-discovery`, `phase-2-data-audit`, `phase-3-fact-pack`, `phase-4-solution-selection`, `phase-5-product-design`, plus `cleaning-log`, `reconciliation`, `research-external`, `grader-reports` and `team-plan`.
 
-## Prototype: Gate Console and Parvis
+## Prototype: Parvius
 
-`prototype/lone-mesa-gate-console.html` is a single self-contained interactive file:
+`prototype/parvius.html` is a single self-contained interactive file:
 
-- **3D site map** with HSE HOLD cages, spare-shelf cubes and avoided-hours towers
+- **Overview** that says what's going on in plain English: sites on hold, machines down, what might break next, and what to do first
+- **Work board** with safety checks to verify, readiness flags to decide, and what's blocked by a hold, each actionable in place
+- **3D site map** with HSE HOLD cages, spare-shelf cubes and avoided-hours towers, plus a six-beat story mode for the pitch
 - **Roles** (Planner, Site HSE supervisor, Manager) enforcing the gate rules: no override on a hold, only a supervisor records verified closure, planners approve with a logged reason
 - **2025 replay** using only readings received by the chosen date, with readiness flags
 - **Rollout and business-case sliders** (reproduces 666 h year one and 968 h steady state)
@@ -51,7 +53,7 @@ Run it from a local server so the mic and voice models work (opening the file di
 cd prototype && python3 -m http.server 8000
 ```
 
-Open <http://localhost:8000/lone-mesa-gate-console.html> in Chrome or Edge. Click **Prepare voices (~370 MB)** once on good wifi before the demo. More detail in `prototype/README.md`.
+Open <http://localhost:8000/parvius.html> in Chrome or Edge. Click **Prepare voices (~370 MB)** once on good wifi before the demo. More detail in `prototype/README.md`.
 
 The Streamlit "Parts Readiness Console" described in `docs/phase-5-product-design.md` is designed but not yet in this repo.
 
