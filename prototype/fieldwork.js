@@ -145,7 +145,7 @@
   function body(aid) {
     const plan = planFor(aid), j = liveJob(aid);
     if (!plan) return `<p class="wc-say">Work in flight on the ${esc(assetBy[aid].type.toLowerCase())}.</p>${actionHtml(aid, null)}`;
-    return `<p class="wc-say"><b>${issueText(plan)}.</b> ${pct(plan.chance)} chance it fails within 3 days.</p>
+    return `<p class="wc-say"><b>${issueText(plan)}.</b> ${pct(plan.chance)} chance it fails within 3 days.${plan.simulated ? ' <span class="sim-tag" title="Simulated live feed: a real 2025 prediction replayed on this date">SIMULATED</span>' : ''}</p>
       ${readings(plan)}${steps(j)}${kitsHtml(aid, plan, j)}${j || doneJob(aid) ? '' : holdHtml(aid)}${actionHtml(aid, plan)}`;
   }
 

@@ -1046,6 +1046,51 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
 .sd-tip{background:var(--paper);border:1px solid var(--ink)}
 .sd-legend button.off{text-decoration:none;opacity:.4}
 
+/* ---------- history vs simulated live ---------- */
+.live-note{position:absolute;z-index:7;left:50%;top:14px;transform:translateX(-50%);display:none;align-items:center;gap:10px;max-width:min(560px,58%);padding:7px 12px;background:var(--ink);color:var(--paper);font-size:12px;line-height:1.35}
+.live-note b{font:600 11px/1 var(--font-mono);letter-spacing:.08em;color:#ffb3a8;white-space:nowrap}
+body.is-live.page-map .live-note{display:flex}
+body.is-live .datechip{background:var(--ink);color:var(--paper);padding:4px 6px 4px 10px}
+body.is-live .datechip .mono{color:#ffb3a8}
+body.is-live .datechip button{color:var(--paper)}
+body.is-live .topline{background:repeating-linear-gradient(90deg,var(--red) 0 14px,var(--ink) 14px 28px);animation:livebar 1.2s linear infinite}
+@keyframes livebar{to{background-position:28px 0}}
+.tl-livezone{position:absolute;top:-4px;bottom:-4px;right:0;background:repeating-linear-gradient(-45deg,rgba(29,31,32,.07) 0 4px,transparent 4px 8px);border-left:2px dashed var(--ink);pointer-events:none}
+body.is-live .tl-livezone{background:repeating-linear-gradient(-45deg,oklch(0.52 0.19 25 / .12) 0 4px,transparent 4px 8px);border-left-color:var(--red)}
+.tl-months .tl-livelbl{color:var(--red-ink);font-weight:600}
+body.is-live .tl{box-shadow:inset 0 3px 0 var(--red)}
+.sim-tag{font:600 9.5px/1 var(--font-mono);letter-spacing:.06em;padding:3px 5px;border:1px dashed var(--red);color:var(--red-ink)}
+
+/* ---------- story visuals ---------- */
+.story-bar{display:flex;height:16px;margin:4px 0 10px;border:1px solid var(--divider)}
+.story-bar i{display:block;height:100%}
+.story-key{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:4px;font-size:13px}
+.story-key li{display:flex;align-items:center;gap:8px}.story-key li i{width:10px;height:10px;flex:0 0 10px}
+.story-key li b{margin-left:auto;font-variant-numeric:tabular-nums}
+.story-key li.hi{font-weight:700;color:var(--red-ink)}
+.story-pred{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid var(--amber);background:var(--amber-bg);margin:6px 0 4px;font-size:13px}
+.story-steps{margin:0 0 12px;padding-left:20px;font-size:14px;line-height:1.7}
+
+/* ---------- simple side panel ---------- */
+.iv-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.iv-say{margin:8px 0 0;font:600 20px/1.25 var(--font-heading);letter-spacing:.01em}
+.donow{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid var(--ink);background:var(--paper)}
+.donow.red{border-color:var(--red);background:var(--red-bg)}.donow.amb{border-color:var(--amber);background:var(--amber-bg)}
+.donow .k{font:500 9.5px/1 var(--font-mono);letter-spacing:.08em;color:var(--n700)}
+.donow b{font:600 19px/1.2 var(--font-heading);letter-spacing:.01em}
+.donow p{margin:0;font-size:13px;line-height:1.45;color:var(--n800)}
+.donow .row{margin-top:2px}.donow .row button{font-size:13px;padding:8px 14px}
+.donow .more{font-size:12px;color:var(--accent-700);background:none;border:0;padding:0;align-self:flex-start}
+.mini-sites{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--divider)}
+.mini-site{display:flex;align-items:center;gap:8px;padding:9px 4px;border:0;border-bottom:1px solid var(--divider);background:transparent;text-align:left;font:inherit;color:inherit;width:100%}
+.mini-site:nth-child(odd){border-right:1px solid var(--divider)}
+.mini-site:hover:not(:disabled){background:var(--n200);border-color:transparent var(--divider) var(--divider) transparent}
+.mini-site i{width:10px;height:10px;flex:0 0 10px}
+.mini-site b{font:600 14px/1 var(--font-heading);letter-spacing:.06em;text-transform:uppercase}
+.mini-site span{margin-left:auto;font:500 10px/1 var(--font-mono);letter-spacing:.04em;padding-right:6px}
+details.recent>summary{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--n700);font-weight:500}
+details.recent .act{margin-top:6px}
+
 /* ---------- smaller screens ---------- */
 @media(max-width:1599px){.hbrand small{display:none}.cmdk span,.cmdk kbd{display:none}#roleSeg .nm{display:none}#roleSeg .ab{display:inline}}
 @media(max-width:1299px){.prize>.mono,.role-wrap>.mono{display:none}.prize{grid-template-columns:auto 90px}.hdiv{display:none}.hnav a,.hnav button{padding:8px 6px;font-size:13px}}
@@ -1149,7 +1194,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
   </a>
   <span class="hdiv" aria-hidden="true"></span>
   <div class="datechip" title="The date being replayed. Everything on every page is as of this day.">
-    <span class="dc-l"><span class="mono">AS OF · 2025 FIELD REPLAY</span><b id="dateLbl"></b></span>
+    <span class="dc-l"><span class="mono" id="liveChip">HISTORY · 2025 RECORDS</span><b id="dateLbl"></b></span>
     <button class="ghost" id="dayBack" aria-label="Previous day"><svg class="ico"><use href="#i-back"/></svg></button>
     <button class="ghost" id="dayFwd" aria-label="Next day"><svg class="ico"><use href="#i-chev"/></svg></button>
     <button class="ghost" id="play2" aria-label="Replay 2025"><svg class="ico"><use href="#i-play"/></svg></button>
@@ -1188,6 +1233,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
   <div class="tip" id="tip"></div>
 
   <div class="fcap"><b>FIELD MAP</b><span class="mono">6 SITES · 18 ASSETS · SCHEMATIC LAYOUT</span></div>
+  <div class="live-note" role="note"><b>LIVE · SIMULATED</b><span>Real 2025 sensor days replayed in a new order to show how Parvius runs live. Not real 2026 data.</span></div>
   <div class="fkey mono" aria-label="Map key">
     <span><i class="k-run"></i>RUNNING</span><span><i class="k-warn"></i>EARLY WARNING</span><span><i class="k-stop"></i>STOPPED</span><span><i class="k-hold"></i>SAFETY HOLD</span>
     <span class="k-div"></span><span><i class="k-rec"></i>RECORDED</span><span><i class="k-mod"></i>MODELED</span>
@@ -1206,7 +1252,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
     <span><i class="sw-elig"></i>Prize tower · avoided hours a year</span>
     <span><i class="sw-shelf"></i>Shelf cubes · spare fill %</span>
     <span><i class="sw-asset"></i>Asset OK</span>
-    <span><i class="sw-flag"></i>Readiness flag</span>
+    <span><i class="sw-flag"></i>Early warning</span>
     <span><i class="sw-stop"></i>Stopped</span>
     <span><i class="sw-wait"></i>Stopped, waiting for parts</span><span class="legend-keys">Keys: <kbd>←</kbd> <kbd>→</kbd> story steps · <kbd>P</kbd> present · <kbd>N</kbd> narrate · <kbd>1</kbd>–<kbd>4</kbd> briefings · <kbd>/</kbd> ask Parvis</span>
   </div>
@@ -1238,7 +1284,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
     <div class="dock-div"></div>
     <div class="scrub">
       <button id="play" class="primary" aria-label="Replay 2025"><svg class="ico"><use href="#i-play"/></svg></button>
-      <div class="scrub-track"><canvas id="spark"></canvas><input type="range" id="day" min="6" max="364" value="200" aria-label="Date"></div>
+      <div class="scrub-track"><canvas id="spark"></canvas><input type="range" id="day" min="6" max="424" value="200" aria-label="Date"></div>
       <div class="scrub-meta"><b id="dayLbl"></b><span id="dayStats"></span></div>
     </div>
   </div>
@@ -1247,9 +1293,9 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
 <section class="tl" id="tl" aria-label="Historical replay">
   <div class="tl-play"><button id="tlPlay" aria-label="Replay 2025"><svg class="ico"><use href="#i-play"/></svg></button><span class="mono">HISTORICAL<br>REPLAY</span></div>
   <div class="tl-months mono" id="tlMonths"></div>
-  <div class="tl-end mono">2025</div>
+  <div class="tl-end mono">TO MAR 2026</div>
   <div class="tl-names mono" id="tlNames"></div>
-  <div class="tl-track" id="tlTrack" role="slider" tabindex="0" aria-label="Replay date" aria-valuemin="6" aria-valuemax="364"></div>
+  <div class="tl-track" id="tlTrack" role="slider" tabindex="0" aria-label="Replay date" aria-valuemin="6" aria-valuemax="424"></div>
   <div class="tl-now"><b id="tlDate"></b><span>Drag to scrub · <i class="tl-k stop"></i> stop that waited for parts · <i class="tl-k"></i> other stop · hatched = critical check overdue</span></div>
 </section>
 
@@ -1303,11 +1349,11 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
 
 <section class="page" id="pg-work" aria-label="Work">
   <div class="page-inner wide">
-    <div class="page-head"><div><h1 tabindex="-1">Who needs to do what</h1><p class="page-sub"><span id="wkEyebrow"></span> Safety checks unlock sites, and unlocked sites can stock spare parts. Readiness flags tell the planner which part to have ready.</p></div>
+    <div class="page-head"><div><h1 tabindex="-1">Today's work</h1><p class="page-sub" id="wkEyebrow"></p></div>
       <div class="seg" id="wkFilter" role="group" aria-label="Show"><button data-f="all">Everyone's work</button><button data-f="mine">Just mine</button></div></div>
     <div class="board" id="board">
       <div class="col"><div class="col-h"><b>Do now</b><span class="cnt" id="cntNow"></span></div><div id="colNow"></div></div>
-      <div class="col"><div class="col-h"><b>Blocked by a safety hold</b><span class="cnt" id="cntBlocked"></span></div><div id="colBlocked"></div></div>
+      <div class="col"><div class="col-h"><b>Waiting on a safety check</b><span class="cnt" id="cntBlocked"></span></div><div id="colBlocked"></div></div>
       <div class="col"><div class="col-h"><b>Done</b><span class="cnt" id="cntDone"></span></div><div id="colDone"></div></div>
       <aside class="wk-side">
         <div class="panel"><div class="panel-h"><h2>Who's on it</h2></div><div id="wkWho"></div></div>
@@ -1523,8 +1569,45 @@ function addLog(entry){S.log=[...S.log,Object.freeze({ts:new Date().toISOString(
 const stat=sid=>siteStatus(sid,S.verified);
 
 /* ---------- per-day derived ---------- */
-function eventsUpTo(day){return D.events.filter(e=>e.s<=day+1)}
-function stoppedNow(aid,day){const t=day+0.5;return D.events.find(e=>e.a===aid&&e.s<=t&&e.e>=t)||null}
+/* ---------- simulated live feed ----------
+   After the 2025 history the replay runs on into a SIMULATED live period, Jan 1 to Mar 1, 2026. No reading is
+   invented: each machine replays real July–December 2025 days (data the failure model never trained on) in shuffled
+   blocks of 10–21 days, carrying those days' readings, stops and the model's own predictions. Same seed, same demo.
+   2025 totals (D.events, Trends, briefings) never include it, and every live surface is labelled SIMULATED. */
+const LIVE_FIRST=365,LIVE_DAYS=60,LAST_DAY=LIVE_FIRST+LIVE_DAYS-1;
+const isLiveDay=d=>d>=LIVE_FIRST;
+const LIVE_NOTE='Simulated live feed: real 2025 sensor days replayed in a new order to show how Parvius runs live. Not real 2026 data.';
+const LIVE=(()=>{
+  let seed=2026;const rnd=()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const src={},events=[];
+  D.assets.forEach(a=>{
+    const map=[],ser=D.series[a.id];
+    while(map.length<LIVE_DAYS){
+      const len=10+Math.floor(rnd()*12),take=Math.min(len,LIVE_DAYS-map.length),start=181+Math.floor(rnd()*(364-181-len)),shift=LIVE_FIRST+map.length-start;
+      for(let k=0;k<take;k++)map.push(start+k);
+      D.events.filter(e=>e.a===a.id&&Math.floor(e.s)>=start&&Math.floor(e.s)<start+take).forEach(e=>events.push({...e,s:e.s+shift,e:Math.min(e.e+shift,LAST_DAY+1),live:true}));
+    }
+    map.forEach((sd,k)=>{const d=LIVE_FIRST+k;ser.v[d]=ser.v[sd];ser.n[d]=ser.n[sd];ser.r[d]=d+Math.max(0,ser.r[sd]-sd)});
+    src[a.id]=map;
+  });
+  return {src,events,plansMerged:false};
+})();
+// every stop the replay can see: 2025 history plus the simulated live stops (which all start after 2025)
+const ALL_EVENTS=D.events.concat(LIVE.events);
+// the model's real prediction for each source day, re-dated onto the live day (fieldwork.js loads the model async)
+function liveMergePlans(){
+  if(LIVE.plansMerged||!window.FW||!FW.model)return false;
+  const P=FW.model.plans;
+  for(let k=0;k<LIVE_DAYS;k++){
+    const key=dayStr(LIVE_FIRST+k),list=[];
+    D.assets.forEach(a=>{const sd=LIVE.src[a.id][k],p=(P[dayStr(sd)]||[]).find(x=>x.asset_id===a.id);if(p)list.push({...p,day:key,simulated:true,source_day:dayStr(sd)})});
+    if(list.length)P[key]=list;
+  }
+  return LIVE.plansMerged=true;
+}
+const liveMergeT=setInterval(()=>{if(liveMergePlans()){clearInterval(liveMergeT);if(isLiveDay(S.day))refreshViews()}},400);
+function eventsUpTo(day){return ALL_EVENTS.filter(e=>e.s<=day+1)}
+function stoppedNow(aid,day){const t=day+0.5;return ALL_EVENTS.find(e=>e.a===aid&&e.s<=t&&e.e>=t)||null}
 function allFlags(day){const o={};D.assets.forEach(a=>o[a.id]=flagFor(D.series[a.id],day));return o}
 
 /* ---------- tabs / role ---------- */
@@ -1811,7 +1894,7 @@ function tipHtml(tag){
   const [t,id]=tag.split(':');
   if(t==='site'){const s=siteBy[id];return `<b>${s.name}</b> · ${stat(id)}<br>${Math.round(steady(id))} avoided h/yr (modeled) · spares ${s.spare}%<br><span class="muted">Double-click for its trends</span>`}
   const a=assetBy[id],fl=flagFor(D.series[id],S.day),st=stoppedNow(id,S.day);
-  return `<b>${id} ${a.type}</b> · ${siteBy[a.site].name}<br>${st?'Stopped ('+st.c+')':fl.flag?'Readiness flag':'Normal'} · max ${fl.maxv?fl.maxv.toFixed(2)+'× normal':'no valid reading'}`;
+  return `<b>${id} ${a.type}</b> · ${siteBy[a.site].name}<br>${st?'Stopped ('+st.c+')':fl.flag?'Early warning':'Normal'} · max ${fl.maxv?fl.maxv.toFixed(2)+'× normal':'no valid reading'}`;
 }
 /* timeline */
 const daySl=$('#day');
@@ -1836,7 +1919,7 @@ function drawAssetChart(hx=aChartHover){
   for(let v=lo;v<=hi+1e-9;v+=0.5){g.strokeStyle='rgba(29,31,32,.09)';g.lineWidth=1;g.beginPath();g.moveTo(L,Y(v));g.lineTo(w-R,Y(v));g.stroke();g.fillStyle='#7a7a7d';g.textAlign='right';g.fillText(v.toFixed(1)+'×',L-5,Y(v))}
   g.strokeStyle=MAPC.amber;g.setLineDash([5,4]);g.lineWidth=1.2;g.beginPath();g.moveTo(L,Y(1.3));g.lineTo(w-R,Y(1.3));g.stroke();g.setLineDash([]);
   g.fillStyle=MAPC.amber;g.textAlign='right';g.textBaseline='bottom';g.fillText('flag 1.3×',w-R,Y(1.3)-2);
-  const stops=D.events.filter(e=>e.a===aid&&e.s>=d0&&e.s<=d1+1);
+  const stops=ALL_EVENTS.filter(e=>e.a===aid&&e.s>=d0&&e.s<=d1+1);
   stops.forEach(e=>{const x=X(Math.min(d1,e.s));g.fillStyle='rgba(183,40,42,.10)';g.fillRect(x,T,Math.max(2,(Math.min(d1+1,e.e)-e.s)/n*(w-L-R)),h-T-B);g.fillStyle=MAPC.red;g.fillRect(x-1,h-B-6,2,6)});
   for(let k=1;k<pts.length;k++){const [a,va]=pts[k-1],[b,vb]=pts[k];g.beginPath();g.moveTo(X(a),Y(va));g.lineTo(X(b),Y(vb));
     if(b-a>1){g.strokeStyle='rgba(65,103,140,.45)';g.setLineDash([3,3]);g.lineWidth=1}else{g.strokeStyle='#41678c';g.setLineDash([]);g.lineWidth=2}g.stroke()}
@@ -2599,53 +2682,67 @@ function payoff(){
   const m=mCur(),cs=cCur(),p=pCur(),cur=cumSeries(m,p,cs);
   return {m,y1:cur.hours[12],val:cur.hours[12]*VPH,pb:cur.net.findIndex((v,i)=>i>0&&v>=0),ss:SITE_ORDER.reduce((a,s)=>a+steady(s,cs),0),perMonth:y1Hours(1,cs,p)-y1Hours(2,cs,p)};
 }
+// Story copy is for someone who has never run a maintenance team: one number per beat, plain words.
+const STAGE_PLAIN={det:'Noticing it',dis:'Getting someone there',pw:'Waiting for the part',rep:'Fixing it',res:'Restarting'};
+function stageSplit(){const ev=D.events,tot=ev.reduce((a,e)=>a+e.h,0);return STAGES.map(([k,,c])=>({k,c,l:STAGE_PLAIN[k],h:ev.reduce((a,e)=>a+e[k],0),pct:Math.round(ev.reduce((a,e)=>a+e[k],0)/tot*100)}))}
+const modelMeta=()=>(window.FW&&FW.model&&FW.model.meta)||null;
+// The highest-chance prediction on the replay day, or the nearest day that has one (moves the replay there).
+function storyPrediction(move){
+  if(!window.FW||!FW.model)return null;
+  const top=d=>(FW.model.plans[dayStr(d)]||[]).slice().sort((a,b)=>b.chance-a.chance)[0]||null;
+  if(top(S.day))return top(S.day);
+  for(let k=1;k<60;k++)for(const d of [S.day+k,S.day-k]){if(d>=6&&d<=LAST_DAY&&top(d)){if(move)setDay(d);return top(d)}}
+  return null;
+}
 const BEATS=[
-  {t:'The problem',sheet:'why',
-   html(){const p=problemFacts();return `<div class="big">${fmt(p.tot)} h</div><div class="bigsub">of unplanned downtime across six sites in 2025</div>
-     <div class="minis"><div><b>${p.ev.length}</b><span>unplanned events</span></div><div><b>$5.6M</b><span>lost contribution (modeled)</span></div><div class="hot"><b>${p.share}%</b><span>spent waiting for parts</span></div></div>
-     <p>The biggest fixable slice of lost time isn't repair. It's broken machines <b>waiting for a part</b> that isn't on the shelf.</p>`},
-   say(){const p=problemFacts();return `Last year Lone Mesa lost ${fmt(p.tot)} hours to unplanned downtime, about 5.6 million dollars of contribution. ${p.share} percent of that was machines simply waiting for parts.`},
+  {t:'Machines break down',sheet:'why',
+   html(){const p=problemFacts(),days=Math.round(p.tot/D.assets.length/24);return `<div class="big">${fmt(p.tot)} hours</div><div class="bigsub">of breakdowns at Lone Mesa's six sites last year</div>
+     <p>That's like every one of the 18 machines sitting idle for about <b>${days} days</b>. Every hour a pump or compressor is down is oil that isn't produced.</p>
+     <p class="muted small">Red machines on the map are stopped right now in the replay.</p>`},
+   say(){const p=problemFacts();return `Machines break down. Last year Lone Mesa's six sites lost ${fmt(p.tot)} hours to breakdowns, like every machine sitting idle for about ${Math.round(p.tot/D.assets.length/24)} days.`},
    enter(){deselect();S.hl=D.assets.filter(a=>stoppedNow(a.id,S.day)).map(a=>a.id);flyHome({yaw:-0.42,dist:60})}},
-  {t:'Why parts',sheet:'why',
-   html(){const a=siteBy.S04;return `<div class="big red">r = ${corrR().toFixed(3)}</div><div class="bigsub">empty-shelf share vs. breakdowns that waited, six sites</div>
-     <p>The emptier a site's spare shelf, the more of its breakdowns wait for parts. Almost one for one.</p>
-     <div class="minis"><div class="hot"><b>${a.spare}%</b><span>Arroyo spare fill, lowest in fleet</span></div><div class="hot"><b>${Math.round(a.waited*100)}%</b><span>of Arroyo breakdowns waited</span></div><div><b>${fmt(a.pw)} h</b><span>Arroyo parts-wait, ~40% of fleet</span></div></div>`},
-   say(){return `Why parts? Across the six sites, the share of the shelf that is empty almost exactly predicts the share of breakdowns that wait. Arroyo is the extreme: the emptiest shelf, and the most waiting.`},
-   enter(){deselect();S.hl=D.assets.filter(a=>a.site==='S04').map(a=>a.id);flyTo('S04',{dist:24,pitch:0.82,yaw:-0.2})}},
-  {t:'The gate',sheet:'hse',
-   html(){const g=gateFacts(),holds=SITE_ORDER.filter(s=>stat(s)==='HOLD');return `<div class="big red">${holds.length} of 6</div><div class="bigsub">sites on safety hold right now</div>
-     <p>${g.g5.length} overdue severity-5 actions (gas monitoring readiness and energy isolation) lock ${lst(g.names)}. We don't stock a held site. Safety goes first.</p>
-     <div class="minis"><div><b>$${Math.round(g.setup/1000)}k</b><span>to close them</span></div><div><b>${g.hrs} h</b><span>person-hours of work</span></div><div><b>${g.pct}%</b><span>of the prize they unlock</span></div></div>`},
-   say(){const g=gateFacts();return `Here is the catch. ${g.g5.length} overdue critical safety actions put ${lst(g.names)} on hold. About ${Math.round(g.setup/1000)} thousand dollars and ${g.hrs} person-hours of safety work unlock ${g.pct} percent of the prize.`},
-   enter(){deselect();S.hl=[];flyHome({pitch:1.02,dist:52,yaw:-0.5})}},
-  {t:'Unlock it',sheet:'hse',
-   html(){const done=stat('S04')==='ELIGIBLE',left=D.gates.filter(g=>g.site==='S04'&&g.block&&!S.verified[g.id]).length;
-     return `<div class="big ${done?'green':''}">${fmt(unlockedH())} h/yr</div><div class="bigsub">of ${fmt(sumSteady())} unlocked so far</div>
-     <p>Only a <b>site HSE supervisor</b> can lift a hold, and only with evidence: a name, a date and what was inspected. There is no override button.</p>
-     ${done?`<div class="done-note">${ico('unlock')} Arroyo unlocked · +${fmt(steady('S04'))} h/yr joined the prize</div>`
-       :`<p class="muted small" style="margin-top:-4px">Arroyo has ${left} critical closure${left==1?'':'s'} left. Verify them and watch the cage come down.</p>
-         <div class="cta"><button class="brand" data-beat-act="unlock">${ico('unlock')} Verify Arroyo as HSE supervisor</button></div>`}`},
-   say(){return `This is the gate in action. Only a site HSE supervisor can lift a hold, and only with evidence. Let's verify Arroyo's critical closures and watch the prize unlock.`},
-   enter(){S.hl=[];flyTo('S04',{dist:30,pitch:0.9,yaw:-0.45})}},
-  {t:'The payoff',sheet:'roll',
-   html(){const p=payoff();return `<div class="big green">${fmt(p.ss)} h/yr</div><div class="bigsub">avoided downtime at steady state (modeled)</div>
-     <div class="slider-row"><label for="beatM"><span>Safety closures verified by</span><b id="bmLbl">month ${p.m}</b></label><input type="range" min="1" max="6" value="${p.m}" id="beatM"></div>
-     <div class="minis"><div class="good"><b id="bY1">${fmt(p.y1)} h</b><span>avoided in year 1</span></div><div><b id="bVal">$${Math.round(p.val/1000)}k</b><span>year-1 modeled margin</span></div><div><b id="bPb">${p.pb>0?'M'+p.pb:'>M12'}</b><span>payback incl. HSE work</span></div></div>
-     <p>Every month the gate stays shut costs about <b>${fmt(p.perMonth)} h</b>. Fixing safety fast is the fastest way to the prize.</p>`},
-   say(){const p=payoff();return `The payoff: about ${fmt(p.ss)} avoided hours a year at steady state, ${fmt(p.y1)} in year one if the closures are verified by month ${p.m}. Every month the gate stays shut costs about ${fmt(p.perMonth)} hours.`},
-   enter(){deselect();S.hl=[];flyHome({pitch:0.6,dist:52,yaw:-0.8})}},
-  {t:'The plan',sheet:'plan',
-   html(){const {waves}=rollout(mCur(),1,pCur(),cCur()),pw=D.sites.reduce((a,s)=>a+s.pw,0);
-     return `<div class="big">4 waves</div><div class="bigsub">gate first. Nothing is stocked at a held site.</div>
-     <ul class="waves" id="waveList">${waves.map((w,i)=>`<li data-w="${i}"><b>M${w.gl}</b><span>${w.name}: ${w.sites.map(s=>siteBy[s].name).join(', ')}</span></li>`).join('')}</ul>
-     <div class="minis"><div class="hot"><b>${fmt(pw)}→${fmt(pw*0.4)}</b><span>parts-wait hours, target</span></div><div><b>${D.gates.filter(g=>g.block).length} → 0</b><span>critical safety actions</span></div><div><b>0</b><span>approvals on a HOLD site</span></div></div>
+  {t:'Most of it is waiting',sheet:'why',
+   html(){const s=stageSplit(),pw=s.find(x=>x.k==='pw');return `<div class="big red">${pw.pct}%</div><div class="bigsub">of the time was spent waiting for a part</div>
+     <div class="story-bar" role="img" aria-label="Where breakdown time goes">${s.map(x=>`<i style="flex:${x.h};background:${x.c}" title="${x.l}: ${x.pct}%"></i>`).join('')}</div>
+     <ul class="story-key">${s.map(x=>`<li class="${x.k==='pw'?'hi':''}"><i style="background:${x.c}"></i>${x.l}<b>${x.pct}%</b></li>`).join('')}</ul>
+     <p>Fixing the machine is real work. <b>Waiting for a part that isn't on the shelf is pure waste</b>, and it's the biggest delay we can cut.</p>`},
+   say(){const pw=stageSplit().find(x=>x.k==='pw');return `Where does the time go? Noticing the problem, getting someone there, fixing it and restarting. But ${pw.pct} percent is just waiting for a part. That's the waste we can cut.`},
+   enter(){deselect();S.hl=D.assets.filter(a=>{const e=stoppedNow(a.id,S.day);return e&&e.pw>0}).map(a=>a.id);flyHome({yaw:-0.5,dist:56})}},
+  {t:'See it coming',sheet:'hse',
+   html(){const m=modelMeta(),p=storyPrediction(false),h=m&&m.holdout;
+     const lead=h?`${Math.max(1,Math.floor(h.median_lead_days))}–${Math.ceil(h.median_lead_days)+(Number.isInteger(h.median_lead_days)?1:0)} days`:'1–2 days';
+     return `<div class="big">${lead}</div><div class="bigsub">of warning before most bearing and seal failures</div>
+     <p>Every machine reports vibration and temperature. When one starts to shake, the failure model says what is likely to break, before it does.${h?` About <b>${Math.round(h.precision*10)} in 10</b> of its warnings turn into a real failure.`:''}</p>
+     ${p?`<div class="story-pred"><span class="mono">PREDICTED · ${prettyDay(S.day).toUpperCase()}${isLiveDay(S.day)?' · SIMULATED':''}</span><b>${p.asset_id} · ${esc(p.asset_type)} at ${esc(siteBy[p.site_id].name)}</b><span>${esc(p.parts.slice().sort((a,b)=>b.likelihood-a.likelihood)[0].for_cause)} likely within 3 days</span></div>`:'<p class="muted small">Loading the failure model…</p>'}`},
+   say(){const p=storyPrediction(false);return `We can see it coming. Sensors warn us one to two days before most bearing and seal failures.${p?` Right now the model expects trouble on the ${siteBy[p.site_id].name} ${p.asset_type.toLowerCase()}.`:''}`},
+   enter(){deselect();const p=storyPrediction(true);S.hl=p?[p.asset_id]:[];if(p)flyTo(p.site_id,{dist:26,pitch:0.85,yaw:-0.35});else flyHome()}},
+  {t:'Send the right fix',sheet:'roll',
+   html(){const ev=D.events.filter(e=>e.pw>0),avg=ev.reduce((a,e)=>a+e.pw,0)/ev.length,p=storyPrediction(false);
+     return `<div class="big">${Math.round(avg)} hours</div><div class="bigsub">a breakdown waited for its part, on average</div>
+     <p>Instead, the manager sends an engineer <b>with the right kit, before the machine fails</b>. No waiting for a part, no second trip. The engineer's phone gets the job, the hazards and the tools.</p>
+     ${p?`<div class="cta"><button class="primary" data-beat-act="send" data-a="${p.asset_id}">Send an engineer to ${esc(siteBy[p.site_id].name)} as manager</button></div><p class="muted small">Watch the engineer walk out on the map.</p>`:'<p class="muted small">Loading the failure model…</p>'}`},
+   say(){return `So instead of waiting, the manager sends an engineer with the right kit before the machine fails. No waiting for a part, and no second trip.`},
+   enter(){deselect();const p=storyPrediction(true);S.hl=p?[p.asset_id]:[];flyHome({pitch:0.82,dist:46,yaw:-0.5})}},
+  {t:'Safety first',sheet:'hse',
+   html(){const holds=SITE_ORDER.filter(s=>stat(s)==='HOLD'),done=stat('S04')==='ELIGIBLE',left=D.gates.filter(g=>g.site==='S04'&&g.block&&!S.verified[g.id]).length;
+     return `<div class="big ${holds.length?'red':'green'}">${holds.length} of 6</div><div class="bigsub">sites can't stock parts until a safety check is signed off</div>
+     <p>${holds.length?`${lst(holds.map(s=>siteBy[s].name))} each have an overdue safety check, like gas detection or locking out power before work. `:''}Only a <b>safety supervisor</b> can clear one, in the field, with evidence. There is no override button.</p>
+     ${done?`<div class="done-note">${ico('unlock')} Arroyo is cleared and can stock parts</div>`
+       :`<div class="cta"><button class="brand" data-beat-act="unlock">${ico('unlock')} Sign off Arroyo as safety supervisor</button></div><p class="muted small">${left} check${left==1?'':'s'} left at Arroyo. Watch the red cage come down.</p>`}`},
+   say(){const n=SITE_ORDER.filter(s=>stat(s)==='HOLD').length;return `Safety comes first. ${n} of the six sites have an overdue safety check. Only a safety supervisor can sign it off, in the field, with evidence. Let's clear Arroyo.`},
+   enter(){deselect();S.hl=[];flyTo('S04',{dist:30,pitch:0.9,yaw:-0.45})}},
+  {t:"What it's worth",sheet:'plan',
+   html(){const ss=sumSteady(),p=problemFacts();
+     return `<div class="big green">${fmt(ss)} hours</div><div class="bigsub">of production back every year <span class="tag mod">MODELED</span></div>
+     <p>That's about <b>${Math.round(ss/p.tot*100)}%</b> of last year's breakdown time, from keeping the right parts ready and sending engineers before machines fail.</p>
+     <ol class="story-steps"><li>Start at one site that's already cleared</li><li>Clear the overdue safety checks</li><li>Roll out to all six sites</li></ol>
      <div class="cta"><button class="primary" data-beat-act="explore">Explore on your own ${ico('chev')}</button></div>`},
-   say(){return `The plan: four waves, gate first. Pilot at an unblocked site, then the rest of the cleared sites, then Arroyo, the biggest prize, the moment its closures are verified. We measure parts-wait hours, critical safety actions, and zero approvals on a held site.`},
-   enter(){deselect();startTour()}}
+   say(){return `What's it worth? About ${fmt(sumSteady())} hours of production back every year. Start at one cleared site, clear the safety checks, then roll out to all six.`},
+   enter(){deselect();S.hl=[];flyHome({pitch:0.6,dist:52,yaw:-0.8})}}
 ];
 function deselect(){S.sel=null;UI.verifyOpen=null;closeInsp();renderDock();renderInsp()}
 function renderStory(){
-  const done=i=>i<UI.beat||(i===3&&stat('S04')==='ELIGIBLE');
+  const done=i=>i<UI.beat||(i===4&&stat('S04')==='ELIGIBLE');
   $('#dots').innerHTML=BEATS.map((b,i)=>`<button class="${i===UI.beat?'on':done(i)?'done':''}" data-b="${i}" aria-label="Beat ${i+1}: ${b.t}"></button>`).join('');
   $('#beats').innerHTML=BEATS.map((b,i)=>`<div class="beat ${i===UI.beat?'on':''} ${done(i)?'done':''}">
     <button class="bh" data-b="${i}" aria-expanded="${i===UI.beat}"><span class="n">${done(i)&&i!==UI.beat?ico('check'):i+1}</span>${b.t}</button>
@@ -2669,6 +2766,10 @@ $('#beats').addEventListener('click',e=>{
   const s=e.target.closest('[data-sheet-open]');if(s){openSheet(s.dataset.sheetOpen);return}
   const a=e.target.closest('[data-beat-act]');if(!a)return;
   if(a.dataset.beatAct==='explore')setMode('explore');
+  if(a.dataset.beatAct==='send'&&window.FW){
+    if(S.role!=='Manager')setRole('Manager');
+    FW.handle({dataset:{act:'fwSend',a:a.dataset.a}});flyHome({pitch:0.82,dist:42,yaw:-0.5});
+  }
   if(a.dataset.beatAct==='unlock'){
     setRole('Site HSE supervisor');
     const g=D.gates.find(x=>x.site==='S04'&&x.block&&!S.verified[x.id]);
@@ -2693,7 +2794,7 @@ function startTour(){
 }
 
 /* ---------- dock & scrubber ---------- */
-const EV_DAY=new Array(366).fill(0);D.events.forEach(e=>{const d=Math.floor(e.s);if(d>=0&&d<366)EV_DAY[d]+=e.h});
+const EV_DAY=new Array(LAST_DAY+2).fill(0);ALL_EVENTS.forEach(e=>{const d=Math.floor(e.s);if(d>=0&&d<=LAST_DAY)EV_DAY[d]+=e.h});
 function renderDock(){
   $('#sites').innerHTML=SITE_ORDER.map(sid=>{const s=siteBy[sid],hold=stat(sid)==='HOLD',sel=S.sel&&(S.sel.type==='site'?S.sel.id===sid:assetBy[S.sel.id].site===sid);
     return `<button class="site-chip ${hold?'hold':'elig'} ${sel?'sel':''}" data-site="${sid}" title="${s.name}: ${hold?'on safety hold':'eligible'}">
@@ -2705,7 +2806,7 @@ $('#sites').addEventListener('click',e=>{const b=e.target.closest('[data-site]')
 function drawSpark(){
   const c=$('#spark');if(!c)return;const w=c.clientWidth,h=c.clientHeight;if(!w)return;
   const dpr=window.devicePixelRatio||1;c.width=w*dpr;c.height=h*dpr;const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
-  const d0=6,d1=364,X=d=>(d-d0)/(d1-d0)*w,mx=Math.max(...EV_DAY),bw=Math.max(1,w/(d1-d0)-0.4);
+  const d0=6,d1=LAST_DAY,X=d=>(d-d0)/(d1-d0)*w,mx=Math.max(...EV_DAY),bw=Math.max(1,w/(d1-d0)-0.4);
   g.fillStyle='#E7EAEE';g.fillRect(0,h-6,w,2);
   for(let d=d0;d<=d1;d++){if(!EV_DAY[d])continue;const bh=Math.max(2,Math.sqrt(EV_DAY[d]/mx)*(h-14));g.fillStyle=d<=S.day?'#8A909C':'#D5D9DF';g.fillRect(X(d),h-6-bh,bw,bh)}
   const x=X(S.day);g.fillStyle=PAL.brand;g.fillRect(x-1,0,2,h);g.beginPath();g.arc(x,h-5,5,0,7);g.fill();
@@ -2715,24 +2816,34 @@ function onDay(){
   const f=allFlags(S.day),nf=Object.values(f).filter(x=>x.flag).length,st=D.assets.filter(a=>stoppedNow(a.id,S.day)).length;
   $('#dayLbl').textContent=prettyDay(S.day);$('#dayStats').textContent=`${st} stopped · ${nf} flagged`;
   // the docked inspector shows the overview when nothing is selected, so it follows the replay day too
+  setLiveState();
   if(UI.page==='map'&&!dlgOpen())renderInsp();
   renderTimeline();renderAI(false);
   updateDateChip();renderWorkBadge();schedulePageRender();
 }
+// History vs the simulated live feed must never be confused: body class, header pill, map banner and a one-time notice.
+let liveSeen=false;
+function setLiveState(){
+  const live=isLiveDay(S.day);
+  document.body.classList.toggle('is-live',live);
+  const chip=$('#liveChip');if(chip)chip.textContent=live?'● LIVE · SIMULATED':'HISTORY · 2025 RECORDS';
+  if(live&&!liveSeen){liveSeen=true;toast(`${ico('bolt')}<div><b>Live feed (simulated) from Jan 1, 2026</b>${LIVE_NOTE}</div>`,{ms:9000,kind:'big'})}
+}
 /* ---------- timeline lanes: one lane per site, recorded stops and overdue critical checks as of the replay day ---------- */
 const dayIdx=iso=>Math.round((Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10))-BASE.getTime())/864e5);
-const tlPct=d=>(Math.max(0,Math.min(364,d))/364*100).toFixed(3)+'%';
+const tlPct=d=>(Math.max(0,Math.min(LAST_DAY+1,d))/(LAST_DAY+1)*100).toFixed(3)+"%";
 function renderTimeline(){
   const tr=$('#tlTrack');if(!tr)return;
   if(!$('#tlNames').childElementCount){
     $('#tlNames').innerHTML=SITE_ORDER.map(s=>`<span>${siteBy[s].name.toUpperCase()}</span>`).join('');
-    $('#tlMonths').innerHTML=MONTH_RANGES.map(([d0],k)=>`<span style="left:${tlPct(d0)}">${MON[k].toUpperCase()}</span>`).join('');
+    $('#tlMonths').innerHTML=MONTH_RANGES.map(([d0],k)=>`<span style="left:${tlPct(d0)}">${MON[k].toUpperCase()}</span>`).join('')
+      +`<span class="tl-livelbl" style="left:${tlPct(LIVE_FIRST)}">LIVE · SIMULATED</span>`;
   }
   const day=S.day;
-  tr.innerHTML=SITE_ORDER.map(sid=>{
+  tr.innerHTML=`<div class="tl-livezone" style="left:${tlPct(LIVE_FIRST)}" title="${esc(LIVE_NOTE)}"></div>`+SITE_ORDER.map(sid=>{
     const bands=D.gates.filter(g=>g.site===sid&&g.block).map(g=>{const d0=dayIdx(g.due);if(d0>day||d0>364)return '';const v=S.verified[g.id];
       return `<div class="tl-band${v?' done':''}" style="left:${tlPct(d0)};width:calc(${tlPct(day)} - ${tlPct(d0)})" title="${g.id} · ${esc(g.hazard)} · ${v?'verified':'overdue'} since ${prettyDate(g.due)}"></div>`}).join('');
-    const marks=D.events.filter(e=>assetBy[e.a].site===sid&&Math.floor(e.s)<=day).map(e=>
+    const marks=ALL_EVENTS.filter(e=>assetBy[e.a].site===sid&&Math.floor(e.s)<=day).map(e=>
       `<div class="tl-mk${e.pw>0?' w':''}" style="left:${tlPct(e.s)}" title="${shortDay(e.s)} · ${e.a} ${esc(e.c.toLowerCase())} · ${h1(e.h)} h${e.pw>0?`, ${h1(e.pw)} h waiting for parts`:''}"></div>`).join('');
     return `<div class="tl-lane">${bands}${marks}</div>`;
   }).join('')+`<div class="tl-head" style="left:${tlPct(day)}"></div>`;
@@ -2740,7 +2851,7 @@ function renderTimeline(){
   $('#tlDate').textContent=prettyDay(day);
 }
 (()=>{
-  const tr=$('#tlTrack'),at=x=>{const r=tr.getBoundingClientRect();return Math.max(6,Math.min(364,Math.round((x-r.left)/r.width*364)))};
+  const tr=$('#tlTrack'),at=x=>{const r=tr.getBoundingClientRect();return Math.max(6,Math.min(LAST_DAY,Math.round((x-r.left)/r.width*(LAST_DAY+1))))};
   tr.addEventListener('pointerdown',e=>{
     if(playT){clearInterval(playT);playT=null;setPlayIcon()}
     tr.setPointerCapture(e.pointerId);setDay(at(e.clientX));
@@ -2749,17 +2860,19 @@ function renderTimeline(){
   });
   tr.addEventListener('keydown',e=>{
     const step=e.shiftKey?7:1;
-    if(e.key==='ArrowRight'){e.preventDefault();setDay(Math.min(364,S.day+step))}
+    if(e.key==='ArrowRight'){e.preventDefault();setDay(Math.min(LAST_DAY,S.day+step))}
     if(e.key==='ArrowLeft'){e.preventDefault();setDay(Math.max(6,S.day-step))}
   });
   $('#tlPlay').addEventListener('click',()=>$('#play').click());
 })();
 let playT=null;
 function setPlayIcon(){['#play','#play2','#tlPlay'].forEach(s=>{const b=$(s);b.innerHTML=ico(playT?'pause':'play');b.setAttribute('aria-label',playT?'Pause replay':'Replay 2025')});$('#play2').classList.toggle('on',!!playT)}
+// History plays fast; the simulated live period plays slowly so predictions can be dispatched as they appear.
 $('#play').addEventListener('click',()=>{
-  if(playT){clearInterval(playT);playT=null;setPlayIcon();return}
-  if(S.day>=360)setDay(6);
-  playT=setInterval(()=>{if(S.day>=364){clearInterval(playT);playT=null;setPlayIcon();return}setDay(S.day+1)},90);setPlayIcon();
+  if(playT){clearTimeout(playT);playT=null;setPlayIcon();return}
+  if(S.day>=LAST_DAY-1)setDay(6);
+  const step=()=>{if(S.day>=LAST_DAY){playT=null;setPlayIcon();return}setDay(S.day+1);playT=setTimeout(step,isLiveDay(S.day)?650:90)};
+  playT=setTimeout(step,90);setPlayIcon();
 });
 $('#orbit').addEventListener('click',()=>{orbit=!orbit;$('#orbit span').textContent='Orbit: '+(orbit?'on':'off')});
 $('#legendBtn').addEventListener('click',()=>$('#legendPop').classList.toggle('on'));
@@ -2872,7 +2985,7 @@ function assetState(a){
   if(st)return {k:st.pw>0?'wait':'stop',col:C_RED,label:st.pw>0?'NO PART':'STOPPED',sub:`Stopped ${shortDay(st.s)} · ${st.c.toLowerCase()}${st.pw>0?', waiting for a part':''}`,st,fl};
   if(fl.flag){const p=a.crit==='High'?'P2':'P3',dec=decidedFlag(a.id);
     if(dec)return {k:'dec',col:C_GRN,label:/Reject/.test(dec.action)?'DEFERRED':'STAGED',sub:`${dec.action} · logged by ${dec.role==='Site HSE supervisor'?'HSE supervisor':dec.role}`,fl,dec,p};
-    return {k:'flag',col:C_AMB,label:'WARN '+p,sub:`Vibration over 1.3× on ${fl.alerts} of 7 days${fl.noise?` · ${nOf(fl.noise,'noise note','noise notes')}`:''}`,fl,p};}
+    return {k:'flag',col:C_AMB,label:'WATCH',sub:`Vibration over 1.3× on ${fl.alerts} of 7 days${fl.noise?` · ${nOf(fl.noise,'noise note','noise notes')}`:''}`,fl,p};}
   return {k:'run',col:C_INK,label:'RUNNING',sub:`Running · ${a.crit.toLowerCase()} criticality`,fl};
 }
 function siteState(sid){
@@ -2880,34 +2993,51 @@ function siteState(sid){
   return {hold,as,down,fl,text:hold?'SAFETY HOLD':down?`${down} DOWN`:fl?`${nOf(fl,'FLAG','FLAGS')}`:'CLEARED',col:hold||down?C_RED:fl?C_AMB:C_GRN};
 }
 const lockSvg='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.8" aria-hidden="true"><rect x="4" y="11" width="16" height="10"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+// Today's predictions from the failure model that no engineer has been sent to yet, most likely first.
+function openPredictions(){
+  const plans=(window.FW&&FW.model&&FW.model.plans[dayStr(S.day)])||[],jobs=(window.FW&&FW.state&&FW.state.jobs)||[];
+  // an engineer already sent (or the repair done) takes the machine off the to-do list
+  const busy=aid=>jobs.some(j=>j.asset===aid&&j.status!=='cancelled');
+  return plans.filter(p=>!busy(p.asset_id)).sort((a,b)=>b.chance-a.chance||(assetBy[a.asset_id].crit==='High'?-1:1));
+}
+const likelyCause=p=>p.parts.slice().sort((a,b)=>b.likelihood-a.likelihood)[0].for_cause;
+// The side panel answers one question for whoever is acting: what should I do right now? Detail lives one click away.
 function inspOverview(){
-  const holds=SITE_ORDER.filter(s=>stat(s)==='HOLD'),stopped=D.assets.map(a=>stoppedNow(a.id,S.day)).filter(Boolean),waiting=stopped.filter(e=>e.pw>0).length;
-  const fl=allFlags(S.day),flags=D.assets.filter(a=>fl[a.id].flag&&!stoppedNow(a.id,S.day)&&!decidedFlag(a.id)).length,p=problemFacts();
-  const head=`${holds.length?`${holds.length} of 6 sites on safety hold (${lst(holds.map(s=>siteBy[s].name))}).`:'All 6 sites cleared.'} ${nOf(stopped.length,'machine','machines')} down${waiting?`, ${waiting} waiting for a part`:''}. ${nOf(flags,'early-warning flag','early-warning flags')} open.`;
-  const rows=SITE_ORDER.map(sid=>{const s=siteBy[sid],x=siteState(sid),n=openGates(sid).length;
-    return `<button class="srow" data-act="site" data-site="${sid}"><span class="d" style="background:${x.col}"></span><span class="nm"><b>${s.name}</b><span style="color:${x.hold?C_RED:'var(--n700)'}">${x.hold?`Safety hold · ${nOf(n,'check','checks')} to verify`:x.down?`Cleared · ${x.down} down`:x.fl?`Cleared · ${nOf(x.fl,'flag','flags')}`:'Cleared · all running'}</span></span><span class="sp" title="Spare fill ${s.spare}%"><i style="width:${s.spare}%;background:${spareCol(s.spare)}"></i></span><span class="hy">${fmt(steady(sid))} h/yr</span></button>`}).join('');
-  const m=workModel(),nx=(bar,text,sub,cta,attrs)=>`<button class="nx" ${attrs}><span class="nb" style="background:${bar}"></span><span class="t"><b>${text}</b><span>${sub}</span></span><span class="c">${cta} →</span></button>`;
-  let next=[];
-  if(S.role==='Site HSE supervisor')next=m.now.filter(it=>it.type==='gate').map(it=>nx(C_RED,`Verify ${it.g.id} at ${siteBy[it.sid].name}`,`${esc(it.g.gap)} · ${isOverdue(it.g)?'overdue since':'due'} ${prettyDate(it.g.due)}`,'OPEN',`data-act="site" data-site="${it.sid}"`));
-  else if(S.role==='Planner'){next=m.now.filter(it=>it.type==='flag').map(it=>nx(C_AMB,`Decide on ${it.a.id} · ${it.a.type}, ${siteBy[it.sid].name}`,`${it.a.crit==='High'?'P2':'P3'} · have a bearing/seal kit ready`,'DECIDE',`data-act="asset" data-a="${it.a.id}"`));
-    if(m.blocked.length)next.push(nx('var(--n400)',`${nOf(m.blocked.length,'more flag','more flags')} behind safety holds`,'Actionable once the site is cleared','VIEW',`data-act="site" data-site="${m.blocked[0].sid}"`));}
-  else next=[nx(C_INK,`${fmt(unlockedH())} of ${fmt(sumSteady())} h/yr unlocked`,`${6-holds.length} of 6 sites cleared · ${nOf(S.log.filter(l=>l.asset).length,'planner decision','planner decisions')} logged`,'WORK','data-act="page" data-p="work"')];
-  if(!next.length)next=[nx('var(--n400)','Nothing waiting for this role','Switch role to see other work','WORK','data-act="page" data-p="work"')];
-  const log=S.log.slice(-4).reverse().map(l=>`<div class="act"><time>${l.ts.slice(11,16)}</time><i style="background:${l.action==='Verified closure'?C_GRN:C_INK}"></i><span>${esc(l.role==='Site HSE supervisor'?'HSE supervisor':l.role)} · ${esc(l.action.toLowerCase())} ${esc(l.gate||l.asset||'')} at ${esc(siteBy[l.site]?.name||'')}.</span></div>`);
-  const field=D.events.filter(e=>Math.floor(e.s)<=S.day&&Math.floor(e.s)>S.day-10).sort((a,b)=>b.s-a.s).slice(0,6).map(e=>{const a=assetBy[e.a];
-    return `<div class="act"><time>${shortDay(e.s).toUpperCase()}</time><i style="background:${e.pw>0?C_RED:C_INK}"></i><span>${siteBy[a.site].name} ${a.type.toLowerCase()} ${e.a} stopped (${esc(e.c.toLowerCase())})${e.pw>0?', waited for parts':''}.</span></div>`});
+  const live=isLiveDay(S.day),holds=SITE_ORDER.filter(s=>stat(s)==='HOLD'),down=D.assets.filter(a=>stoppedNow(a.id,S.day));
+  const preds=openPredictions(),predSites=new Set(preds.map(p=>p.site_id)),m=workModel();
+  const say=[holds.length?nOf(holds.length,'site on safety hold','sites on safety hold'):'',down.length?nOf(down.length,'machine down','machines down'):'',preds.length?nOf(preds.length,'machine likely to fail soon','machines likely to fail soon'):''].filter(Boolean);
+  const card=(cls,k,title,text,btn,more)=>`<div class="donow ${cls}"><span class="k">${k}</span><b>${title}</b><p>${text}</p>${btn?`<div class="row">${btn}</div>`:''}${more?`<button class="more" data-act="page" data-p="work">${more}</button>`:''}</div>`;
+  let doNow='';
+  if(S.role==='Manager'){
+    const p=preds[0];
+    doNow=p?card('amb','DO THIS NOW',`Send an engineer to ${esc(siteBy[p.site_id].name)}`,`The ${esc(p.asset_type.toLowerCase())} ${p.asset_id} will likely fail in the next 3 days (${esc(likelyCause(p).toLowerCase())}). Sending someone now, with the kit, avoids the breakdown and the wait for a part.${live?' <span class="sim-tag">SIMULATED</span>':''}`,
+        `<button class="primary" data-act="fwSend" data-a="${p.asset_id}">Send engineer</button><button class="ghost" data-act="asset" data-a="${p.asset_id}">Details</button>`,preds.length>1?`+${preds.length-1} more likely to fail · see Work`:'')
+      :card('','NOTHING URGENT','No machine is likely to fail in the next 3 days','Engineers already sent show on the map. Press play to move through time.','','');
+  }else if(S.role==='Site HSE supervisor'){
+    const gates=m.now.filter(it=>it.type==='gate'),g=gates[0];
+    doNow=g?card('red','DO THIS NOW',`Sign off ${g.g.id} at ${esc(siteBy[g.sid].name)}`,`${esc(g.g.gap)}. ${g.last?`It's the last check at ${esc(siteBy[g.sid].name)}: clearing it lets the site get parts and repairs again.`:`${g.left} checks left before ${esc(siteBy[g.sid].name)} is cleared.`}`,
+        `<button class="primary" data-act="openVerify" data-g="${g.g.id}">Sign off ${g.g.id}</button><button class="ghost" data-act="site" data-site="${g.sid}">Details</button>`,gates.length>1?`+${gates.length-1} more safety checks · see Work`:'')
+      :card('','ALL CLEAR','Every safety check is signed off','All six sites can get parts and repairs.','','');
+  }else{
+    const flags=m.now.filter(it=>it.type==='flag'),f=flags[0];
+    doNow=f?card('amb','DO THIS NOW',`Decide on ${f.a.id} at ${esc(siteBy[f.sid].name)}`,`The ${esc(f.a.type.toLowerCase())} is shaking more than normal. Have a bearing or seal kit ready so a repair doesn't wait for a part.`,
+        `<button class="primary" data-act="openDecide" data-a="${f.a.id}">Decide</button><button class="ghost" data-act="asset" data-a="${f.a.id}">Details</button>`,flags.length>1?`+${flags.length-1} more early warnings · see Work`:'')
+      :card('','NOTHING TO DECIDE','No early warnings at cleared sites','Warnings at sites on safety hold wait until the site is signed off.','','');
+  }
+  const roleHint=S.role!=='Manager'&&preds.length?`<button class="locked" data-act="fwBeMgr">${ico('lock')} ${nOf(preds.length,'machine is','machines are')} likely to fail soon · act as manager to send engineers</button>`:'';
+  const sites=SITE_ORDER.map(sid=>{const x=siteState(sid),[w,c]=x.hold?['SAFETY HOLD',C_RED]:x.down?['DOWN',C_RED]:(x.fl||predSites.has(sid))?['WATCH',C_AMB]:['RUNNING',C_GRN];
+    return `<button class="mini-site" data-act="site" data-site="${sid}"><i style="background:${c}"></i><b>${siteBy[sid].name}</b><span style="color:${c}">${w}</span></button>`}).join('');
+  const log=S.log.slice(-5).reverse().map(l=>`<div class="act"><time>${l.ts.slice(11,16)}</time><i style="background:${l.action==='Verified closure'?C_GRN:C_INK}"></i><span>${esc(l.role==='Site HSE supervisor'?'Safety supervisor':l.role)} · ${esc(l.action.toLowerCase())} ${esc(l.gate||l.asset||'')}${l.site?' at '+esc(siteBy[l.site]?.name||''):''}.</span></div>`);
+  const field=ALL_EVENTS.filter(e=>Math.floor(e.s)<=S.day&&Math.floor(e.s)>S.day-7).sort((a,b)=>b.s-a.s).slice(0,5).map(e=>{const a=assetBy[e.a];
+    return `<div class="act"><time>${shortDay(e.s).toUpperCase()}</time><i style="background:${e.pw>0?C_RED:C_INK}"></i><span>${siteBy[a.site].name} ${a.type.toLowerCase()} stopped (${esc(e.c.toLowerCase())})${e.pw>0?', waited for a part':''}.</span></div>`});
+  const recent=log.concat(field);
   return `<div class="iv">
-    <div class="iv-h"><span class="mono">FIELD OVERVIEW · SELECT A SITE OR ASSET</span><h2>Lone Mesa field</h2><p class="iv-lead">${head}</p></div>
-    ${window.FW?FW.overviewBlock():''}
-    <div class="kgrid">
-      <div><b>${fmt(p.tot)} h</b><span>unplanned downtime, 2025</span></div>
-      <div><b>${p.ev.length}</b><span>unplanned stops, 2025</span></div>
-      <div class="hot"><b>${p.share}%</b><span>of it spent waiting for parts</span></div>
-      <div class="mod"><b>$5.6M</b><span>lost contribution · modeled</span></div>
-    </div>
-    <div><div class="sh mono"><span>SITE</span><span>SPARES · UNLOCK</span></div>${rows}</div>
-    <div class="ivs"><span class="mono">NEXT FOR ${(S.role==='Site HSE supervisor'?'HSE supervisor':S.role).toUpperCase()}</span>${next.join('')}</div>
-    <div class="ivs"><span class="mono">ACTIVITY</span>${log.concat(field).join('')||'<div class="is-note">Nothing logged yet, and no stops in the last 10 days.</div>'}</div>
+    <div class="iv-h"><div class="iv-status">${live?'<span class="sim-tag">● LIVE · SIMULATED</span>':'<span class="tag obs">HISTORY · 2025 RECORDS</span>'}<span class="mono">${prettyDay(S.day).toUpperCase()}</span></div>
+      <p class="iv-say">${say.length?say.join(' · '):'Everything is running'}</p>
+      ${live?`<p class="small muted" style="margin:6px 0 0">${LIVE_NOTE}</p>`:''}</div>
+    ${doNow}${roleHint}
+    <div class="ivs"><span class="mono">SITES</span><div class="mini-sites">${sites}</div></div>
+    <details class="recent"><summary>RECENT (${recent.length})</summary>${recent.join('')||'<div class="is-note">Nothing in the last 7 days.</div>'}</details>
   </div>`;
 }
 function gateItem(g,isHSE,isMgr,left){
@@ -2923,7 +3053,7 @@ function gateItem(g,isHSE,isMgr,left){
 }
 function assetCard(a){
   const st=stoppedNow(a.id,S.day),fl=flagFor(D.series[a.id],S.day),cls=st?(st.pw>0?'wait':'stop'):fl.flag?'flag':'';
-  return `<button class="asset-card" data-act="asset" data-a="${a.id}"><span class="dot ${cls}"></span><span class="at"><b>${a.id} · ${a.type}</b><span>${st?(st.pw>0?'Stopped, waiting for parts':'Stopped'):fl.flag?'Readiness flag':'Normal'} · ${a.crit} criticality</span></span>${ico('chev','chev')}</button>`;
+  return `<button class="asset-card" data-act="asset" data-a="${a.id}"><span class="dot ${cls}"></span><span class="at"><b>${a.id} · ${a.type}</b><span>${st?(st.pw>0?'Stopped, waiting for parts':'Stopped'):fl.flag?'Early warning':'Normal'} · ${a.crit} criticality</span></span>${ico('chev','chev')}</button>`;
 }
 function siteView(sid){
   const s=siteBy[sid],x=siteState(sid),hold=x.hold,gates=D.gates.filter(g=>g.site===sid),crit=gates.filter(g=>g.block),other=gates.filter(g=>!g.block);
@@ -3041,7 +3171,7 @@ function celebrate(sid){
   const all=unlockedH()>=sumSteady();
   toast(`${ico('unlock','unlock-ico')}<div><b>${all?'All six sites cleared':`${siteBy[sid].name} unlocked`}</b>${all?`The full ${fmt(sumSteady())} h/yr prize is unlocked. Every site can now stock spare parts.`:`+${fmt(steady(sid))} h/yr joins the prize · ${fmt(unlockedH())} of ${fmt(sumSteady())} now unlocked`}</div>`,{kind:'good big',ms:all?9000:6000});
   if(UI.narrate)speak(`${siteBy[sid].name} is unlocked. ${fmt(steady(sid))} avoided hours a year join the prize.`);
-  if(UI.mode==='story'&&UI.beat===3){renderStory();const n=$('#nextBeat');n.classList.add('brand');setTimeout(()=>n.classList.remove('brand'),4000)}
+  if(UI.mode==='story'&&UI.beat===4){renderStory();const n=$('#nextBeat');n.classList.add('brand');setTimeout(()=>n.classList.remove('brand'),4000)}
 }
 
 /* ---------- briefing sheets ---------- */
@@ -3195,9 +3325,9 @@ function nav(p){go(p);if(location.hash!=='#/'+UI.route)location.hash='#/'+UI.rou
 $('#navTrends').addEventListener('click',()=>{const sid=S.sel?(S.sel.type==='site'?S.sel.id:assetBy[S.sel.id].site):UI.siteId||'S04';$('#navTrends').setAttribute('href','#/site/'+sid)});
 window.addEventListener('hashchange',()=>{const p=location.hash.replace(/^#\/?/,'');if(p!==UI.route)go(p)});
 function showOnMap(kind,id){nav('map');if(UI.mode!=='explore')setMode('explore');kind==='site'?selectSite(id):selectAsset(id)}
-function updateDateChip(){$('#dateLbl').textContent=prettyDay(S.day);$('#dayBack').disabled=S.day<=6;$('#dayFwd').disabled=S.day>=364}
+function updateDateChip(){$('#dateLbl').textContent=prettyDay(S.day);$('#dayBack').disabled=S.day<=6;$('#dayFwd').disabled=S.day>=LAST_DAY}
 $('#dayBack').addEventListener('click',()=>setDay(Math.max(6,S.day-1)));
-$('#dayFwd').addEventListener('click',()=>setDay(Math.min(364,S.day+1)));
+$('#dayFwd').addEventListener('click',()=>setDay(Math.min(LAST_DAY,S.day+1)));
 $('#play2').addEventListener('click',()=>$('#play').click());
 let pageT=null;
 function schedulePageRender(){
@@ -3377,7 +3507,7 @@ function gateCard(it){
 function flagCard(it){
   const a=it.a,s=siteBy[a.site],hold=stat(a.site)==='HOLD',isPL=S.role==='Planner',open=UI.workOpen===it.k,high=a.crit==='High',o=openGates(a.site);
   return `<div class="wcard ${high?'p2':''}" id="${cardId(it.k)}">
-    <div class="wc-top"><span class="prio ${high?'p2':''}" title="${high?'P2: early warning on a high-criticality machine':'P3: early warning on a lower-criticality machine'}">${high?'P2':'P3'}</span><b>${a.id}</b><button class="site" data-wk="site" data-site="${a.site}">${s.name}</button><span class="kind">Readiness flag</span></div>
+    <div class="wc-top"><span class="prio ${high?'p2':''}" title="${high?'P2: early warning on a high-criticality machine':'P3: early warning on a lower-criticality machine'}">${high?'P2':'P3'}</span><b>${a.id}</b><button class="site" data-wk="site" data-site="${a.site}">${s.name}</button><span class="kind">Early warning</span></div>
     <p class="wc-say">${a.type} showing early warning signs: ${flagEvidence(it.f)}. Have a bearing/seal kit ready.</p>
     <span class="spark-wrap">${sparkSvg(a.id)}<span>vibration, last 30 days</span></span>
     <div class="wc-meta"><span>${isPL?'You':'Planner'}</span><span>${a.crit} criticality</span><span>${a.age} years old</span></div>
@@ -3407,7 +3537,7 @@ function renderWork(){
   const all=workModel(),mine=UI.wkMine,m=mine?{...all,now:all.now.filter(it=>ownerOf(it)===S.role),blocked:all.blocked.filter(it=>ownerOf(it)===S.role)}:all;
   $$('#wkFilter button').forEach(b=>{const on=(b.dataset.f==='mine')===!!mine;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   const mgr=mine&&S.role==='Manager'&&!m.now.length;
-  $('#wkEyebrow').textContent=`As of ${prettyDay(S.day)}, acting as ${S.role==='Site HSE supervisor'?'HSE supervisor':S.role}.`;
+  $('#wkEyebrow').textContent=`${prettyDay(S.day)}${isLiveDay(S.day)?' · live (simulated)':''} · acting as ${S.role==='Site HSE supervisor'?'safety supervisor':S.role.toLowerCase()} · ${nOf(all.now.length,'job open','jobs open')}`;
   $('#cntNow').textContent=m.now.length;$('#cntBlocked').textContent=m.blocked.length;$('#cntDone').textContent=m.done.length;
   $('#colNow').innerHTML=m.now.length?m.now.map(it=>it.type==='gate'?gateCard(it):it.type==='predict'?FW.card(it):flagCard(it)).join('')
     :`<div class="col-empty">${mgr?'Managers don’t own tasks here. Switch to “Everyone’s work” to watch progress.':mine&&all.now.length?`Nothing for the ${S.role==='Site HSE supervisor'?'HSE supervisor':'planner'} right now. ${nOf(all.now.length,'task waits','tasks wait')} on someone else.`:'Nothing to do right now. Every site is cleared and every flag has a decision.'}</div>`;
@@ -3538,7 +3668,8 @@ function sdDelta(cur,prev,o){
   return `<span class="sd-delta ${d>0?'bad':'ok'}">${d>0?'▲':'▼'} ${(o.fmt||fmt)(Math.abs(d))}${pct} vs ${o.vs}</span>`;
 }
 function sdKpis(sid){
-  const g=UI.sd.grain==='week'?'week':'month',B=sdBuckets(g),i=B.findIndex(b=>S.day>=b.d0&&S.day<=b.d1),cur=B[i],prev=i>0?B[i-1]:null;
+  // Trends cover recorded 2025 only; during the simulated live feed they anchor on the last 2025 period
+  const day=Math.min(S.day,364),g=UI.sd.grain==='week'?'week':'month',B=sdBuckets(g),i=B.findIndex(b=>day>=b.d0&&day<=b.d1),cur=B[i],prev=i>0?B[i-1]:null;
   const C=periodStats(sid,cur.d0,cur.d1),P=prev?periodStats(sid,prev.d0,prev.d1):null,vs=prev?(g==='week'?'the week before':MON[i-1]):'';
   const pv=f=>P?f(P):null,partial=UI.sd.upTo&&S.day<cur.d1?` so far (to ${shortDay(S.day)})`:'';
   const t=(val,lbl,c,p,o={})=>`<div class="tile"><b>${val}</b><span>${lbl}</span>${sdDelta(c,p,{vs,...o})}</div>`;
