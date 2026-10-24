@@ -2441,16 +2441,32 @@ function stopSpeaking(){
   try{speechSynthesis.cancel()}catch(e){}
   if(agState==='speaking')setState('idle');
 }
+const browserVoices=()=>{try{return speechSynthesis.getVoices().length}catch(e){return 0}};
+let noVoiceTold=false,hdToldLoading=false;
+// Said once per page: speech was asked for and nothing on this device can produce it.
+function noVoice(){
+  setState('idle');if(noVoiceTold)return;noVoiceTold=true;
+  toast('<b>No voice available in this browser.</b> '+(navigator.gpu?'The HD voice could not load.':'The HD voice needs WebGPU (Chrome or Edge).')+' Firefox and Zen on Linux also need a speech engine: install espeak-ng for speech-dispatcher. The text is on screen.',{kind:'big',ms:12000});
+}
 function speak(text){
   stopSpeaking();
   if(!voiceOn||!text){setState('idle');return}
   const t=speakable(text);
   if(hdVoice!=='browser'&&tts) return speakHD(t);
-  if(hdVoice!=='browser'&&!ttsFail&&!ttsLoading) loadHD().catch(()=>{});
+  const canHD=hdVoice!=='browser'&&!ttsFail&&!!navigator.gpu;
+  // With no system voices the browser fallback is silent, so wait for the HD voice instead.
+  if(!browserVoices()){
+    if(!canHD) return noVoice();
+    const my=spk.token;setState('thinking');prepLabel('Loading HD voice…');
+    if(!tts&&!hdToldLoading){hdToldLoading=true;toast('<b>Loading the HD voice.</b> The first time it downloads about 330 MB, then it is cached. Parvis speaks as soon as it is ready.',{kind:'big',ms:9000})}
+    loadHD().then(()=>{if(my===spk.token)speakHD(t)}).catch(()=>{if(my===spk.token)noVoice()});
+    return;
+  }
+  if(canHD&&!ttsLoading) loadHD().catch(()=>{});
   speakBrowser(t);
 }
 function speakBrowser(t){
-  if(!('speechSynthesis' in window)){setState('idle');return}
+  if(!('speechSynthesis' in window)||!browserVoices()) return noVoice();
   const chunks=(t.match(/[^.!?]+[.!?]*/g)||[t]).map(s=>s.trim()).filter(Boolean);
   setState('speaking');
   chunks.forEach((c,i)=>{
