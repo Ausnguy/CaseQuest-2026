@@ -154,7 +154,9 @@ Clicking or hovering a marker shows a text box with:
 
 The layout can be a schematic: no real coordinates are needed, since the sites are fictional.
 
-### AI field-report chat (nice-to-have; one owner, 9:00–11:00; form fallback if it isn't working by 11:00)
+### AI field-report chat: optional prototype concept, outside the ask (one owner, 9:00–11:00; form fallback if it isn't working by 11:00)
+
+**Scope (per audit):** this is not part of the $227.5k ask and not on the architecture slide. If shown, caption it "prototype concept". It is not O3: it doesn't change detect or dispatch time, and it claims zero hours. A production version (phone-to-operator queue, automatic HSE routing) needs live integration, which comes with Phase 2's O2 data platform.
 
 **Technician page (mobile-friendly).** The tech describes the problem. Claude Haiku 5.5 extracts a ticket with these fields:
 - site
@@ -167,7 +169,7 @@ The layout can be a schematic: no real coordinates are needed, since the sites a
 
 The tech confirms the ticket before it is submitted.
 
-**Safety rule (deterministic, in code, not left to the AI).** If the text matches corrosion, leak, gas, H2S, pressure, smell, spill or fire:
+**Safety backstop (deterministic, in code, not left to the AI; a backstop, not a hazard detector).** Case-insensitive **word-stem** match on `corro`, `rust`, `leak`, `drip`, `gas`, `h2s`, `pressur`, `hiss`, `smell`, `odor`/`odour`, `spill`, `fire`, `smoke` or `spark`. Test it with the demo phrase "compressor A012 at Arroyo, seal looks corroded and leaking" and with "corroded" on its own. When it matches:
 - show a **Stop. Make the area safe and contact your HSE supervisor** banner
 - set the urgency to red
 - route the ticket to both the HSE and operator queues

@@ -24,18 +24,18 @@ This log is for the group. It lists every question Aayan asked, what we decided,
 - Click a site to open a text box listing what's wrong and what happens next. For example: "HOLD: 2 overdue H2S/LOTO actions, awaiting supervisor verification · spare fill 42% · 3 readiness flags."
 - It uses data we already have, so it's cheap to build and strong for the Tech score.
 
-**AI field-report chat (nice-to-have; one person, 9:00–11:00, form fallback if it isn't working by 11:00).**
+**AI field-report chat: an optional prototype concept, outside the $227.5k ask** (per the audit). It's not on the architecture slide, and it's captioned "prototype concept" if shown. One person, 9:00–11:00, form fallback if it isn't working by 11:00.
 - **Flow:** a tech types on their phone, the AI fills in a structured ticket (site, machine, part, condition, urgency, photo), the tech confirms it, the ticket lands in the operator's queue on the PC, and the operator resolves it with a note.
 - **Guardrails:**
   1. If the report mentions **corrosion, leaks, gas or pressure**, the chat says "Stop. Make the area safe and contact your HSE supervisor", flags the ticket red, and also routes it to HSE.
   2. The AI only **writes tickets**. It never orders parts, approves work, or touches LOTO or restart. The operator decides.
-  3. Present it as the **parts-request channel of the spare-parts program**, not a second recommendation. It claims **zero** hours.
+  3. It is **not** O3 (the work-order workflow): it doesn't change detect or dispatch time, and it claims **zero** hours. A production version needs live integration, which comes with Phase 2's O2 platform.
   4. Its cost is negligible: Claude Haiku 5.5 is about $2–25 a year in AI usage at the assumed volume. It's shown as optional, outside the ask.
   5. Offline queueing for weak signal; Arroyo has 92.8% network uptime.
   6. Report from a safe area, or use an intrinsically safe phone.
   7. Keep the API key out of the repo, and have a demo fallback form plus a backup video.
 - **Demo moment:**
-  1. A tech types "pump A012 at Arroyo, seal looks corroded and leaking."
+  1. A tech types "compressor A012 at Arroyo, seal looks corroded and leaking."
   2. The chat replies with the safety stop message and builds a red ticket.
   3. The ticket appears in the operator queue, routed to HSE.
   4. Arroyo's map marker shows the new issue.

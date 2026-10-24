@@ -20,7 +20,7 @@
 | 7. Test | Not started | §5 |
 | 8. Slides and rehearsal | Not started: Saturday afternoon | `docs/team-plan.md` |
 
-All code lives in `src/casequest/` and is tested: 94 tests, 39 data checks.
+All code lives in `src/casequest/` and is tested: 99 tests, 39 data checks.
 
 ## 2. The recommendation (memorize this)
 
@@ -35,7 +35,7 @@ All code lives in `src/casequest/` and is tested: 94 tests, 39 data checks.
 | Number | Value | Type |
 |---|---|---|
 | 2025 unplanned downtime | 6,599 h across 313 events | OBSERVED |
-| Modeled lost contribution margin | $5.6M | OBSERVED (ReadMe formula) |
+| Lost contribution margin | $5.6M | OBSERVED events × the ReadMe formula |
 | Share of downtime spent waiting for parts | 24% | OBSERVED |
 | Share of breakdowns that waited for parts ≈ 1 − spare-fill % | r = −0.995 across 6 sites (Arroyo 56% vs 42% fill) | OBSERVED, **the story chart** |
 | Avoided downtime, steady state | **968 h/yr** (range 565–1,210) | MODELED |
@@ -59,11 +59,11 @@ All code lives in `src/casequest/` and is tested: 94 tests, 39 data checks.
 - **Payback: month 8.** Year-1 net about **+$332k**. 3-year net about **+$1.98M**. Benefit ÷ cost about 8×.
 - **Worst case** (low effect + slow safety sign-off + oil margin −$15/bbl): it still pays back by **month 16**.
 - **The biggest lever is how fast the safety actions are closed.**
-- **Real-world checks:** case oil prices ($63–73) match EIA's ~$65/bbl 2025 WTI. A DOE-cited survey puts maintenance-management payback at about 14.5 months.
+- **Real-world check:** case oil prices ($63–73) are in line with EIA's ~$65/bbl 2025 WTI estimate (via Rigzone; confirm in EIA's series).
 
 ### New features agreed (details in `docs/decisions-log.md` #10 and the Phase 5 design §8)
 - **Site map** with an issue box per site: must-have.
-- **AI field-report chat**, phone to operator PC: nice-to-have, timeboxed 9–11, with a form fallback. **Hazard words such as corrosion, leak or gas trigger a "Stop, make safe, call HSE" message.** The AI only drafts tickets.
+- **AI field-report chat**, phone to operator PC: an **optional prototype concept, NOT in the ask and NOT on the architecture slide**. Timeboxed 9–11, with a form fallback. Hazard words trigger a "Stop, make safe, call HSE" backstop. The AI only drafts tickets. Production would need Phase 2's data platform.
 
 ## 3. Things we must NEVER say (the judges will check)
 
@@ -81,7 +81,7 @@ One-time setup, after installing [uv](https://docs.astral.sh/uv/):
 git clone https://github.com/Ausnguy/CaseQuest-2026 && cd CaseQuest-2026 && uv sync
 ```
 
-Run every test (should say 94 passed):
+Run every test (should say 99 passed):
 ```bash
 uv run pytest
 ```

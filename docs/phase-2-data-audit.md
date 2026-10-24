@@ -1,7 +1,7 @@
 # Phase 2: Data Audit
 
 **Date:** 2026-10-23
-**Status:** Complete. The cleaned data is reproducible, all 38 integrity and reconciliation checks pass, and all 63 automated tests pass. Audited twice by an independent skeptical reviewer (section 11).
+**Status:** Complete. The cleaned data is reproducible, all 39 integrity and reconciliation checks pass, and all 69 automated tests pass (at merge). Audited in four rounds by an AI-agent skeptical reviewer (section 11).
 
 > **Like I'm 5:** Someone handed us a box of puzzle pieces. Some pieces were in there twice, some had smudged labels, and a few were missing. In this phase we sorted the pieces, wiped the labels clean, and wrote down every single thing we did. Then we checked that the pieces actually fit together. They do.
 
@@ -128,7 +128,7 @@ These are **facts about data quality**, not recommendations yet.
 - [x] All 38 integrity and reconciliation checks pass. Recovered values are excluded from self-referential checks, and the HSE gate check uses an independent rule (no closure date + severity 5, site via asset)
 - [x] All 63 automated tests pass, including mutation tests and a pinned expected gate (S02, S04, S06)
 - [x] Unknown or blank gate labels, units and conflicting values stop the build; the HSE gate fails closed
-- [x] Two rounds of independent skeptical audit, with findings fixed (section 11)
+- [x] Four rounds of AI-agent skeptical audit, with findings fixed (section 11)
 - [x] Outputs are reproducible with one command
 
 ## 10. Status and next step

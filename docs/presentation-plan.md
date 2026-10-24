@@ -8,7 +8,7 @@
 |---|---:|---|
 | Video: problem + app overview | 1:00 | (recorded) |
 | Live app demo | about 1:00 | Wali drives; Aayan narrates if needed |
-| **10 slides** | **5:00** | everyone (2 slides each) |
+| **10 slides** | **5:00** | everyone (Aayan 3, Austin 2, Nick 2, Sidra 2, Wali 1 + the demo) |
 | Q&A (separate from the 7 minutes) | 3:00 | everyone; Aayan routes questions |
 
 ## ⚠️ The judges' rubric differs from the PDF packet
@@ -53,7 +53,7 @@ The rubric's "what judges look for" phrases are quoted in each slide's **Rubric 
   - fixed 8 scrambled IDs
   - converted 4 °F temperatures
   - rebuilt 4 missing durations and 3 missing potentials using the case's own formulas
-- **Validation:** 39 automated checks, 99 tests and an independent skeptical audit. One command reproduces everything.
+- **Validation:** 39 automated checks, 99 tests and an AI-agent skeptical audit (4 rounds). One command reproduces everything.
 - **Limitations stated:**
   - the data is synthetic
   - readings are daily snapshots
@@ -79,9 +79,11 @@ The rubric's "what judges look for" phrases are quoted in each slide's **Rubric 
 1. Existing exports: readings, work orders, HSE register
 2. Cleaning and 39 checks
 3. Rules engine: stock-out risk, readiness flags, HSE gate, payback
-4. Streamlit console
-5. **Human decisions:** the planner approves pre-staging, the HSE supervisor verifies closures, and the operator resolves field tickets
+4. Streamlit console: site map, parts console, HSE gate
+5. **Human decisions:** the planner approves pre-staging, and the HSE supervisor verifies closures
 6. Append-only audit log
+
+The AI field-report chat is **not** on this diagram. It's an optional prototype concept, outside the ask; see the note under slide 10.
 
 **Point out:** the demo they just saw maps onto each box. In the ask there is no new integration. Live integration is in Phase 2.
 
@@ -120,15 +122,15 @@ The rubric's "what judges look for" phrases are quoted in each slide's **Rubric 
 | 9 | Review whether Cedar and Juniper continue | Ops manager |
 
 - **Training:** console training for planners and storekeepers (within the 20 install hours per site; our assumption). HSE supervisors get the verification step.
-- **Pilot measures**, checked after 3 months live at Canyon (baseline 4.24 parts-wait h per event; 22% of events waited):
+- **Pilot measures** (our proposal):
+  - **Leading KPI: Canyon spare fill %**, measured weekly. Baseline 78%. Across sites, the share of breakdowns that wait ≈ 1 − fill, so a fill of about 90% points to about 10% waiting.
+  - **Outcome KPI: parts-wait hours per breakdown**, baseline 4.24. Treat it as directional only. Canyon has about 4 breakdowns a month and only about 1 in 5 waits, so a 3-month average is too noisy to decide on.
 
 | Decision | Condition |
 |---|---|
-| **Expand** | ≤ 2.8 h/event, i.e. at least the case's low estimate (−35%) |
-| **Revise** | 2.8–3.8 h: re-check stocking lists |
-| **Stop** | > 3.8 h (less than 10% better), or any safety-control bypass |
-
-- **Caveat:** Canyon has about 4 breakdowns a month, so we read the trend and don't over-trust one month.
+| **Expand** (month 3) | Canyon fill ≥ 90% and no safety-control bypass |
+| **Revise** | Fill < 90% at month 3, or waits not trending down by month 6: re-check stocking lists |
+| **Stop** | Any safety-control bypass, or no improvement in fill or waits by month 6 |
 
 **Rubric hook:** *"Twelve-month roadmap with owners, training, a pilot and measures for expanding, revising or stopping."*
 
@@ -145,7 +147,7 @@ The rubric's "what judges look for" phrases are quoted in each slide's **Rubric 
 | **Supporting activity:** closing the HSE backlog | $59.5k | $1.5k |
 | **Total** | **$227.5k** | **$19.5k** |
 
-- **Staffing:** fits every site's available project hours. **Training:** about 20 h per site.
+- **Staffing:** fits every site's available project hours. **Training:** included in O4's 20 install hours per site (our assumption).
 - **Annual downtime benefit:** 968 h (565–1,210). Year 1: 666 h.
 
 **Rubric hook:** *"Recommend one improvement. Estimate upfront/annual costs, supporting activities, staffing/training and annual downtime benefit."*
@@ -153,10 +155,10 @@ The rubric's "what judges look for" phrases are quoted in each slide's **Rubric 
 ### Slide 8: Recommendation, costs and resources (cont.): what it earns · Nick · 0:30
 **Headline:** "It pays for itself in about 8 months."
 
-**Visual:** a running-total line from month 0 to 36. It dips to −$148k, **crosses zero at month 8**, and reaches **+$1.98M by year 3**. Shade a band from month 6 (best case) to month 16 (everything goes wrong).
+**Visual:** a cumulative **modeled margin** line from month 0 to 36. It dips to −$148k, **crosses zero at month 8**, and reaches **+$1.98M by year 3**. Shade a band from month 6 (best case) to month 16 (everything goes wrong).
 - **Year 1:** +$332k net. **NPV:** about $1.66M (10%, 3 years). **Benefit ÷ cost:** about 8×.
 - **Stress tested:** low effect + slow safety sign-off + oil at about $50 still pays back by month 16.
-- **Footnote:** MODELED contribution margin (the case formula), not cash. Case prices ($63–73) match EIA's ~$65 2025 WTI estimate.
+- **Footnote:** MODELED contribution margin (the case formula), not cash. Case prices ($63–73) are in line with EIA's ~$65 2025 WTI estimate (via Rigzone; check EIA's own series before the final deck).
 
 **Say:** "The biggest lever is closing the safety actions fast, which is why safety comes first."
 
@@ -174,7 +176,7 @@ The rubric's "what judges look for" phrases are quoted in each slide's **Rubric 
 **Headline:** "It never trades safety for speed."
 - **Hard HSE gate:** no site starts while a severity-5 action is open. **There is no override button**, and only the HSE supervisor can verify a closure.
 - **Speeds up waiting, never work:** lockout/tagout, gas monitoring and controlled restart are untouched (29 CFR 1910.147; NIOSH/OSHA 2016-108).
-- **Responsible AI:** sensor flags and the field chat **only advise or draft**. If a report mentions corrosion, leaks or gas, the chat says *"Stop, make safe, call HSE."* (NIST AI RMF; CISA AI-in-OT.)
+- **Responsible AI:** sensor readiness flags **only advise**. A planner approves or rejects each one, and overrides are logged. (NIST AI RMF; CISA AI-in-OT.)
 - **Security:**
   - role-based access, with SSO in production
   - append-only audit log
@@ -186,6 +188,11 @@ The rubric's "what judges look for" phrases are quoted in each slide's **Rubric 
 
 **Total: 4:50, with 10 seconds of buffer.**
 
+> **Note on the AI field-report chat.** If it gets built, show it only as an **optional prototype concept**, captioned *"prototype concept, not part of the $227.5k ask"*.
+> - It is **not** the O3 work-order workflow: it doesn't change detect or dispatch time, and it claims **zero** hours.
+> - A production version (phone-to-operator queue, automatic HSE routing) needs live integration, so it belongs with Phase 2's data platform.
+> - If asked, the safety backstop is: hazard words → "Stop, make safe, call HSE".
+
 ---
 
 ## Video (1:00) outline: script owner Aayan, edit owner Wali
@@ -193,7 +200,7 @@ The rubric's "what judges look for" phrases are quoted in each slide's **Rubric 
 | Time | Content |
 |---|---|
 | 0:00–0:15 | **Problem:** "At Lone Mesa, a broken pump often sits idle not because of the repair, but because the part isn't on the shelf." Show 6,599 h, 24% waiting, the Arroyo map marker turning red |
-| 0:15–0:45 | **What the app does**, quick cuts: site map with issue boxes → parts console with readiness flags → planner approves → field tech reports a corroded seal on a phone → operator resolves it on a PC → HSE gate locked until verified → business case |
+| 0:15–0:45 | **What the app does**, quick cuts: site map with issue boxes → parts console with readiness flags → planner approves → HSE gate locked until verified → business case. *Optional last 5 seconds, only if built:* field-report chat, captioned "prototype concept, not in the ask" |
 | 0:45–1:00 | **Payoff:** "Fewer waits, safety first, people in control." Show payback at month 8 |
 
 **Rule:** the video gives a high-level overview. Don't repeat its numbers in detail on the slides; the slides prove them.

@@ -2,7 +2,7 @@
 
 **Model:** `src/casequest/finance.py`, built on `options.model_plan` and `roadmap.gate_first_waves`. Tested in `tests/test_finance.py`.
 
-> **Like I'm 5:** We spend about $228k to stock the shelves and fix the safety problems. Every month after that, machines spend less time broken, so the company keeps more of the oil money. Around **month 8** the money saved has paid back the money spent, and after that it's profit.
+> **Like I'm 5:** We spend about $228k to stock the shelves and fix the safety problems. Every month after that, machines spend less time broken, so the company keeps more of the oil money. Around **month 8**, the modeled margin we've protected has paid back what we spent. After that it keeps adding up. It's modeled margin, not booked cash.
 
 ## Ground rules: where every number comes from
 
@@ -89,7 +89,7 @@ The ReadMe says ROI and payback are **not required**. We show them because judge
 | Check | Real-world figure | Our case | Verdict |
 |---|---|---|---|
 | Oil price | EIA estimated **WTI averaged about $65.40/bbl in 2025** (Jan 2026 STEO, as reported by Rigzone) | Case prices $63–73, average $67 | The case is realistic. Our −$15 stress is roughly $50 WTI |
-| Payback of maintenance-management investments | DOE/PNNL FEMP O&M Guide cites a 1994 survey of 558 companies using a maintenance management system: **14.5-month average payback**, 20.1% less downtime. It's an old survey, so we use it as context only | Base payback 8 months; worst 16 | Same ballpark |
+| Payback context (weak comparison) | DOE/PNNL FEMP O&M Guide cites a **vendor-reported 1994 survey of CMMS software users** (558 companies): 14.5-month average payback, 20.1% less downtime. It's about software, not spare parts, and it's old | Base payback 8 months; worst 16 | Context only, not a benchmark. Don't put it on a slide |
 | Missing parts really do stall work | GAO-03-887: **58% of Navy work orders** couldn't be completed because parts weren't on board | 24% of our downtime is parts wait | Supports the problem choice (as an analogy) |
 | Discount rate | OMB A-94 Appendix C, 2025: **3.7% nominal for 3 years** (US government) | We use 10% | We're more conservative |
 | New monitoring programs cost before they save | NASA RCM Guide §3.5.3: about 2–3 years | Sensors are kept in Phase 2 | Consistent |
@@ -108,7 +108,7 @@ The ReadMe says ROI and payback are **not required**. We show them because judge
 
 **Slide 5: "What it costs, what it's worth" (Nick, about 40 seconds)**
 - **Left:** a cost stack bar, $168k parts program + $59.5k safety backlog = **$227.5k**, then $19.5k a year.
-- **Right:** a cumulative cash line from month 0 to 36. It dips to about −$148k, crosses zero at **month 8**, and reaches **+$1.98M** by year 3.
+- **Right:** a cumulative **modeled margin** line from month 0 to 36. It dips to about −$148k, crosses zero at **month 8**, and reaches **+$1.98M** by year 3.
 - **Shade the band** between "everything goes wrong" (month 16) and "fast sign-off" (month 6).
 - **Footnote:** "MODELED using the case's reduction fractions and contribution formula; margin, not cash; no repair savings claimed."
 - **Say:** "For $227k, the plan pays for itself in about 8 months and is worth about $2M over three years. Even if everything goes wrong, it still pays back in 16 months. The biggest lever is closing the safety actions fast, which is why safety comes first."
