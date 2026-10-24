@@ -1,4 +1,4 @@
-// Field work for Parvius: failure predictions (data/model/predictions.json), parts orders and engineer
+// Field work for Parvius: failure predictions (data/model/predictions.json), the parts warehouse and engineer
 // dispatch, shared live with the engineer's phone through the dispatch API in web/.
 // Loaded after parvius.html's own script; uses its globals (S, D, UI, siteBy, assetBy, stat, esc, addLog,
 // and the 3D map's addBox/addLine/addText/proj/items).
@@ -8,7 +8,8 @@
   // On Vercel and on the local dev server (web/scripts/dev.ts) the API is same-origin; anywhere else use production.
   const ORIGIN = q ? q.replace(/\/$/, '') : /\.vercel\.app$/.test(location.hostname) || location.port === '3300' ? '' : PROD;
   const PHONE = 'ENG-1';
-  const WAREHOUSE = [-17, 0];
+  // The warehouse stands beside the maintenance base: engineers collect their kits as they leave.
+  const WAREHOUSE = [-2.9, 0], SUPPLIER = [-21, 0];
   const FW = { state: null, cfg: null, off: 0, err: null, model: null, modelErr: null, sig: '', ticks: 0, disp: {}, sending: new Set() };
   window.FW = FW;
 
@@ -50,9 +51,13 @@
   const jobsFor = (aid) => (FW.state?.jobs || []).filter((j) => j.asset === aid);
   const liveJob = (aid) => jobsFor(aid).filter(active).slice(-1)[0] || null;
   const doneJob = (aid) => jobsFor(aid).filter((j) => j.status === 'closed').slice(-1)[0] || null;
-  const partsOf = (j) => (j && j.partsId && FW.state.parts.find((p) => p.id === j.partsId)) || null;
-  const inTransit = (aid) => (FW.state?.parts || []).find((p) => p.asset === aid && now() < p.arriveAt) || null;
-  const missingKits = (plan) => (plan ? plan.parts.filter((p) => !p.on_shelf).map((p) => p.kit) : []);
+  // Kits are stocked per machine type, named like the server's SKUs: "Bearing kit · Lift pump".
+  const skuOf = (plan, k) => `${k.kit} · ${plan.asset_type}`;
+  const kitSkus = (plan) => plan.parts.slice().sort((x, y) => y.likelihood - x.likelihood).map((k) => skuOf(plan, k));
+  const onShelf = (sk) => FW.state?.stock?.[sk] ?? 0;
+  const onOrder = (sk) => (FW.state?.restocks || []).find((r) => r.sku === sk && !r.received) || null;
+  const shortKits = (plan) => (plan && FW.state ? kitSkus(plan).filter((sk) => onShelf(sk) < 1) : []);
+  const kitName = (sk) => sk.split(' · ')[0];
   const engName = (id) => short(FW.state?.engineers.find((e) => e.id === id)?.name || id);
   const freeEngineer = () => FW.state && (FW.state.engineers.find((e) => e.id === PHONE && !e.jobId) || FW.state.engineers.find((e) => !e.jobId));
   const topCause = (plan) => plan.parts.slice().sort((x, y) => y.likelihood - x.likelihood);
@@ -62,15 +67,16 @@
     return `${a.for_cause} likely (${pct(a.likelihood)})${b ? `, or a ${b.for_cause.toLowerCase()} (${pct(b.likelihood)})` : ''}`;
   }
 
+  const usedText = (j) => (!j.used ? '' : j.used.length ? `Fitted the ${lst(j.used.map((k) => kitName(k).toLowerCase()))}` : 'No parts needed');
   function jobLine(j, t) {
-    const p = partsOf(j), who = engName(j.engineerId);
+    const who = engName(j.engineerId);
     switch (j.status) {
-      case 'scheduled': return t >= j.leaveAt ? `${who} is due to leave the base now` : `${who} leaves the base in ${dur(j.leaveAt - t)}${p ? ', timed to arrive with the parts' : ''}`;
+      case 'scheduled': return `${who} has the kits and is due to leave the base`;
       case 'en-route': return `${who} driving to site, ${(j.leg.km - legDone(j.leg, t)).toFixed(1)} km to go`;
-      case 'on-site': return p && t < p.arriveAt ? `${who} on site, parts land in ${dur(p.arriveAt - t)}` : `${who} on site, about to start the repair`;
+      case 'on-site': return `${who} on site, about to start the repair`;
       case 'working': { const left = j.workStartAt + FW.cfg.workS * 1000 - t; return left > 0 ? `${who} repairing, about ${dur(left)} left` : `${who} finishing the repair`; }
-      case 'done': return `Repaired. ${who} packing up`;
-      case 'leaving': return `Repaired. ${who} heading back to base`;
+      case 'done': return `Repaired. ${usedText(j)}. ${who} packing up`;
+      case 'leaving': return `Repaired. ${usedText(j)}. ${who} heading back${j.carry.length > (j.used || []).length ? ' with the unused kits' : ''}`;
       default: return '';
     }
   }
@@ -93,15 +99,19 @@
     const ev = plan.evidence;
     return `<div class="fw-read"><span class="${ev.vibration_x_normal > 1.3 ? 'hi' : ''}"><b>${ev.vibration_x_normal}×</b> vibration</span><span class="${ev.temp_above_normal_c > 5 ? 'hi' : ''}"><b>${ev.temp_above_normal_c > 0 ? '+' : ''}${ev.temp_above_normal_c} °C</b> temperature</span>${ev.noise_notes ? `<span class="hi"><b>${ev.noise_notes}</b> noise note${ev.noise_notes > 1 ? 's' : ''}</span>` : ''}</div>`;
   }
+  function stockCell(sk) {
+    const n = onShelf(sk), o = onOrder(sk);
+    if (n > 0) return `<b class="fw-ok">${n} in the warehouse</b>`;
+    if (o) return `<b class="fw-amb">Out of stock · ${o.qty} arriving in <span data-eta="${o.arriveAt}">${dur(o.arriveAt - now())}</span></b>`;
+    return `<b class="fw-bad">Out of stock</b>${isMgr() ? `<button class="ghost fw-mini" data-act="fwRestock" data-sku="${esc(sk)}" data-qty="2">Restock 2</button>` : ''}`;
+  }
   function kitsHtml(aid, plan, j) {
-    const s = siteBy[assetBy[aid].site], p = partsOf(j) || inTransit(aid), t = now();
-    return `<div class="fw-parts">${plan.parts.map((k) => {
-      const coming = !k.on_shelf && p && p.kit.split(' + ').includes(k.kit);
-      const v = k.on_shelf ? `<b class="fw-ok">On the ${esc(s.name)} shelf</b>`
-        : coming ? (t < p.arriveAt ? `<b class="fw-amb">Ordered · lands in ${dur(p.arriveAt - t)}</b>` : '<b class="fw-ok">Delivered to site</b>')
-          : `<b class="fw-bad">Not on shelf · ${k.lead_hours} h to order</b>`;
-      return `<div class="fw-row"><span>${esc(k.kit)}</span>${v}</div>`;
-    }).join('')}</div>`;
+    const rows = j ? j.carry.map((sk) => {
+      const fitted = (j.used || []).includes(sk);
+      const v = !j.used ? `<b class="fw-amb">With ${esc(engName(j.engineerId))}</b>` : fitted ? '<b class="fw-ok">Fitted</b>' : '<b class="fw-ok">Not needed, going back</b>';
+      return `<div class="fw-row"><span>${esc(kitName(sk))}</span>${v}</div>`;
+    }) : kitSkus(plan).map((sk) => `<div class="fw-row"><span>${esc(kitName(sk))}</span><span class="fw-r">${stockCell(sk)}</span></div>`);
+    return `<div class="fw-parts">${rows.join('')}</div>`;
   }
   function steps(j) {
     const n = stage(j), lab = ['Predicted', 'Booked', 'Driving', 'On site', 'Repaired'];
@@ -113,14 +123,17 @@
       const cancel = isMgr() && ['scheduled', 'en-route', 'on-site'].includes(j.status) ? `<button class="ghost" data-act="fwCancel" data-job="${j.id}">Cancel</button>` : '';
       return `<div class="fw-live" data-a="${aid}">${jobLine(j, now())}</div><div class="wc-act">${UI.page === 'map' ? '' : `<button class="ghost" data-act="fwMap" data-a="${aid}">Watch on map</button>`}${cancel}</div>`;
     }
-    if (done) return `<div class="fw-live fw-done">Repaired by ${esc(engName(done.engineerId))} at ${clock(done.doneAt)}.</div>`;
+    if (done) return `<div class="fw-live fw-done">Repaired by ${esc(engName(done.engineerId))} at ${clock(done.doneAt)}. ${usedText(done)}.</div>`;
     if (!plan) return '';
-    const miss = missingKits(plan), eng = freeEngineer(), who = eng ? esc(short(eng.name)) : 'an engineer';
-    const plain = miss.length ? `Orders the ${lst(miss.map((k) => k.toLowerCase()))}, then sends ${who} to arrive as it lands.` : `Kits are on the shelf, so ${who} leaves now.`;
-    if (!isMgr()) return `<p class="fw-plan">${plain}</p><div class="wc-act"><button class="locked" data-act="fwBeMgr" title="Only the manager orders parts and sends engineers">${ico('lock')} Switch to manager to send</button></div>`;
     if (!FW.state) return `<p class="fw-plan muted">${FW.err ? esc(FW.err) : 'Connecting to dispatch…'}</p>`;
+    const miss = shortKits(plan), eng = freeEngineer(), who = eng ? esc(short(eng.name)) : 'an engineer';
+    const plain = miss.length
+      ? `The warehouse is out of the ${lst(miss.map((k) => kitName(k).toLowerCase()))}. Restock before an engineer can be assigned.`
+      : `${who} takes ${plan.parts.length > 1 ? 'both kits' : 'the kit'} from the warehouse and leaves now. Kits not fitted come back to the shelf.`;
+    if (!isMgr()) return `<p class="fw-plan">${plain}</p><div class="wc-act"><button class="locked" data-act="fwBeMgr" title="Only the manager restocks and sends engineers">${ico('lock')} Switch to manager to send</button></div>`;
     if (!eng) return `<p class="fw-plan">All engineers are on jobs.</p>`;
     const busy = FW.sending.has(aid);
+    if (miss.length) return `<p class="fw-plan">${plain}</p><div class="wc-act"><button class="primary" disabled title="Kits missing from the warehouse">Send engineer</button><a class="ghost btn-link" href="#/inventory">Inventory</a></div>`;
     return `<p class="fw-plan">${plain}</p><div class="wc-act"><button class="primary" data-act="fwSend" data-a="${aid}" ${busy ? 'disabled' : ''}>${busy ? 'Sending…' : 'Send engineer'}</button></div>`;
   }
   function holdHtml(aid) {
@@ -168,7 +181,10 @@
     return `<div class="${bare ? 'fw-ov bare' : 'fw-ov'}">${head}${list.map((it) => {
       const aid = it.a.id, plan = planFor(aid), j = liveJob(aid), done = doneJob(aid);
       const sub = j ? `<span class="fw-live" data-a="${aid}">${jobLine(j, now())}</span>` : done ? '<span class="fw-ok">Repaired</span>' : plan ? `<span>${issueText(plan)}</span>` : '';
-      const btn = j || done || !plan || !isMgr() || !freeEngineer() ? '' : `<button class="primary" data-act="fwSend" data-a="${aid}" ${FW.sending.has(aid) ? 'disabled' : ''}>Send engineer</button>`;
+      const miss = plan ? shortKits(plan) : [];
+      const btn = j || done || !plan || !isMgr() || !freeEngineer() ? ''
+        : miss.length ? `<a class="ghost btn-link" href="#/inventory" title="Out of the ${esc(lst(miss.map(kitName)).toLowerCase())}">Restock first</a>`
+          : `<button class="primary" data-act="fwSend" data-a="${aid}" ${FW.sending.has(aid) ? 'disabled' : ''}>Send engineer</button>`;
       return `<div class="fw-ovrow"><button class="fw-ovname" data-act="asset" data-a="${aid}"><b>${aid} · ${esc(it.a.type)}, ${esc(siteBy[it.sid].name)}</b>${sub}</button>${btn}</div>`;
     }).join('')}${isMgr() ? '' : `<button class="locked fw-ovmgr" data-act="fwBeMgr">${ico('lock')} Switch to manager to send engineers</button>`}</div>`;
   };
@@ -179,12 +195,19 @@
     if (a === 'fwMap') { showOnMap('asset', b.dataset.a); return; }
     if (a === 'fwReset') {
       if (!isMgr()) { toast('Only the manager can reset dispatch.'); return; }
-      if (!confirm('Clear every parts order and job for everyone, including the engineer phone?')) return;
-      if (await act({ type: 'reset' })) addLog({ fw: true, action: 'Reset dispatch', reason: 'Cleared all orders and jobs' });
+      if (!confirm('Reset the warehouse to its starting stock and clear every order and job for everyone, including the engineer phone?')) return;
+      if (await act({ type: 'reset' })) addLog({ fw: true, action: 'Reset dispatch', reason: 'Warehouse back to starting stock, all jobs cleared' });
       refresh(true); return;
     }
     if (!isMgr()) { toast('Only the manager can do this.'); return; }
     if (a === 'fwSend') await send(b.dataset.a);
+    else if (a === 'fwRestock') {
+      const sk = b.dataset.sku, qty = Number(b.dataset.qty || document.getElementById('fwQty-' + b.dataset.i)?.value || 2);
+      if (await act({ type: 'restock', sku: sk, qty })) {
+        addLog({ fw: true, action: `Restock ${qty} × ${sk}`, reason: `Supplier delivery to the warehouse in ${dur(FW.cfg.restockS * 1000)}` });
+        toast(`${qty} × ${sk} ordered. Lands in the warehouse in ${dur(FW.cfg.restockS * 1000)}.`);
+      }
+    }
     else if (a === 'fwCancel') {
       const j = FW.state.jobs.find((x) => x.id === b.dataset.job);
       if (await act({ type: 'cancelJob', jobId: b.dataset.job }) && j) addLog({ fw: true, action: 'Cancel job', asset: j.asset, site: j.site, reason: j.id });
@@ -192,7 +215,7 @@
     refresh(true);
   };
 
-  // Order what the site shelf lacks, then book the engineer timed to land with it.
+  // Assign the free engineer with the plan's kits, most likely cause first. The server refuses if any is not in stock.
   async function send(aid) {
     // Only a manager sends work. The model alerts; it never books anyone by itself.
     if (!isMgr()) { toast('Only the manager can send an engineer.'); return; }
@@ -201,27 +224,64 @@
     try {
       const plan = planFor(aid), asset = assetBy[aid], eng = freeEngineer();
       if (!plan || !eng) { toast('Nothing to send.'); return; }
-      let order = inTransit(aid);
-      const miss = missingKits(plan);
-      if (miss.length && !order) {
-        if (!await act({ type: 'orderParts', asset: aid, kit: miss.join(' + ') })) return;
-        order = inTransit(aid);
-        addLog({ fw: true, action: `Order ${miss.join(' + ').toLowerCase()}`, asset: aid, site: asset.site, reason: `Predicted failure, ${pct(plan.chance)} within 3 days` });
-      }
+      const miss = shortKits(plan);
+      if (miss.length) { toast(`Out of the ${lst(miss)}. Restock it first.`); return; }
       const hz = stat(asset.site) === 'HOLD' ? openGates(asset.site).map((g) => `${g.id} ${g.hazard}`) : [];
       const note = `${issueText(plan)}. Vibration ${plan.evidence.vibration_x_normal}× normal, temperature ${plan.evidence.temp_above_normal_c > 0 ? '+' : ''}${plan.evidence.temp_above_normal_c} °C above normal.`;
+      const kits = kitSkus(plan);
       const ok = await act({
-        type: 'requestEngineer', asset: aid, engineerId: eng.id, partsId: order ? order.id : null, timing: 'with-parts',
+        type: 'requestEngineer', asset: aid, engineerId: eng.id,
         note: note.slice(0, 200), hseHold: hz.length ? hz.join('; ').slice(0, 200) : null,
-        kits: plan.parts.map((p) => p.kit), tools: plan.tools.slice(0, 12), chance: plan.chance,
+        kits, tools: plan.tools.slice(0, 12), chance: plan.chance,
       });
       if (!ok) return;
-      addLog({ fw: true, action: 'Send engineer', asset: aid, site: asset.site, reason: order ? `${short(eng.name)}, timed to arrive with ${order.id}` : `${short(eng.name)}, kits on the shelf` });
-      const j = liveJob(aid), [sx, sz] = POS[asset.site];
+      addLog({ fw: true, action: 'Send engineer', asset: aid, site: asset.site, reason: `${short(eng.name)}, carrying ${lst(kits.map(kitName)).toLowerCase()}` });
+      const [sx, sz] = POS[asset.site];
       if (UI.page === 'map') cam.goal = { yaw: cam.yaw, pitch: 0.82, dist: 40, tx: sx * 0.55, tz: sz * 0.55 };
-      toast(order ? `${short(eng.name)} booked. Leaves in ${dur(j.leaveAt - now())} to arrive as the ${order.kit.toLowerCase()} lands.` : `${short(eng.name)} is on the way to ${siteBy[asset.site].name}.`);
+      toast(`${short(eng.name)} took the kits from the warehouse and is heading to ${siteBy[asset.site].name}.`);
     } finally { FW.sending.delete(aid); }
   }
+
+  // ---------- Inventory page (manager's view of the warehouse) ----------
+  // Kits each predicted machine for the replay day still needs, that no engineer has been sent with yet.
+  function neededToday() {
+    const need = {};
+    for (const plan of FW.model?.plans[dayStr(S.day)] || []) {
+      if (liveJob(plan.asset_id) || doneJob(plan.asset_id)) continue;
+      for (const sk of kitSkus(plan)) (need[sk] = need[sk] || []).push(plan.asset_id);
+    }
+    return need;
+  }
+  function inventoryHtml() {
+    if (!FW.state || !FW.cfg) return `<div class="panel"><p class="muted">${FW.err ? esc(FW.err) : 'Connecting to dispatch…'}</p></div>`;
+    const need = neededToday(), out = {};
+    for (const j of FW.state.jobs.filter(active)) for (const sk of j.carry) if (!(j.used || []).includes(sk)) (out[sk] = out[sk] || []).push(j);
+    const mgr = isMgr(), t = now();
+    const groups = [...new Set(FW.cfg.skus.map((sk) => sk.split(' · ')[1]))];
+    let i = 0, shortN = 0;
+    const body = groups.map((ty) => `<tr class="inv-grp"><th colspan="6" scope="rowgroup">${esc(ty)}</th></tr>` + FW.cfg.skus.filter((sk) => sk.endsWith(' · ' + ty)).map((sk) => {
+      const n = onShelf(sk), o = onOrder(sk), nd = need[sk] || [], ow = out[sk] || [], k = i++;
+      const short = nd.length > n;
+      if (short) shortN++;
+      const st = short ? `<span class="inv-st bad">${n === 0 ? 'Out' : 'Short'}</span>` : n === 0 ? '<span class="inv-st amb">Empty</span>' : '<span class="inv-st ok">OK</span>';
+      const act = o ? `<span class="muted">${o.qty} arriving in <span data-eta="${o.arriveAt}">${dur(o.arriveAt - t)}</span></span>`
+        : mgr ? `<span class="inv-act"><input type="number" id="fwQty-${k}" min="1" max="10" value="${Math.max(2, nd.length - n)}" aria-label="Quantity of ${esc(sk)}"><button class="ghost fw-mini" data-act="fwRestock" data-sku="${esc(sk)}" data-i="${k}">Restock</button></span>` : '';
+      return `<tr class="${short ? 'short' : ''}"><td>${esc(kitName(sk))}</td><td class="num"><b>${n}</b></td>
+        <td>${ow.length ? ow.map((j) => `${esc(engName(j.engineerId))} · ${j.asset}`).join('<br>') : '<span class="muted">none</span>'}</td>
+        <td>${nd.length ? nd.join(', ') : '<span class="muted">none</span>'}</td><td>${st}</td><td>${act}</td></tr>`;
+    }).join('')).join('');
+    const moves = FW.state.moves.slice().reverse().slice(0, 14).map((m) =>
+      `<li><span class="mono">${clock(m.t)}</span><b class="${m.qty > 0 ? 'fw-ok' : m.qty < 0 ? 'fw-amb' : ''}">${m.qty > 0 ? '+' + m.qty : m.qty < 0 ? m.qty : 'fitted'}</b><span>${esc(m.sku)}</span><span class="muted">${esc(m.why.replace(' (phone)', ''))}</span></li>`).join('');
+    return `<div class="inv-grid">
+      <div class="panel"><div class="panel-h"><h2>Stock by kit</h2><span class="muted small">${shortN ? `<b class="fw-bad">${shortN} kit${shortN > 1 ? 's' : ''} short</b> for ${prettyDay(S.day)}'s predictions` : `Covers every prediction for ${prettyDay(S.day)}`}</span></div>
+        <div class="inv-scroll"><table class="inv"><thead><tr><th scope="col">Kit</th><th scope="col" class="num">On shelf</th><th scope="col">Out with engineers</th><th scope="col">Needed for predictions</th><th scope="col">Status</th><th scope="col">${mgr ? 'Restock' : ''}</th></tr></thead><tbody>${body}</tbody></table></div>
+        ${mgr ? `<p class="small muted">Supplier deliveries land in ${dur(FW.cfg.restockS * 1000)} (the sites' median 2025 parts wait, at 3 s per hour). Starting quantities are modeled; the workbook has no item-level stock.</p>` : `<button class="locked" data-act="fwBeMgr">${ico('lock')} Switch to manager to restock</button>`}
+      </div>
+      <div class="panel"><div class="panel-h"><h2>Movements</h2></div>${moves ? `<ul class="inv-moves">${moves}</ul>` : '<p class="muted small">Nothing has moved yet.</p>'}</div>
+    </div>`;
+  }
+  FW.renderInventory = () => { const el = document.getElementById('invBody'); if (el) el.innerHTML = inventoryHtml(); };
+  document.getElementById('invBody')?.addEventListener('click', (e) => { const b = e.target.closest('[data-act]'); if (b) FW.handle(b); });
 
   // ---------- Field crew panel on the Work page ----------
   function engWhere(e) {
@@ -233,13 +293,13 @@
     if (!FW.state) return `<p class="muted small">${FW.err ? esc(FW.err) : 'Connecting to dispatch…'}</p>`;
     const t = now();
     const engs = FW.state.engineers.map((e) => { const j = e.jobId && FW.state.jobs.find((x) => x.id === e.jobId); return `<div class="fw-row"><span><b>${esc(e.name)}</b><br><span class="muted">${engWhere(e)}</span></span><span class="fw-r">${j ? `${j.asset}<br><span class="muted">${j.status.replace('-', ' ')}</span>` : '<span class="muted">free</span>'}</span></div>`; }).join('');
-    const parts = FW.state.parts.filter((p) => t < p.arriveAt).map((p) => `<div class="fw-row"><span>${p.asset} · ${esc(p.kit)}</span><b>${dur(p.arriveAt - t)}</b></div>`).join('');
-    return `<span class="mono">ENGINEERS</span>${engs}${parts ? `<span class="mono">PARTS ON THE ROAD</span>${parts}` : ''}
-      <div class="wc-act"><button class="ghost" data-act="fwReset" title="Clears all orders and jobs for everyone">Reset dispatch</button></div>`;
+    const parts = FW.state.restocks.filter((r) => !r.received).map((r) => `<div class="fw-row"><span>${r.qty} × ${esc(r.sku)}</span><b>${dur(r.arriveAt - t)}</b></div>`).join('');
+    return `<span class="mono">ENGINEERS</span>${engs}${parts ? `<span class="mono">RESTOCKS ON THE WAY</span>${parts}` : ''}
+      <div class="wc-act"><a class="ghost btn-link" href="#/inventory">Inventory</a><button class="ghost" data-act="fwReset" title="Clears the warehouse, orders and jobs for everyone">Reset dispatch</button></div>`;
   }
   FW.side = () => `<div class="panel" id="fwPanel"><div class="panel-h"><h2>Field crew <span class="fw-conn" id="fwConn"></span></h2></div><div id="fwSide">${sideHtml()}</div></div>`;
 
-  // ---------- 3D map: base, warehouse, engineers and parts trucks ----------
+  // ---------- 3D map: base, warehouse, engineers and supplier trucks ----------
   const ENG = [89, 128, 166], TRUCK = [93, 93, 96];
   const siteSpot = (sid) => [POS[sid][0], POS[sid][1] + 1.3];
   const same = (a, b) => a[0] === b[0] && a[1] === b[1];
@@ -255,9 +315,11 @@
       return { p: [from[0] + (to[0] - from[0]) * f, from[1] + (to[1] - from[1]) * f], j, to };
     }
     if (j && ['on-site', 'working', 'done'].includes(j.status)) return { p: siteSpot(j.site), j, onSite: true };
-    if (j) return { p: e.pos, j };
+    // Engineers at the base park side by side in front of it instead of on one spot.
+    const i = FW.state.engineers.indexOf(e), park = [-1.1 + i * 1.1, 1.6];
+    if (j) return { p: same(e.pos, [0, 0]) ? park : e.pos, j };
     if (e.at && POS[e.at]) return { p: siteSpot(e.at) };
-    return { p: e.pos };
+    return { p: same(e.pos, [0, 0]) ? park : e.pos };
   }
   // Ground level, or the pad's top when the vehicle is inside a site's pad.
   const groundAt = (x, z) => (Object.values(POS).some(([cx, cz]) => Math.abs(x - cx) < 3.7 && Math.abs(z - cz) < 3.2) ? 0.28 : 0.02);
@@ -271,16 +333,18 @@
     addBox(0, 0, 0, 2.2, 0.55, 1.4, [226, 226, 229], { stroke: 'rgba(29,31,32,.45)' });
     addBox(0, 0.55, 0, 2.2, 0.12, 1.4, [196, 196, 200], { stroke: 'rgba(29,31,32,.45)' });
     addText([0, 1.2, 0], 'MAINTENANCE BASE', { size: 10, col: MAPC.ink, bold: 1, mono: 1, pri: 3 });
-    addBox(WAREHOUSE[0], 0, WAREHOUSE[1], 1.6, 0.8, 2.2, [214, 214, 218], { stroke: 'rgba(29,31,32,.45)' });
-    addText([WAREHOUSE[0], 1.4, WAREHOUSE[1]], 'PARTS WAREHOUSE', { size: 10, col: MAPC.muted, bold: 1, mono: 1, pri: 2 });
+    addBox(WAREHOUSE[0], 0, WAREHOUSE[1], 1.5, 0.75, 1.4, [214, 214, 218], { stroke: 'rgba(29,31,32,.45)' });
+    addBox(WAREHOUSE[0], 0.75, WAREHOUSE[1], 1.5, 0.1, 1.4, [190, 190, 195], { stroke: 'rgba(29,31,32,.45)' });
+    const stocked = FW.state?.stock ? Object.values(FW.state.stock).reduce((a, b) => a + b, 0) : null;
+    addText([WAREHOUSE[0], 1.35, WAREHOUSE[1]], `WAREHOUSE${stocked === null ? '' : ` · ${stocked} KITS`}`, { size: 10, col: MAPC.muted, bold: 1, mono: 1, pri: 2 });
     if (!FW.state || !FW.cfg) return;
     const tt = now();
-    for (const p of FW.state.parts.filter((x) => tt < x.arriveAt)) {
-      const f = Math.min(1, Math.max(0, (tt - p.orderedAt) / (p.arriveAt - p.orderedAt))), to = siteSpot(p.site);
-      const x = WAREHOUSE[0] + (to[0] - WAREHOUSE[0]) * f, z = WAREHOUSE[1] + (to[1] - WAREHOUSE[1]) * f;
-      addLine([x, 0.3, z], [to[0], 0.3, to[1]], 'rgba(168,114,34,.8)', 1.6, [4, 4], 1);
+    for (const r of FW.state.restocks.filter((x) => !x.received && tt < x.arriveAt)) {
+      const f = Math.min(1, Math.max(0, (tt - r.orderedAt) / (r.arriveAt - r.orderedAt)));
+      const x = SUPPLIER[0] + (WAREHOUSE[0] - 1 - SUPPLIER[0]) * f, z = SUPPLIER[1] + (WAREHOUSE[1] - SUPPLIER[1]) * f;
+      addLine([x, 0.3, z], [WAREHOUSE[0] - 1, 0.3, WAREHOUSE[1]], 'rgba(168,114,34,.8)', 1.6, [4, 4], 1);
       vehicle(x, z, TRUCK, t, true);
-      addText([x, 1.3, z], `${p.kit.toUpperCase()} · ${dur(p.arriveAt - tt)}`, { size: 10, col: MAPC.amber, bold: 1, mono: 1, pri: 3 });
+      addText([x, 1.3, z], `${r.qty} × ${kitName(r.sku).toUpperCase()} · ${dur(r.arriveAt - tt)}`, { size: 10, col: MAPC.amber, bold: 1, mono: 1, pri: 3 });
     }
     for (const e of FW.state.engineers) {
       const g = engTarget(e, tt), d = FW.disp[e.id] || (FW.disp[e.id] = g.p.slice());
@@ -293,7 +357,7 @@
         addBox(wx, 0.78 + bob, wz, 0.16, 0.16, 0.16, [236, 200, 160], { stroke: 'rgba(29,31,32,.6)' });
         if (g.j.status === 'working') { const s = proj([wx, 1.0, wz]), pu = 0.5 + 0.5 * Math.sin(t / 180); items.push({ t: 'ring', x: s[0], y: s[1], r: (6 + pu * 5) * s[3] / 34, col: MAPC.accent, d: s[2] - 1 }); }
       }
-      const st = g.j?.status, tag = !g.j ? '' : st === 'working' ? 'REPAIRING' : st === 'on-site' ? 'WAITING FOR PARTS' : st === 'done' ? 'PACKING UP' : st === 'leaving' ? 'HEADING BACK' : st === 'en-route' ? `TO ${siteBy[g.j.site].name.toUpperCase()}` : tt >= g.j.leaveAt ? 'LEAVING NOW' : `LEAVES IN ${dur(g.j.leaveAt - tt)}`;
+      const st = g.j?.status, tag = !g.j ? '' : st === 'working' ? 'REPAIRING' : st === 'on-site' ? 'ON SITE' : st === 'done' ? 'PACKING UP' : st === 'leaving' ? 'HEADING BACK' : st === 'en-route' ? `TO ${siteBy[g.j.site].name.toUpperCase()}` : 'LEAVING WITH KITS';
       addText([d[0], 1.25, d[1]], `${short(e.name).toUpperCase()}${e.phone ? ' (PHONE)' : ''}${tag ? ' · ' + tag : ''}`, { size: 11, col: '#41678c', bold: 1, pri: 4 });
     }
   };
@@ -303,17 +367,19 @@
   function tick() {
     const t = now();
     document.querySelectorAll('.fw-live[data-a]').forEach((el) => { const j = liveJob(el.dataset.a); if (j) el.textContent = jobLine(j, t); });
+    document.querySelectorAll('[data-eta]').forEach((el) => { el.textContent = dur(Number(el.dataset.eta) - t); });
     const side = document.getElementById('fwSide'); if (side) side.innerHTML = sideHtml();
     const c = document.getElementById('fwConn'); if (c) c.innerHTML = connHtml();
   }
   // Re-render only when something that changes buttons happened, and never under an open dialog.
   function refresh(force) {
-    const sig = FW.state ? JSON.stringify([UI.page, S.sel && S.sel.id, !!FW.model, S.role, S.day, [...FW.sending], FW.state.jobs.map((j) => j.id + j.status), FW.state.parts.map((p) => p.id + (now() < p.arriveAt)), FW.state.engineers.map((e) => e.jobId)]) : String(FW.err);
+    const sig = FW.state ? JSON.stringify([UI.page, S.sel && S.sel.id, !!FW.model, S.role, S.day, [...FW.sending], FW.state.jobs.map((j) => j.id + j.status), FW.state.restocks.map((r) => r.id + r.received), FW.state.moves.at(-1)?.t, FW.state.engineers.map((e) => e.jobId)]) : String(FW.err);
     if (!force && sig === FW.sig) { tick(); return; }
     FW.sig = sig;
     if (typeof dlgOpen === 'function' && dlgOpen()) { tick(); return; }
     if (UI.page === 'work') renderWork();
     if (UI.page === 'map') renderInsp();
+    if (UI.page === 'inventory') FW.renderInventory();
     const ov = document.getElementById('ovPred'); if (ov && UI.page === 'overview') ov.innerHTML = FW.overviewBlock(true);
     tick();
   }

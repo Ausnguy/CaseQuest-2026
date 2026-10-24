@@ -1,21 +1,20 @@
 import { z } from 'zod';
 
-import type { Action } from './dispatch.js';
+import { SKUS, type Action } from './dispatch.js';
 
 const id = z.string().regex(/^[A-Z]+-?\d{1,4}$/);
 const text = (max: number) => z.string().trim().max(max);
+const kit = z.enum(SKUS as [string, ...string[]]);
 
 export const actionSchema: z.ZodType<Action> = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('orderParts'), asset: id, kit: text(80).min(3) }),
+  z.object({ type: z.literal('restock'), sku: kit, qty: z.number().int().min(1).max(10) }),
   z.object({
     type: z.literal('requestEngineer'),
     asset: id,
     engineerId: id,
-    partsId: id.nullable(),
-    timing: z.enum(['with-parts', 'now']),
     note: text(200),
     hseHold: text(200).nullable(),
-    kits: z.array(text(60)).max(4).optional(),
+    kits: z.array(kit).max(4),
     tools: z.array(text(60)).max(12).optional(),
     chance: z.number().min(0).max(1).nullable().optional(),
   }),
@@ -25,7 +24,7 @@ export const actionSchema: z.ZodType<Action> = z.discriminatedUnion('type', [
   z.object({ type: z.literal('travel'), engineerId: id, km: z.number().positive().max(6) }),
   z.object({ type: z.literal('autoTravel'), engineerId: id, on: z.boolean() }),
   z.object({ type: z.literal('startWork'), jobId: id, engineerId: id }),
-  z.object({ type: z.literal('finishWork'), jobId: id, engineerId: id }),
+  z.object({ type: z.literal('finishWork'), jobId: id, engineerId: id, used: z.array(kit).max(4) }),
   z.object({ type: z.literal('leave'), jobId: id, engineerId: id }),
   z.object({ type: z.literal('reset') }),
 ]);

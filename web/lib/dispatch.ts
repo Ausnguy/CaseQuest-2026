@@ -19,7 +19,7 @@ export const SITES: Site[] = [
 ];
 export const BASE = { id: 'BASE', name: 'Maintenance base', pos: [0, 0] as Vec };
 
-const TYPES = ['Transfer pump', 'Lift pump', 'Compressor'];
+export const TYPES = ['Transfer pump', 'Lift pump', 'Compressor'];
 export const ASSETS: Asset[] = SITES.flatMap((s, i) =>
   TYPES.map((type, j) => ({ id: `A${String(i * 3 + j + 1).padStart(3, '0')}`, site: s.id, type })),
 );
@@ -33,7 +33,26 @@ export const SHAKE_KM = 0.5;
 export const WORK_S = 20;
 // Demo clock for parts: each real hour of lead time plays as this many seconds.
 export const DEMO_S_PER_HOUR = 3;
-export const leadTimeS = (siteId: string) => Math.round((siteById(siteId)?.partsLeadH ?? 18) * DEMO_S_PER_HOUR);
+
+// Kits are priced per machine type in the 2025 invoices, so the warehouse stocks one line per kit and type.
+export const KITS = ['Bearing kit', 'Mechanical seal kit', 'Motor starter and relay kit'];
+export const sku = (kit: string, type: string) => `${kit} · ${type}`;
+export const SKUS = KITS.flatMap((k) => TYPES.map((ty) => sku(k, ty)));
+export const skuType = (s: string) => s.split(' · ')[1];
+// A supplier delivery to the warehouse takes the median of the sites' observed 2025 parts waits.
+const leads = SITES.map((s) => s.partsLeadH).sort((a, b) => a - b);
+export const SUPPLIER_LEAD_H = (leads[2] + leads[3]) / 2;
+export const RESTOCK_S = Math.round(SUPPLIER_LEAD_H * DEMO_S_PER_HOUR);
+
+// Starting shelf. Modeled: the workbook has no item-level stock. Some lines start short so restocking shows up.
+export function initialStock(): Record<string, number> {
+  const s: Record<string, number> = Object.fromEntries(SKUS.map((k) => [k, 2]));
+  s[sku('Bearing kit', 'Lift pump')] = 1;
+  s[sku('Mechanical seal kit', 'Lift pump')] = 1;
+  s[sku('Bearing kit', 'Compressor')] = 0;
+  for (const ty of TYPES) s[sku('Motor starter and relay kit', ty)] = 1;
+  return s;
+}
 
 export const PHONE_ENGINEER = 'ENG-1';
 
@@ -50,7 +69,11 @@ export interface Engineer {
   jobId: string | null;
 }
 
-export interface PartsOrder { id: string; asset: string; site: string; kit: string; orderedAt: number; arriveAt: number }
+// A supplier delivery of one kit line to the warehouse.
+export interface Restock { id: string; sku: string; qty: number; orderedAt: number; arriveAt: number; received: boolean }
+
+// Every change to the warehouse shelf, newest last. `qty` is the change in stock (0 when a carried kit is fitted).
+export interface Move { t: number; sku: string; qty: number; why: string }
 
 export type JobStatus = 'scheduled' | 'en-route' | 'on-site' | 'working' | 'done' | 'leaving' | 'closed' | 'cancelled';
 
@@ -59,10 +82,8 @@ export interface Job {
   asset: string;
   site: string;
   note: string;
-  partsId: string | null;
   engineerId: string;
   createdAt: number;
-  // When the engineer should set off so they arrive as the parts do.
   leaveAt: number;
   status: JobStatus;
   leg: Leg | null;
@@ -72,10 +93,11 @@ export interface Job {
   closedAt: number | null;
   // Open severity-5 HSE actions at the site when the manager made the request, shown to the engineer.
   hseHold: string | null;
-  // From the failure model's plan when the request came from a prediction. Older stored jobs lack them.
-  kits?: string[];
-  tools?: string[];
-  chance?: number | null;
+  // Kits taken from the warehouse for this job. The engineer reports which were fitted; the rest go back on the shelf.
+  carry: string[];
+  used: string[] | null;
+  tools: string[];
+  chance: number | null;
 }
 
 export interface LogEntry { t: number; who: string; text: string }
@@ -84,7 +106,9 @@ export interface DispatchState {
   v: number;
   seq: number;
   engineers: Engineer[];
-  parts: PartsOrder[];
+  stock: Record<string, number>;
+  restocks: Restock[];
+  moves: Move[];
   jobs: Job[];
   log: LogEntry[];
 }
@@ -97,10 +121,12 @@ export function initialState(): DispatchState {
     seq: 0,
     engineers: [
       { id: PHONE_ENGINEER, name: 'R. Ortiz (phone)', phone: true, pos: [...BASE.pos], at: BASE.id, jobId: null },
-      { id: 'ENG-2', name: 'D. Patel', phone: false, pos: [...SITES[4].pos], at: 'S05', jobId: null },
-      { id: 'ENG-3', name: 'K. Moore', phone: false, pos: [...HOME], at: null, jobId: null },
+      { id: 'ENG-2', name: 'D. Patel', phone: false, pos: [...BASE.pos], at: BASE.id, jobId: null },
+      { id: 'ENG-3', name: 'K. Moore', phone: false, pos: [...BASE.pos], at: BASE.id, jobId: null },
     ],
-    parts: [],
+    stock: initialStock(),
+    restocks: [],
+    moves: [],
     jobs: [],
     log: [],
   };
@@ -129,11 +155,31 @@ function legArrival(leg: Leg, now: number): number | null {
 const makeLeg = (from: Vec, to: Vec, autoSince: number | null): Leg => ({ from: [...from], to: [...to], km: dist(from, to), doneKm: 0, autoSince });
 
 export const isActive = (j: Job) => j.status !== 'closed' && j.status !== 'cancelled';
-export const partsArrived = (p: PartsOrder, now: number) => now >= p.arriveAt;
 
+// Documents stored before the warehouse existed lack its fields and carry parts-to-site orders. Start them clean.
 function clone(s: DispatchState): DispatchState {
-  return JSON.parse(JSON.stringify(s)) as DispatchState;
+  const c = JSON.parse(JSON.stringify(s)) as DispatchState & { parts?: unknown };
+  if (!c.stock) return { ...initialState(), v: c.v };
+  return c;
 }
+
+function addMove(s: DispatchState, t: number, sk: string, qty: number, why: string) {
+  s.moves.push({ t, sku: sk, qty, why });
+  if (s.moves.length > 60) s.moves.splice(0, s.moves.length - 60);
+}
+
+// Carried kits that were not fitted go back on the shelf.
+function returnUnused(s: DispatchState, job: Job, t: number) {
+  const left = [...job.carry];
+  for (const u of job.used ?? []) { const i = left.indexOf(u); if (i >= 0) left.splice(i, 1); }
+  for (const k of left) {
+    s.stock[k] = (s.stock[k] ?? 0) + 1;
+    addMove(s, t, k, +1, `Returned unused from ${job.id} (${job.asset})`);
+  }
+}
+
+// Stand-ins have no phone to report on; they fit the most likely kit, listed first.
+const standInUse = (job: Job) => job.carry.slice(0, 1);
 
 function addLog(s: DispatchState, t: number, who: string, text: string) {
   s.log.push({ t, who, text });
@@ -144,10 +190,15 @@ function addLog(s: DispatchState, t: number, who: string, text: string) {
 // happened (arrival, parts delivery), not `now`, so a late poll gives the same answer as an early one.
 export function materialize(input: DispatchState, now: number): DispatchState {
   const s = clone(input);
+  for (const r of s.restocks) {
+    if (r.received || now < r.arriveAt) continue;
+    r.received = true;
+    s.stock[r.sku] = (s.stock[r.sku] ?? 0) + r.qty;
+    addMove(s, r.arriveAt, r.sku, r.qty, `Delivered by supplier (${r.id})`);
+  }
   for (const job of s.jobs) {
     const eng = s.engineers.find((e) => e.id === job.engineerId);
     if (!eng) continue;
-    const parts = job.partsId ? s.parts.find((p) => p.id === job.partsId) : undefined;
     for (let guard = 0; guard < 6; guard++) {
       const before = job.status;
       if (job.status === 'scheduled' && !eng.phone && now >= job.leaveAt) {
@@ -169,22 +220,22 @@ export function materialize(input: DispatchState, now: number): DispatchState {
             job.closedAt = t;
             eng.at = BASE.id;
             eng.jobId = null;
+            returnUnused(s, job, t);
           }
           job.leg = null;
         }
       // The phone engineer starts and finishes the repair themselves ('startWork', 'finishWork'); dispatch never
       // acts on a machine. Stand-in engineers are simulated people, so they follow the same steps on their own.
       } else if (job.status === 'on-site' && job.arrivedAt !== null && !eng.phone) {
-        const start = Math.max(job.arrivedAt, parts ? parts.arriveAt : job.arrivedAt);
-        if (now >= start) {
-          job.status = 'working';
-          job.workStartAt = start;
-        }
+        job.status = 'working';
+        job.workStartAt = job.arrivedAt;
       } else if (job.status === 'working' && job.workStartAt !== null && !eng.phone) {
         const end = job.workStartAt + WORK_S * 1000;
         if (now >= end) {
           job.status = 'done';
           job.doneAt = end;
+          job.used = standInUse(job);
+          for (const k of job.used) addMove(s, end, k, 0, `Fitted on ${job.asset} (${job.id})`);
           addLog(s, end, eng.name, `Repaired ${job.asset}`);
         }
       } else if (job.status === 'done' && !eng.phone && job.doneAt !== null) {
@@ -200,14 +251,14 @@ export function materialize(input: DispatchState, now: number): DispatchState {
 }
 
 export type Action =
-  | { type: 'orderParts'; asset: string; kit: string }
-  | { type: 'requestEngineer'; asset: string; engineerId: string; partsId: string | null; timing: 'with-parts' | 'now'; note: string; hseHold: string | null; kits?: string[]; tools?: string[]; chance?: number | null }
+  | { type: 'restock'; sku: string; qty: number }
+  | { type: 'requestEngineer'; asset: string; engineerId: string; note: string; hseHold: string | null; kits: string[]; tools?: string[]; chance?: number | null }
   | { type: 'cancelJob'; jobId: string }
   | { type: 'depart'; jobId: string; engineerId: string }
   | { type: 'travel'; engineerId: string; km: number }
   | { type: 'autoTravel'; engineerId: string; on: boolean }
   | { type: 'startWork'; jobId: string; engineerId: string }
-  | { type: 'finishWork'; jobId: string; engineerId: string }
+  | { type: 'finishWork'; jobId: string; engineerId: string; used: string[] }
   | { type: 'leave'; jobId: string; engineerId: string }
   | { type: 'reset' };
 
@@ -216,26 +267,18 @@ export type Result = { ok: true; state: DispatchState } | { ok: false; error: st
 const fail = (error: string): Result => ({ ok: false, error });
 const pad = (n: number) => String(n).padStart(3, '0');
 
-// The latest suggested departure time that still has the engineer on site when the parts land.
-export function plannedLeaveAt(eng: Engineer, siteId: string, parts: PartsOrder | undefined, timing: 'with-parts' | 'now', now: number) {
-  const site = siteById(siteId);
-  if (!site || !parts || timing === 'now') return now;
-  return Math.max(now, parts.arriveAt - travelS(eng.pos, site.pos) * 1000);
-}
-
 // Expects a materialized state. Returns a new state; never mutates the input.
 export function apply(input: DispatchState, a: Action, now: number): Result {
   if (a.type === 'reset') return { ok: true, state: { ...initialState(), v: input.v } };
   const s = clone(input);
 
   switch (a.type) {
-    case 'orderParts': {
-      const asset = assetById(a.asset);
-      if (!asset) return fail('Unknown asset.');
-      if (s.parts.some((p) => p.asset === a.asset && !partsArrived(p, now))) return fail(`Parts for ${a.asset} are already on the way.`);
-      const id = `P-${pad(++s.seq)}`;
-      s.parts.push({ id, asset: a.asset, site: asset.site, kit: a.kit, orderedAt: now, arriveAt: now + leadTimeS(asset.site) * 1000 });
-      addLog(s, now, 'Manager', `Ordered ${a.kit} for ${a.asset} (${id})`);
+    case 'restock': {
+      if (!SKUS.includes(a.sku)) return fail('Unknown kit.');
+      if (s.restocks.some((r) => r.sku === a.sku && !r.received)) return fail(`${a.sku} is already on order.`);
+      const id = `R-${pad(++s.seq)}`;
+      s.restocks.push({ id, sku: a.sku, qty: a.qty, orderedAt: now, arriveAt: now + RESTOCK_S * 1000, received: false });
+      addLog(s, now, 'Manager', `Ordered ${a.qty} × ${a.sku} for the warehouse (${id})`);
       break;
     }
     case 'requestEngineer': {
@@ -245,18 +288,21 @@ export function apply(input: DispatchState, a: Action, now: number): Result {
       if (!eng) return fail('Unknown engineer.');
       if (eng.jobId) return fail(`${eng.name} already has a job.`);
       if (s.jobs.some((j) => j.asset === a.asset && isActive(j))) return fail(`${a.asset} already has an engineer assigned.`);
-      let parts: PartsOrder | undefined;
-      if (a.partsId) {
-        parts = s.parts.find((p) => p.id === a.partsId);
-        if (!parts || parts.asset !== a.asset) return fail('That parts order is not for this asset.');
-        if (s.jobs.some((j) => j.partsId === a.partsId && isActive(j))) return fail('Those parts are already assigned to a job.');
-      }
+      const wrong = a.kits.find((k) => !SKUS.includes(k) || skuType(k) !== asset.type);
+      if (wrong) return fail(`${wrong} does not fit a ${asset.type.toLowerCase()}.`);
+      const need: Record<string, number> = {};
+      for (const k of a.kits) need[k] = (need[k] ?? 0) + 1;
+      const short = Object.keys(need).filter((k) => (s.stock[k] ?? 0) < need[k]);
+      if (short.length) return fail(`Not in the warehouse: ${short.join(', ')}. Restock before assigning an engineer.`);
       const id = `J-${pad(++s.seq)}`;
-      const leaveAt = plannedLeaveAt(eng, asset.site, parts, a.timing, now);
+      for (const k of a.kits) {
+        s.stock[k] -= 1;
+        addMove(s, now, k, -1, `Out with ${eng.name} for ${a.asset} (${id})`);
+      }
       s.jobs.push({
-        id, asset: a.asset, site: asset.site, note: a.note, partsId: parts?.id ?? null, engineerId: eng.id, createdAt: now,
-        leaveAt, status: 'scheduled', leg: null, arrivedAt: null, workStartAt: null, doneAt: null, closedAt: null, hseHold: a.hseHold,
-        kits: a.kits ?? [], tools: a.tools ?? [], chance: a.chance ?? null,
+        id, asset: a.asset, site: asset.site, note: a.note, engineerId: eng.id, createdAt: now,
+        leaveAt: now, status: 'scheduled', leg: null, arrivedAt: null, workStartAt: null, doneAt: null, closedAt: null, hseHold: a.hseHold,
+        carry: [...a.kits], used: null, tools: a.tools ?? [], chance: a.chance ?? null,
       });
       eng.jobId = id;
       addLog(s, now, 'Manager', `Requested ${eng.name} for ${a.asset} (${id})`);
@@ -274,6 +320,7 @@ export function apply(input: DispatchState, a: Action, now: number): Result {
       job.status = 'cancelled';
       job.leg = null;
       job.closedAt = now;
+      returnUnused(s, job, now);
       addLog(s, now, 'Manager', `Cancelled ${job.id}`);
       break;
     }
@@ -305,8 +352,6 @@ export function apply(input: DispatchState, a: Action, now: number): Result {
       const job = s.jobs.find((j) => j.id === a.jobId);
       if (!job || job.engineerId !== a.engineerId) return fail('That job is not assigned to you.');
       if (job.status !== 'on-site') return fail('You are not on site for this job.');
-      const parts = job.partsId ? s.parts.find((p) => p.id === job.partsId) : null;
-      if (parts && now < parts.arriveAt) return fail('The parts have not arrived yet.');
       job.status = 'working';
       job.workStartAt = now;
       addLog(s, now, s.engineers.find((e) => e.id === a.engineerId)!.name, `Started repair on ${job.asset}`);
@@ -316,9 +361,18 @@ export function apply(input: DispatchState, a: Action, now: number): Result {
       const job = s.jobs.find((j) => j.id === a.jobId);
       if (!job || job.engineerId !== a.engineerId) return fail('That job is not assigned to you.');
       if (job.status !== 'working') return fail('The repair has not started.');
+      const left = [...job.carry];
+      for (const u of a.used) {
+        const i = left.indexOf(u);
+        if (i < 0) return fail(`${u} was not taken for this job.`);
+        left.splice(i, 1);
+      }
       job.status = 'done';
       job.doneAt = now;
-      addLog(s, now, s.engineers.find((e) => e.id === a.engineerId)!.name, `Repaired ${job.asset}`);
+      job.used = [...a.used];
+      for (const k of job.used) addMove(s, now, k, 0, `Fitted on ${job.asset} (${job.id})`);
+      const name = s.engineers.find((e) => e.id === a.engineerId)!.name;
+      addLog(s, now, name, `Repaired ${job.asset}${job.used.length ? `, fitted ${job.used.join(', ')}` : ', no parts needed'}`);
       break;
     }
     case 'leave': {
@@ -345,13 +399,6 @@ function prune(s: DispatchState) {
     const drop = new Set(done.slice(0, done.length - 20).map((j) => j.id));
     s.jobs = s.jobs.filter((j) => !drop.has(j.id));
   }
-  const used = new Set(s.jobs.map((j) => j.partsId));
-  if (s.parts.length > 30) s.parts = s.parts.filter((p, i) => used.has(p.id) || i >= s.parts.length - 30);
-}
-
-// How far the engineer's arrival is from the parts' arrival for this job, in seconds.
-// Positive: the engineer waits for parts. Negative: parts wait for the engineer.
-export function arrivalGapS(job: Job, parts: PartsOrder | undefined) {
-  if (!parts || job.arrivedAt === null) return null;
-  return Math.round((parts.arriveAt - job.arrivedAt) / 1000);
+  const open = s.restocks.filter((r) => !r.received);
+  s.restocks = [...s.restocks.filter((r) => r.received).slice(-20), ...open];
 }

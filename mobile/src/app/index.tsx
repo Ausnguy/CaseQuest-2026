@@ -51,9 +51,10 @@ function Now({ state, job, now, kmLeft, legDone }: { state: DispatchState; job: 
   const busy = useStore((s) => s.busy);
   const shake = useStore((s) => s.shake);
   const site = siteById(job.site);
-  const parts = job.partsId ? state.parts.find((p) => p.id === job.partsId) : undefined;
-  const partsIn = parts ? now >= parts.arriveAt : true;
-  const due = now >= job.leaveAt;
+  // Kits the engineer reports as fitted. Starts empty: a repair does not always replace a part.
+  const [pick, setPick] = useState<{ job: string; used: number[] }>({ job: job.id, used: [] });
+  const used = pick.job === job.id ? pick.used : [];
+  const toggle = (i: number) => setPick({ job: job.id, used: used.includes(i) ? used.filter((x) => x !== i) : [...used, i] });
   const auto = job.leg?.autoSince != null;
   const to = job.status === 'en-route' ? site?.name : 'the base';
 
@@ -61,25 +62,26 @@ function Now({ state, job, now, kmLeft, legDone }: { state: DispatchState; job: 
   let sub = '';
   let tone: string = C.text;
   if (job.status === 'scheduled') {
-    head = due ? 'Time to leave' : `Leave in ${countdown(job.leaveAt - now)}`;
-    sub = parts && !partsIn ? `Dispatch timed this so you reach ${site?.name} as the parts land.` : `Head to ${site?.name}.`;
-    tone = due ? C.primary : C.text;
+    head = 'Time to leave';
+    sub = job.carry.length ? `Collect ${job.carry.length > 1 ? `the ${job.carry.length} kits` : 'the kit'} at the warehouse and head to ${site?.name}.` : `Head to ${site?.name}.`;
+    tone = C.primary;
   } else if (job.status === 'en-route' || job.status === 'leaving') {
     head = `${kmLeft.toFixed(1)} km to ${to}`;
     sub = shake?.status === 'unavailable' ? 'No motion sensor on this phone. Use auto drive.' : auto ? 'Auto driving. Shake to go faster.' : `Shake your phone to drive. Each shake is ${SHAKE_KM} km.`;
     tone = C.primary;
   } else if (job.status === 'on-site') {
-    head = partsIn ? 'Ready to repair' : `Parts in ${countdown(parts!.arriveAt - now)}`;
-    sub = partsIn ? 'Parts and kits are on site. Start when you begin work.' : 'You are early. Start the repair once the parts arrive.';
+    head = 'Ready to repair';
+    sub = 'You have the kits. Start when you begin work.';
     tone = C.amber;
   } else if (job.status === 'working') {
     const left = job.workStartAt! + WORK_S * 1000 - now;
     head = left > 0 ? `Repairing · ${countdown(left)}` : 'Repairing';
-    sub = left > 0 ? 'Estimated time left. Mark it repaired when you are done.' : 'Mark it repaired when you are done.';
+    sub = job.carry.length ? 'Tick the kits you fitted, then mark it repaired. Kits you did not use go back to the warehouse.' : 'Mark it repaired when you are done.';
     tone = C.amber;
   } else if (job.status === 'done') {
     head = 'Repair done';
-    sub = 'Pack up and head back to the base when you are ready.';
+    const back = job.carry.length - (job.used?.length ?? 0);
+    sub = back > 0 ? `Pack up and take the ${back} unused kit${back > 1 ? 's' : ''} back to the warehouse.` : 'Pack up and head back to the base when you are ready.';
     tone = C.green;
   }
 
@@ -92,13 +94,33 @@ function Now({ state, job, now, kmLeft, legDone }: { state: DispatchState; job: 
         {(job.status === 'en-route' || job.status === 'leaving') && <Meter value={legDone} />}
         {job.status === 'working' && <Meter value={(now - job.workStartAt!) / (WORK_S * 1000)} color={C.amber} />}
         {job.status === 'on-site' && (
-          <Btn label="Start repair" primary disabled={busy || !partsIn} onPress={() => act({ type: 'startWork', jobId: job.id, engineerId: ME })} />
+          <Btn label="Start repair" primary disabled={busy} onPress={() => act({ type: 'startWork', jobId: job.id, engineerId: ME })} />
+        )}
+        {job.status === 'working' && job.carry.length > 0 && (
+          <View accessibilityLabel="Kits fitted">
+            <Text style={st.label}>KITS FITTED</Text>
+            {job.carry.map((k, i) => {
+              const on = used.includes(i);
+              return (
+                <Pressable key={`${k}${i}`} accessibilityRole="checkbox" accessibilityState={{ checked: on }} onPress={() => toggle(i)} style={styles.kit}>
+                  <View style={[styles.box, on && { backgroundColor: C.primary, borderColor: C.primary }]}>{on ? <Text style={styles.tick}>✓</Text> : null}</View>
+                  <Text style={[st.body, { flex: 1 }]}>{k.split(' · ')[0]}</Text>
+                  <Text style={[st.small, { color: on ? C.primary : C.muted }]}>{on ? 'Fitted' : 'Not used'}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         )}
         {job.status === 'working' && (
-          <Btn label="Mark repaired" primary={now >= job.workStartAt! + WORK_S * 1000} disabled={busy} onPress={() => act({ type: 'finishWork', jobId: job.id, engineerId: ME })} />
+          <Btn
+            label={job.carry.length ? (used.length ? `Mark repaired · ${used.length} fitted` : 'Mark repaired · no parts used') : 'Mark repaired'}
+            primary={now >= job.workStartAt! + WORK_S * 1000}
+            disabled={busy}
+            onPress={() => act({ type: 'finishWork', jobId: job.id, engineerId: ME, used: used.map((i) => job.carry[i]) })}
+          />
         )}
         {job.status === 'scheduled' && (
-          <Btn label={due ? 'Set off' : 'Set off early'} primary={due} disabled={busy} onPress={() => act({ type: 'depart', jobId: job.id, engineerId: ME })} />
+          <Btn label="Set off" primary disabled={busy} onPress={() => act({ type: 'depart', jobId: job.id, engineerId: ME })} />
         )}
         {(job.status === 'en-route' || job.status === 'leaving') && (
           <Btn label={auto ? 'Stop auto drive' : 'Auto drive instead'} disabled={busy} onPress={() => act({ type: 'autoTravel', engineerId: ME, on: !auto })} />
@@ -109,12 +131,12 @@ function Now({ state, job, now, kmLeft, legDone }: { state: DispatchState; job: 
   );
 }
 
-function Details({ state, job, now }: { state: DispatchState; job: Job; now: number }) {
+function Details({ job }: { job: Job }) {
   const [tools, setTools] = useState(false);
   const site = siteById(job.site);
   const asset = assetById(job.asset);
-  const parts = job.partsId ? state.parts.find((p) => p.id === job.partsId) : undefined;
-  const partsIn = parts ? now >= parts.arriveAt : true;
+  const toFit = [...(job.used ?? [])];
+  const fitted = job.carry.map((k) => { const i = toFit.indexOf(k); if (i < 0) return false; toFit.splice(i, 1); return true; });
   return (
     <Panel title={`Job ${job.id} · ${site?.name}`}>
       <Text style={styles.asset}>{job.asset} · {asset?.type}</Text>
@@ -122,11 +144,10 @@ function Details({ state, job, now }: { state: DispatchState; job: Job; now: num
       {job.chance != null ? <Text style={[st.small, { marginTop: 2 }]}>Failure model: {Math.round(job.chance * 100)}% chance it fails within 3 days.</Text> : null}
       {job.hseHold ? <View style={{ marginTop: 10 }}><Note tone="red">Safety hold at {site?.name}: {job.hseHold}. Follow isolation and gas checks before work.</Note></View> : null}
       <View style={{ marginTop: 10 }}>
-        {(job.kits?.length ? job.kits : parts ? [parts.kit] : []).map((k) => {
-          const ordered = !!parts && parts.kit.split(' + ').includes(k);
-          const value = !ordered ? `On the ${site?.name} shelf` : partsIn ? 'Delivered to site' : `On the truck · ${countdown(parts!.arriveAt - now)}`;
-          return <KV key={k} label={k} value={value} tone={ordered && !partsIn ? 'warn' : 'ok'} />;
-        })}
+        {job.carry.length ? job.carry.map((k, i) => {
+          const value = !job.used ? 'With you' : fitted[i] ? 'Fitted' : 'Back to warehouse';
+          return <KV key={`${k}${i}`} label={k.split(' · ')[0]} value={value} tone={value === 'Back to warehouse' ? 'warn' : 'ok'} />;
+        }) : <Text style={st.small}>No kits taken for this job.</Text>}
       </View>
       {job.tools?.length ? (
         <Pressable accessibilityRole="button" accessibilityState={{ expanded: tools }} onPress={() => setTools(!tools)} style={styles.toolsHead}>
@@ -176,7 +197,6 @@ export default function MyJob() {
     legDone = job.leg.km ? doneKm / job.leg.km : 1;
     pos = legPos({ ...job.leg, doneKm, autoSince: null }, now);
   }
-  const parts = job?.partsId ? state.parts.find((p) => p.id === job.partsId) : undefined;
   const history = state.jobs.filter((j) => j.engineerId === ME && !isActive(j)).reverse().slice(0, 6);
 
   return (
@@ -198,8 +218,8 @@ export default function MyJob() {
             <Text style={st.small}>When the manager sends you to a machine, this phone buzzes and the job shows here with when to leave.</Text>
           </View>
         )}
-        <FieldMap me={pos} job={job} parts={parts} now={now} holdSites={job?.hseHold ? new Set([job.site]) : new Set()} />
-        {job ? <Details state={state} job={job} now={now} /> : null}
+        <FieldMap me={pos} job={job} holdSites={job?.hseHold ? new Set([job.site]) : new Set()} />
+        {job ? <Details job={job} /> : null}
         {history.length ? (
           <Panel title="Done today">
             {history.map((j) => (
@@ -216,6 +236,9 @@ export default function MyJob() {
 }
 
 const styles = StyleSheet.create({
+  kit: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, borderBottomWidth: 1, borderBottomColor: C.line },
+  box: { width: 22, height: 22, borderWidth: 1.5, borderColor: C.text, borderRadius: 2, alignItems: 'center', justifyContent: 'center' },
+  tick: { color: C.panel, fontFamily: F.semibold, fontSize: 14, lineHeight: 16 },
   center: { flex: 1, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', gap: 6 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: S.gutter, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line, backgroundColor: C.panel },
   brand: { fontFamily: F.displayBold, fontSize: 20, color: C.text, letterSpacing: 1.6 },

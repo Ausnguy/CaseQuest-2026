@@ -128,24 +128,16 @@ function notify(state: DispatchState, now: number) {
   if (!seen.has(job.id)) {
     seen.add(job.id);
     useStore.setState({
-      banner: { key: job.id, tone: 'job', title: `New job: ${job.asset} at ${site}`, body: job.note || 'Open the job for when to leave.' },
+      banner: { key: job.id, tone: 'job', title: `New job: ${job.asset} at ${site}`, body: `${job.carry.length ? `Collect ${job.carry.length > 1 ? `${job.carry.length} kits` : 'the kit'} at the warehouse and set off. ` : 'Set off when ready. '}${job.note}`.trim() },
     });
     Vibration.vibrate([0, 400, 200, 400]);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
   }
-  const parts = job.partsId ? state.parts.find((p) => p.id === job.partsId) : undefined;
   const readyKey = `${job.id}:ready`;
-  if (job.status === 'on-site' && (!parts || now >= parts.arriveAt) && !seen.has(readyKey)) {
+  if (job.status === 'on-site' && !seen.has(readyKey)) {
     seen.add(readyKey);
-    useStore.setState({ banner: { key: readyKey, tone: 'go', title: 'Parts on site', body: 'Everything is here. Tap Start repair when you begin.' } });
+    useStore.setState({ banner: { key: readyKey, tone: 'go', title: `On site at ${site}`, body: 'Tap Start repair when you begin work.' } });
     Vibration.vibrate([0, 300, 150, 300]);
-  }
-  const goKey = `${job.id}:go`;
-  if (job.status === 'scheduled' && now >= job.leaveAt && !seen.has(goKey)) {
-    seen.add(goKey);
-    useStore.setState({ banner: { key: goKey, tone: 'go', title: 'Time to leave', body: job.partsId ? `Set off now and you reach ${site} as the parts land.` : `Set off for ${site} now.` } });
-    Vibration.vibrate([0, 600, 200, 600, 200, 600]);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
   }
 }
 

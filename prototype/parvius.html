@@ -407,7 +407,7 @@ body.page-map.insp-open .toasts{right:calc(var(--inspW) + 32px)}
 .datechip button.on{background:var(--text);color:#fff}
 body:not(.page-map) .stage,body:not(.page-map) #modeSeg{display:none}
 .page{position:fixed;top:var(--top);left:var(--sideW);right:0;bottom:var(--tabH);overflow:auto;display:none;background:var(--bg)}
-body.page-overview #pg-overview,body.page-work #pg-work,body.page-site #pg-site{display:block}
+body.page-overview #pg-overview,body.page-work #pg-work,body.page-inventory #pg-inventory,body.page-site #pg-site{display:block}
 .page-inner{max-width:1240px;margin:0 auto;padding:24px 24px 48px}
 .page-inner.wide{max-width:1560px}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
@@ -783,6 +783,24 @@ details.more>summary{color:var(--accent-700);font-weight:600}
 .fw-conn{font:500 10.5px/1 var(--font-mono);letter-spacing:.04em;margin-left:8px}
 #fwSide .mono{display:block;margin:10px 0 2px}
 #fwToast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;z-index:90;max-width:min(560px,calc(100vw - 32px));background:var(--ink);color:var(--paper);padding:10px 14px;font-size:13px;transition:opacity .2s,transform .2s;pointer-events:none}
+.fw-mini{padding:3px 8px;font-size:12px;margin-left:8px}
+.btn-link{display:inline-flex;align-items:center;text-decoration:none}
+.inv-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:16px;align-items:start}
+@media(max-width:1100px){.inv-grid{grid-template-columns:1fr}}
+.inv-scroll{overflow-x:auto}
+table.inv{width:100%;border-collapse:collapse;font-size:14px}
+table.inv th,table.inv td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.inv thead th{font:500 11px "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+table.inv .num{text-align:right;font-variant-numeric:tabular-nums}
+table.inv tr.inv-grp th{font:600 13px "Barlow Condensed","Barlow",sans-serif;letter-spacing:.04em;text-transform:uppercase;background:var(--bg);color:var(--ink)}
+table.inv tr.short td:first-child{box-shadow:inset 3px 0 0 var(--red,#b7282a)}
+.inv-st{font:600 11px "IBM Plex Mono",ui-monospace,monospace;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border:1px solid currentColor}
+.inv-st.ok{color:#1e7f4f}.inv-st.amb{color:#94600f}.inv-st.bad{color:#b7282a}
+.inv-act{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.inv-act input{width:52px;padding:3px 6px;font:inherit;border:1px solid var(--line);background:#fff}
+.inv-moves{list-style:none;margin:0;padding:0;font-size:13px}
+.inv-moves li{display:grid;grid-template-columns:62px 48px 1fr;gap:2px 8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.inv-moves li .muted{grid-column:3}
 #fwToast.on{opacity:1;transform:translate(-50%,0)}
 
 /* ---------- map ---------- */
@@ -1102,6 +1120,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
     <a href="#/overview" data-page="overview"><svg class="ico"><use href="#i-home"/></svg><span>Overview</span></a>
     <a href="#/map" data-page="map"><svg class="ico"><use href="#i-cube"/></svg><span>Map</span></a>
     <a href="#/work" data-page="work"><svg class="ico"><use href="#i-list"/></svg><span>Work</span><b class="nav-badge" id="workBadge2"></b></a>
+    <a href="#/inventory" data-page="inventory"><svg class="ico"><use href="#i-layers"/></svg><span>Inventory</span></a>
     <button class="side-more" data-sheet-open="why" aria-label="Briefings"><svg class="ico"><use href="#i-book"/></svg><span>Briefings</span></button>
   </div>
   <div class="side-brief">
@@ -1145,6 +1164,7 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
     <a href="#/map" data-page="map">Map</a>
     <a href="#/overview" data-page="overview">Overview</a>
     <a href="#/work" data-page="work">Work<b class="nav-badge" id="workBadge"></b></a>
+    <a href="#/inventory" data-page="inventory">Inventory</a>
     <a href="#/site/S04" data-page="site" id="navTrends">Trends</a>
     <button data-sheet-open="why">Briefings</button>
   </nav>
@@ -1294,6 +1314,13 @@ body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + 
         <div class="panel"><div class="panel-h"><h2>Progress</h2></div><div id="wkProgress"></div></div>
       </aside>
     </div>
+  </div>
+</section>
+
+<section class="page" id="pg-inventory" aria-label="Inventory">
+  <div class="page-inner wide">
+    <div class="page-head"><div><h1 tabindex="-1">Parts warehouse</h1><p class="page-sub">Every repair kit the field holds, what is out with engineers and what today's predictions will need. An engineer can only be assigned once the kits for the job are on the shelf; kits they don't fit come back.</p></div></div>
+    <div id="invBody"></div>
   </div>
 </section>
 
@@ -3134,7 +3161,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ======================= pages: router + date ======================= */
-const PAGES={overview:'Overview',map:'Map',work:'Work',site:'Site'};
+const PAGES={overview:'Overview',map:'Map',work:'Work',inventory:'Inventory',site:'Site'};
 function go(p){
   p=p||'';
   if(p.startsWith('site/')){const sid=p.slice(5).toUpperCase();if(siteBy[sid]){p='site';if(UI.siteId!==sid){UI.sd.pick=null;UI.sd.hide={}}UI.siteId=sid}else{p='map';history.replaceState(null,'','#/map')}}
@@ -3150,6 +3177,7 @@ function go(p){
   if(p==='map')requestAnimationFrame(()=>{resize3d();frameTargets(true);drawSpark()});else stopTour();
   if(p==='overview')renderOverview();
   if(p==='work')renderWork();
+  if(p==='inventory'&&window.FW)FW.renderInventory();
   if(p==='site')renderSite();
   if(was!==UI.route){const pg=$('#pg-'+p);if(pg)pg.scrollTop=0}
 }

@@ -12,11 +12,13 @@ Vercel Functions have no WebSockets, so the console polls every 2 s and the phon
 
 ## Flow
 
-1. The failure model flags a machine for the replay day: likely cause, chance of failure within 3 days, the readings behind it, and which kits are on the site shelf.
-2. The manager clicks **Send engineer** (Overview, the map's field overview, the asset inspector or the Work board). Kits missing from the shelf are ordered first; each site's lead time is its observed 2025 median parts wait, played at 3 s per hour.
-3. Dispatch books the engineer to leave so they arrive as the parts land. The 3D map shows the parts truck leaving the warehouse and the engineer driving out and back.
-4. The phone buzzes with the job, then again when it is time to leave. The engineer shakes the phone to drive (0.5 km per shake) or uses auto drive.
-5. On site, the engineer taps **Start repair** once the parts are there and **Mark repaired** when done (about 20 s in the demo), then **Leave site**. Dispatch never starts, stops or changes a machine, and nothing is sent without the manager: the model only alerts.
+1. The failure model flags a machine for the replay day: likely cause, chance of failure within 3 days, the readings behind it, and the kits each cause needs.
+2. The warehouse (`stock` in the state) holds every kit, one line per kit and machine type. The manager tracks it on the **Inventory** page and restocks from the supplier; a delivery lands after the sites' median 2025 parts wait (18 h, played at 3 s per hour).
+3. The manager clicks **Send engineer**. The server refuses unless every kit for the job is on the shelf. Assigning takes the kits off the shelf and the engineer leaves the base with them.
+4. The phone buzzes with the job. The engineer shakes the phone to drive (0.5 km per shake) or uses auto drive.
+5. On site, the engineer taps **Start repair**, ticks the kits actually fitted (a repair does not always replace a part) and taps **Mark repaired**, then **Leave site**. Kits not fitted go back on the shelf when they reach the base.
+
+Dispatch never starts, stops or changes a machine, and nothing is sent without the manager: the model only alerts. Every shelf change is recorded in `moves`.
 
 ## Local
 
@@ -36,4 +38,5 @@ Open `http://localhost:3300/`. The console uses the same-origin API on `*.vercel
 ## Known gaps
 
 - No login. Anyone with the URL can act as the manager or the engineer. Fine for a judged demo, not for real use.
+- Starting stock is modeled: the workbook has no item-level inventory.
 - The console's HSE HOLD state lives in each browser, so the server cannot enforce it. Requests at held sites go through and carry the open sev-5 actions to the engineer's phone.
