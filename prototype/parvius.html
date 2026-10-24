@@ -1738,6 +1738,14 @@ function draw(t){
       ctx.beginPath();ctx.arc(it.x,it.y,Math.max(1.5,it.r*0.35),0,7);ctx.fillStyle=it.col;ctx.fill();
     }else if(it.t==='dot'){
       ctx.beginPath();ctx.arc(it.x,it.y,it.r,0,7);ctx.fillStyle=it.col;ctx.fill();
+    }else if(it.t==='fig'){
+      // A person drawn as round-capped limbs, far limbs first: outline pass, then fill pass per limb.
+      ctx.lineCap='round';
+      it.segs.forEach(s=>{ctx.beginPath();ctx.moveTo(s.a[0],s.a[1]);ctx.lineTo(s.b[0],s.b[1]);ctx.strokeStyle='rgba(29,31,32,.55)';ctx.lineWidth=s.w+2;ctx.stroke();
+        ctx.beginPath();ctx.moveTo(s.a[0],s.a[1]);ctx.lineTo(s.b[0],s.b[1]);ctx.strokeStyle=s.col;ctx.lineWidth=s.w;ctx.stroke();
+        if(s.head){ctx.beginPath();ctx.arc(s.b[0],s.b[1],s.head,0,7);ctx.fillStyle=s.col;ctx.fill();ctx.strokeStyle='rgba(29,31,32,.55)';ctx.lineWidth=1;ctx.stroke();
+          ctx.beginPath();ctx.arc(s.b[0],s.b[1]-s.head*0.25,s.head*1.02,Math.PI*1.05,Math.PI*1.95);ctx.closePath();ctx.fillStyle='#f0a030';ctx.fill();ctx.stroke()}});
+      ctx.lineCap='butt';
     }
   });
   placeLabels().sort((a,b)=>b.d-a.d).forEach(l=>{

@@ -300,13 +300,15 @@
   FW.side = () => `<div class="panel" id="fwPanel"><div class="panel-h"><h2>Field crew <span class="fw-conn" id="fwConn"></span></h2></div><div id="fwSide">${sideHtml()}</div></div>`;
 
   // ---------- 3D map: base, warehouse, engineers and supplier trucks ----------
-  const ENG = [89, 128, 166], TRUCK = [93, 93, 96];
+  const TRUCK = [93, 93, 96];
   const siteSpot = (sid) => [POS[sid][0], POS[sid][1] + 1.3];
   const same = (a, b) => a[0] === b[0] && a[1] === b[1];
   function assetSpot(aid) {
     const a = assetBy[aid], i = D.assets.filter((x) => x.site === a.site).indexOf(a), [cx, cz] = POS[a.site];
     return [cx - 2.2 + i * 2.2, cz + 0.55];
   }
+  // Where the engineer stands to work: just in front of the machine, facing it.
+  const workSpot = (aid) => { const [x, z] = assetSpot(aid); return [x, z + 0.75]; };
   function engTarget(e, t) {
     const j = e.jobId && FW.state.jobs.find((x) => x.id === e.jobId);
     if (j && j.leg && (j.status === 'en-route' || j.status === 'leaving')) {
@@ -314,7 +316,7 @@
       const from = same(j.leg.from, POS[j.site]) ? siteSpot(j.site) : j.leg.from, to = same(j.leg.to, POS[j.site]) ? siteSpot(j.site) : j.leg.to;
       return { p: [from[0] + (to[0] - from[0]) * f, from[1] + (to[1] - from[1]) * f], j, to };
     }
-    if (j && ['on-site', 'working', 'done'].includes(j.status)) return { p: siteSpot(j.site), j, onSite: true };
+    if (j && ['on-site', 'working', 'done'].includes(j.status)) return { p: j.status === 'working' ? workSpot(j.asset) : siteSpot(j.site), j, onSite: true };
     // Engineers at the base park side by side in front of it instead of on one spot.
     const i = FW.state.engineers.indexOf(e), park = [-1.1 + i * 1.1, 1.6];
     if (j) return { p: same(e.pos, [0, 0]) ? park : e.pos, j };
@@ -328,6 +330,56 @@
     addBox(x, y, z, 0.75, 0.32, 0.5, col, { stroke: 'rgba(29,31,32,.6)' });
     addBox(x + 0.12, y + 0.32, z, 0.4, 0.22, 0.46, col.map((v) => Math.min(255, v + 60)), { stroke: 'rgba(29,31,32,.6)' });
     if (lights) { const s = proj([x + 0.12, y + 0.66, z]); items.push({ t: 'dot', x: s[0], y: s[1], r: Math.max(2, s[3] * 0.07), col: Math.floor(t / 300) % 2 ? 'rgba(255,170,40,.95)' : 'rgba(255,170,40,.25)', d: s[2] - 0.5 }); }
+  }
+
+  // ---------- walking engineer ----------
+  // Motion state per engineer: eased position, height, heading and gait. The leg cycle advances with the distance
+  // actually covered, so feet never slide, and the stride amplitude eases in and out so starts and stops are smooth.
+  const STRIDE = 1.1, WALK_MAX = 3.2;
+  function moveWalker(id, goal, face, t) {
+    let m = FW.disp[id];
+    if (!m || !m.walk) m = FW.disp[id] = { walk: true, x: goal[0], z: goal[1], y: groundAt(goal[0], goal[1]), h: 0, ph: 0, amp: 0, last: t };
+    const dt = Math.min(0.1, Math.max(0, (t - m.last) / 1000)); m.last = t;
+    const dx = goal[0] - m.x, dz = goal[1] - m.z, dist = Math.hypot(dx, dz);
+    const step = Math.min(dist, Math.min(WALK_MAX, dist * 2.5) * dt);
+    if (dist > 1e-4) { m.x += dx / dist * step; m.z += dz / dist * step; }
+    const speed = dt ? step / dt : 0, moving = speed > 0.08;
+    const want = moving ? Math.atan2(dz, dx) : face ?? m.h;
+    let dh = want - m.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh));
+    m.h += dh * Math.min(1, dt * 8);
+    m.amp += ((moving ? Math.min(1, 0.45 + speed * 0.5) : 0) - m.amp) * Math.min(1, dt * 6);
+    m.ph += step / STRIDE * Math.PI * 2;
+    m.y += (groundAt(m.x, m.z) - m.y) * Math.min(1, dt * 10);
+    return m;
+  }
+  function walker(m, t, working, col) {
+    const f = [Math.cos(m.h), Math.sin(m.h)], l = [-f[1], f[0]], a = m.amp * 0.55, ph = m.ph;
+    const P = (fw, up, side) => proj([m.x + f[0] * fw + l[0] * side, m.y + up, m.z + f[1] * fw + l[1] * side]);
+    const bob = 0.022 * m.amp * Math.cos(ph * 2), crouch = working ? 0.06 : 0;
+    const hipY = 0.56 + bob - crouch, shY = 0.93 + bob - crouch, lean = 0.05 * m.amp + (working ? 0.08 : 0);
+    const segs = [], sc = proj([m.x, m.y + 0.6, m.z])[3], W = (u) => Math.max(1.5, u * sc);
+    const seg = (A, B, w, c, head) => segs.push({ a: A, b: B, w: W(w), col: c, head: head ? W(head) : 0, d: (A[2] + B[2]) / 2 });
+    for (const s of [-1, 1]) {
+      // Legs: thigh swings with the cycle, the knee folds most while that leg swings forward.
+      const th = a * Math.sin(ph + (s > 0 ? 0 : Math.PI)) + (working ? 0.25 : 0);
+      const kn = (0.15 + 0.9 * Math.max(0, Math.cos(ph + (s > 0 ? 0 : Math.PI)))) * m.amp + (working ? 0.5 : 0);
+      const hip = [0, hipY, s * 0.08], knee = [hip[0] + Math.sin(th) * 0.29, hip[1] - Math.cos(th) * 0.29, hip[2]];
+      const ank = [knee[0] + Math.sin(th - kn) * 0.29, knee[1] - Math.cos(th - kn) * 0.29, knee[2]];
+      seg(P(...hip), P(...knee), 0.1, '#3b4652'); seg(P(...knee), P(...ank), 0.09, '#3b4652');
+      seg(P(...ank), P(ank[0] + 0.08, Math.max(0.02, ank[1] - 0.02), ank[2]), 0.08, '#1d1f20');
+      // Arms swing against the legs; working arms reach forward and tap.
+      const ua = working ? 1.15 + 0.18 * Math.sin(t / 140 + s) : -a * 0.9 * Math.sin(ph + (s > 0 ? 0 : Math.PI));
+      const el = working ? 0.9 : 0.25 + 0.35 * m.amp;
+      const sh = [lean, shY, s * 0.16], elb = [sh[0] + Math.sin(ua) * 0.23, sh[1] - Math.cos(ua) * 0.23, sh[2]];
+      const hand = [elb[0] + Math.sin(ua + el) * 0.21, elb[1] - Math.cos(ua + el) * 0.21, elb[2]];
+      seg(P(...sh), P(...elb), 0.085, col); seg(P(...elb), P(...hand), 0.075, '#c9ced6');
+    }
+    seg(P(0, hipY, 0), P(lean, shY, 0), 0.24, col);
+    seg(P(lean, shY, 0), P(lean * 1.2, shY + 0.13, 0), 0.07, '#c9ced6', 0.085);
+    // Painter's order inside the figure: far limbs first, head always last.
+    const head = segs.pop(); segs.sort((p, q) => q.d - p.d); segs.push(head);
+    items.push({ t: 'fig', segs, d: proj([m.x, m.y + 0.6, m.z])[2] - 0.3 });
+    return m;
   }
   FW.scene3d = (t) => {
     addBox(0, 0, 0, 2.2, 0.55, 1.4, [226, 226, 229], { stroke: 'rgba(29,31,32,.45)' });
@@ -347,18 +399,14 @@
       addText([x, 1.3, z], `${r.qty} × ${kitName(r.sku).toUpperCase()} · ${dur(r.arriveAt - tt)}`, { size: 10, col: MAPC.amber, bold: 1, mono: 1, pri: 3 });
     }
     for (const e of FW.state.engineers) {
-      const g = engTarget(e, tt), d = FW.disp[e.id] || (FW.disp[e.id] = g.p.slice());
-      d[0] += (g.p[0] - d[0]) * 0.12; d[1] += (g.p[1] - d[1]) * 0.12;
+      const g = engTarget(e, tt), working = g.j?.status === 'working';
+      const face = working ? -Math.PI / 2 : null;
+      const m = moveWalker(e.id, g.p, face, t), d = [m.x, m.z];
       if (g.to) addLine([d[0], 0.3, d[1]], [g.to[0], 0.3, g.to[1]], 'rgba(89,128,166,.9)', 2, [6, 4], 1);
-      vehicle(d[0], d[1], ENG, t, !!g.to);
-      if (g.onSite) {
-        const [wx, wz] = assetSpot(g.j.asset), bob = g.j.status === 'working' ? 0.05 * Math.abs(Math.sin(t / 160)) : 0;
-        addBox(wx, 0.28 + bob, wz, 0.2, 0.5, 0.2, [255, 160, 40], { stroke: 'rgba(29,31,32,.6)' });
-        addBox(wx, 0.78 + bob, wz, 0.16, 0.16, 0.16, [236, 200, 160], { stroke: 'rgba(29,31,32,.6)' });
-        if (g.j.status === 'working') { const s = proj([wx, 1.0, wz]), pu = 0.5 + 0.5 * Math.sin(t / 180); items.push({ t: 'ring', x: s[0], y: s[1], r: (6 + pu * 5) * s[3] / 34, col: MAPC.accent, d: s[2] - 1 }); }
-      }
+      walker(m, t, working, e.phone ? '#41678c' : '#5980a6');
+      if (working) { const s = proj([m.x, m.y + 1.35, m.z]), pu = 0.5 + 0.5 * Math.sin(t / 180); items.push({ t: 'ring', x: s[0], y: s[1], r: (6 + pu * 5) * s[3] / 34, col: MAPC.accent, d: s[2] - 1 }); }
       const st = g.j?.status, tag = !g.j ? '' : st === 'working' ? 'REPAIRING' : st === 'on-site' ? 'ON SITE' : st === 'done' ? 'PACKING UP' : st === 'leaving' ? 'HEADING BACK' : st === 'en-route' ? `TO ${siteBy[g.j.site].name.toUpperCase()}` : 'LEAVING WITH KITS';
-      addText([d[0], 1.25, d[1]], `${short(e.name).toUpperCase()}${e.phone ? ' (PHONE)' : ''}${tag ? ' · ' + tag : ''}`, { size: 11, col: '#41678c', bold: 1, pri: 4 });
+      addText([d[0], m.y + 1.55, d[1]], `${short(e.name).toUpperCase()}${e.phone ? ' (PHONE)' : ''}${tag ? ' · ' + tag : ''}`, { size: 11, col: '#41678c', bold: 1, pri: 4 });
     }
   };
 
