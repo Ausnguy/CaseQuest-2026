@@ -1,6 +1,6 @@
 # CaseQuest 2026: Team Handoff
 
-**Last updated:** Fri Oct 23, 2026 (evening)
+**Last updated:** Sat Oct 24, 2026 (early morning)
 **Deadline:** Sat Oct 24, **4:45 PM** submission (deck ≤ 10 slides + prototype). Judging check-in 4:45 in MH 160; 7 minutes per team; **everyone speaks**.
 
 > **Like I'm 5:** A pretend oil company's machines keep breaking, and they sit broken for a long time waiting for spare parts. We're the doctors. Our one medicine: **keep the right spare parts on the shelf**. We fix the overdue safety problems **first**. And we build a little app so workers can use the plan.
@@ -55,6 +55,16 @@ All code lives in `src/casequest/` and is tested: 94 tests, 39 data checks.
 - 5 months to switch on; needs +94 h of help.
 - A go/no-go decision at month 6.
 
+### Money (details in `docs/financial-case.md`, all MODELED)
+- **Payback: month 8.** Year-1 net about **+$332k**. 3-year net about **+$1.98M**. Benefit ÷ cost about 8×.
+- **Worst case** (low effect + slow safety sign-off + oil margin −$15/bbl): it still pays back by **month 16**.
+- **The biggest lever is how fast the safety actions are closed.**
+- **Real-world checks:** case oil prices ($63–73) match EIA's ~$65/bbl 2025 WTI. A DOE-cited survey puts maintenance-management payback at about 14.5 months.
+
+### New features agreed (details in `docs/decisions-log.md` #10 and the Phase 5 design §8)
+- **Site map** with an issue box per site: must-have.
+- **AI field-report chat**, phone to operator PC: nice-to-have, timeboxed 9–11, with a form fallback. **Hazard words such as corrosion, leak or gas trigger a "Stop, make safe, call HSE" message.** The AI only drafts tickets.
+
 ## 3. Things we must NEVER say (the judges will check)
 
 - ❌ "Our sensors predict failures with 100% accuracy." The backtest is synthetic data: *feasibility, not proof*.
@@ -99,6 +109,7 @@ The full spec is `docs/phase-5-product-design.md`. Build in `app/`, and run with
 | **Sidra** | HSE gate page: HOLD/ELIGIBLE per site; a closure form only the HSE supervisor role can submit (name, date ≤ today, evidence note); **no override button** | `data.sites["pilot_blocked"]`, `data.hse` | A planner cannot lift a hold (write a test) |
 | **Austin** | Overview page (KPI tiles + the parts-wait vs spare-fill chart) and KPI page | `casequest.metrics.summarize`, `site_context`, `kpi_baselines` | Numbers match `docs/phase-3-fact-pack.md` exactly |
 | **Nick** | Business-case page: sliders for verification month (1–6) and low/base/high; costs table; Phase 2 card | `casequest.options.model_plan`, `casequest.roadmap.gate_first_waves`, `first_year` | Shows 666 h at month 3 and 483 h at month 6; costs match Phase 4 |
+| **Site map** (Austin or Wali, ~1 h) and **AI chat** (one owner, 9–11, timeboxed) | See Phase 5 design §8 | `metrics.site_context`, `signals.readiness_flags`, Claude Haiku 5.5 | Map colors match the gate; hazard words always route to HSE (tested) |
 | **Aayan** | Readiness console (pick site and date; flags; approve/edit/reject with a reason; log), "How it works" diagrams (`st.graphviz_chart`), demo script, final review | `casequest.signals.readiness_flags` | Demo (Arroyo, 2025-10-15, A012 flagged) runs twice cleanly |
 
 **Demo script, about 75 seconds:**
