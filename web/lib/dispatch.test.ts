@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { actionSchema } from './actions.js';
 import {
-  AUTO_KM_PER_S, PHONE_ENGINEER, SITES, WORK_S, apply, dist, initialState, leadTimeS, materialize,
+  AUTO_KM_PER_S, DEMO_S_PER_HOUR, PHONE_ENGINEER, SITES, WORK_S, apply, dist, initialState, leadTimeS, materialize,
   type Action, type DispatchState,
 } from './dispatch.js';
 
@@ -50,6 +50,29 @@ describe('parts first, engineer timed to the parts', () => {
     expect(working.jobs[0].status).toBe('working');
     expect(working.jobs[0].workStartAt).toBe(partsIn);
     expect(materialize(s, partsIn + WORK_S * 1000).jobs[0].status).toBe('done');
+  });
+});
+
+describe('requests from the failure model', () => {
+  it('uses each site\'s observed parts lead time', () => {
+    for (const s of SITES) expect(leadTimeS(s.id)).toBe(Math.round(s.partsLeadH * DEMO_S_PER_HOUR));
+    expect(leadTimeS('S06')).toBeLessThan(leadTimeS('S03'));
+  });
+
+  it('carries kits, tools and the predicted chance to the engineer', () => {
+    let s = run(initialState(), { type: 'orderParts', asset: 'A011', kit: 'Mechanical seal kit' }, T0);
+    s = run(s, {
+      type: 'requestEngineer', asset: 'A011', engineerId: PHONE_ENGINEER, partsId: s.parts[0].id, timing: 'with-parts', note: 'Predicted failure',
+      hseHold: null, kits: ['Bearing kit', 'Mechanical seal kit'], tools: ['Lockout/tagout kit'], chance: 0.67,
+    }, T0);
+    expect(s.jobs[0]).toMatchObject({ kits: ['Bearing kit', 'Mechanical seal kit'], tools: ['Lockout/tagout kit'], chance: 0.67 });
+  });
+
+  it('rejects a chance outside 0 to 1 and oversized tool lists', () => {
+    const base = { type: 'requestEngineer', asset: 'A011', engineerId: PHONE_ENGINEER, partsId: null, timing: 'now', note: '', hseHold: null };
+    expect(actionSchema.safeParse({ ...base, chance: 1.5 }).success).toBe(false);
+    expect(actionSchema.safeParse({ ...base, tools: Array(13).fill('x') }).success).toBe(false);
+    expect(actionSchema.safeParse({ ...base, chance: 0.67, kits: ['Bearing kit'] }).success).toBe(true);
   });
 });
 

@@ -1,4 +1,4 @@
-import { AUTO_KM_PER_S, SHAKE_KM, WORK_S, materialize, type DispatchState } from './dispatch.js';
+import { AUTO_KM_PER_S, BASE, HOME, SHAKE_KM, SITES, WORK_S, materialize, type DispatchState } from './dispatch.js';
 
 // The console on Vercel is same-origin. Cross-origin is only for the console served from a laptop.
 // The phone app is native and sends no Origin header.
@@ -29,5 +29,6 @@ export const preflight = (req: Request) => json(req, 204, null);
 
 // What clients receive: the state as of `now`, plus `now` so they can correct for their own clock.
 export function view(state: DispatchState, now: number) {
-  return { now, config: { autoKmPerS: AUTO_KM_PER_S, shakeKm: SHAKE_KM, workS: WORK_S }, state: materialize(state, now) };
+  const sites = SITES.map(({ id, name, pos }) => ({ id, name, pos }));
+  return { now, config: { autoKmPerS: AUTO_KM_PER_S, shakeKm: SHAKE_KM, workS: WORK_S, sites, base: BASE.pos, home: HOME }, state: materialize(state, now) };
 }

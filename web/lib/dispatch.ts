@@ -4,17 +4,18 @@
 
 export type Vec = [number, number];
 
-export interface Site { id: string; name: string; pos: Vec; spare: number }
+export interface Site { id: string; name: string; pos: Vec; spare: number; partsLeadH: number }
 export interface Asset { id: string; site: string; type: string }
 
-// Same layout as the console's 3D map (two rows of three), read as kilometres.
+// Same layout as the console's 3D map (two rows of three), read as kilometres. `partsLeadH` is the
+// observed median hours a 2025 repair waited when parts were not on hand (casequest.maintenance.site_times).
 export const SITES: Site[] = [
-  { id: 'S01', name: 'Cedar', pos: [-9.5, -6.2], spare: 86 },
-  { id: 'S02', name: 'Mesa', pos: [0, -6.2], spare: 65 },
-  { id: 'S03', name: 'Juniper', pos: [9.5, -6.2], spare: 92 },
-  { id: 'S04', name: 'Arroyo', pos: [-9.5, 6.2], spare: 42 },
-  { id: 'S05', name: 'Canyon', pos: [0, 6.2], spare: 78 },
-  { id: 'S06', name: 'Prairie', pos: [9.5, 6.2], spare: 70 },
+  { id: 'S01', name: 'Cedar', pos: [-9.5, -6.2], spare: 86, partsLeadH: 20.0 },
+  { id: 'S02', name: 'Mesa', pos: [0, -6.2], spare: 65, partsLeadH: 14.8 },
+  { id: 'S03', name: 'Juniper', pos: [9.5, -6.2], spare: 92, partsLeadH: 23.9 },
+  { id: 'S04', name: 'Arroyo', pos: [-9.5, 6.2], spare: 42, partsLeadH: 16.5 },
+  { id: 'S05', name: 'Canyon', pos: [0, 6.2], spare: 78, partsLeadH: 19.9 },
+  { id: 'S06', name: 'Prairie', pos: [9.5, 6.2], spare: 70, partsLeadH: 13.3 },
 ];
 export const BASE = { id: 'BASE', name: 'Maintenance base', pos: [0, 0] as Vec };
 
@@ -30,8 +31,9 @@ export const assetById = (id: string) => ASSETS.find((a) => a.id === id);
 export const AUTO_KM_PER_S = 0.5;
 export const SHAKE_KM = 0.5;
 export const WORK_S = 20;
-// Parts ship faster from a full site shelf than from the regional warehouse when the shelf is empty.
-export const leadTimeS = (siteId: string) => 30 + Math.round((100 - (siteById(siteId)?.spare ?? 50)) * 0.9);
+// Demo clock for parts: each real hour of lead time plays as this many seconds.
+export const DEMO_S_PER_HOUR = 3;
+export const leadTimeS = (siteId: string) => Math.round((siteById(siteId)?.partsLeadH ?? 18) * DEMO_S_PER_HOUR);
 
 export const PHONE_ENGINEER = 'ENG-1';
 
@@ -70,6 +72,10 @@ export interface Job {
   closedAt: number | null;
   // Open severity-5 HSE actions at the site when the manager made the request, shown to the engineer.
   hseHold: string | null;
+  // From the failure model's plan when the request came from a prediction. Older stored jobs lack them.
+  kits?: string[];
+  tools?: string[];
+  chance?: number | null;
 }
 
 export interface LogEntry { t: number; who: string; text: string }
@@ -193,7 +199,7 @@ export function materialize(input: DispatchState, now: number): DispatchState {
 
 export type Action =
   | { type: 'orderParts'; asset: string; kit: string }
-  | { type: 'requestEngineer'; asset: string; engineerId: string; partsId: string | null; timing: 'with-parts' | 'now'; note: string; hseHold: string | null }
+  | { type: 'requestEngineer'; asset: string; engineerId: string; partsId: string | null; timing: 'with-parts' | 'now'; note: string; hseHold: string | null; kits?: string[]; tools?: string[]; chance?: number | null }
   | { type: 'cancelJob'; jobId: string }
   | { type: 'depart'; jobId: string; engineerId: string }
   | { type: 'travel'; engineerId: string; km: number }
@@ -246,6 +252,7 @@ export function apply(input: DispatchState, a: Action, now: number): Result {
       s.jobs.push({
         id, asset: a.asset, site: asset.site, note: a.note, partsId: parts?.id ?? null, engineerId: eng.id, createdAt: now,
         leaveAt, status: 'scheduled', leg: null, arrivedAt: null, workStartAt: null, doneAt: null, closedAt: null, hseHold: a.hseHold,
+        kits: a.kits ?? [], tools: a.tools ?? [], chance: a.chance ?? null,
       });
       eng.jobId = id;
       addLog(s, now, 'Manager', `Requested ${eng.name} for ${a.asset} (${id})`);

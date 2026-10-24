@@ -2,7 +2,7 @@
 
 Vercel project `casequest-2026` (root directory `web/`). Production: <https://casequest-2026.vercel.app>.
 
-- `/` serves `prototype/lone-mesa-gate-console.html` (copied at build by `scripts/build.mjs`).
+- `/` serves `prototype/parvius.html`, with `prototype/fieldwork.js` beside it and the failure model's `data/model/predictions.json` as `/model.json` (copied at build by `scripts/build.mjs`).
 - `GET /api/state` returns the shared dispatch state as of now.
 - `POST /api/action` applies one manager or engineer action (`lib/actions.ts` lists them).
 - State is one JSON document in Upstash Redis, written with compare-and-set so concurrent writers retry instead of overwriting each other.
@@ -12,10 +12,11 @@ Vercel Functions have no WebSockets, so the console polls every 2 s and the phon
 
 ## Flow
 
-1. Manager orders parts for an asset. Lead time depends on the site's spare fill (demo seconds).
-2. Manager requests an engineer, timed to the parts. Dispatch sets the departure so the engineer arrives as the parts land.
-3. The phone buzzes with the job, then again when it is time to leave. The engineer shakes the phone to drive (0.5 km per shake) or uses auto drive.
-4. The repair starts by itself once the engineer and the parts are both on site, takes 20 s, then the engineer leaves for the base.
+1. The failure model flags a machine for the replay day: likely cause, chance of failure within 3 days, the readings behind it, and which kits are on the site shelf.
+2. The manager clicks **Send engineer** (Overview, the map's field overview, the asset inspector or the Work board). Kits missing from the shelf are ordered first; each site's lead time is its observed 2025 median parts wait, played at 3 s per hour.
+3. Dispatch books the engineer to leave so they arrive as the parts land. The 3D map shows the parts truck leaving the warehouse and the engineer driving out and back.
+4. The phone buzzes with the job, then again when it is time to leave. The engineer shakes the phone to drive (0.5 km per shake) or uses auto drive.
+5. The repair starts by itself once the engineer and the parts are both on site, takes 20 s, then the engineer leaves for the base.
 
 ## Local
 
@@ -26,7 +27,7 @@ npm test
 npm run typecheck
 ```
 
-Open `http://localhost:3300/?api=http://localhost:3300`. Without `?api=`, a console opened anywhere other than `*.vercel.app` talks to production.
+Open `http://localhost:3300/`. The console uses the same-origin API on `*.vercel.app` and on port 3300; opened anywhere else it talks to production unless given `?api=<url>`.
 
 ## Environment
 
