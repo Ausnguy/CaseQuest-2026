@@ -2960,10 +2960,15 @@ function verifyFormHtml(g){
     <div class="msg f-msg" role="alert"></div></div>`;
 }
 function decideFormHtml(aid){
-  const a=assetBy[aid],s=siteBy[a.site],hold=stat(a.site)==='HOLD';
+  const a=assetBy[aid],s=siteBy[a.site],hold=stat(a.site)==='HOLD',f=flagFor(D.series[aid],S.day);
+  const why=f.flag?flagEvidence(f):'early warning on the replay day';
+  // demo reason, worded for the only choice open at a held site (defer) or the usual one (stage the kit)
+  const demo=hold?`Early warning: ${why}. ${s.name} is on safety hold, so defer and keep watching until the site is signed off.`
+    :`Early warning: ${why}. Stage a bearing/seal kit at ${s.name} so a repair doesn't wait for the part.`;
   return `<div class="dform" data-asset="${aid}">
-    ${hold?`<div class="banner red" style="margin:10px 0 0">${s.name} is on safety hold. Approve is disabled; you can reject or log an advisory.</div>`:''}
-    <label>Reason (required)</label><textarea class="d-reason" aria-label="Reason" placeholder="Why approve, edit or reject?"></textarea>
+    ${hold?`<div class="banner red" style="margin:10px 0 0">${s.name} is on safety hold. Staging is disabled until it's signed off; you can still defer.</div>`:''}
+    <label>Reason (required)</label><textarea class="d-reason" aria-label="Reason" placeholder="Why stage the kit or defer?"></textarea>
+    <button class="linkbtn" data-act="fillReason" data-r="${esc(demo)}" style="margin-top:6px;font-size:12px" title="${esc(demo)}">${ico('book')} Insert the demo reason</button>
     <label>Kit</label><input type="text" class="d-kit" aria-label="Kit" value="Bearing/seal kit for ${a.type}">
     <div class="row"><button data-act="closeDlg">Cancel</button><button class="warn" data-act="decide" data-d="Reject" title="Keep monitoring; the reason is logged">Defer</button><button data-act="decide" data-d="Edit" ${hold?'disabled':''}>Stage with changes</button><button class="primary" data-act="decide" data-d="Approve pre-stage" ${hold?'disabled':''}>Stage the kit</button></div>
     <div class="msg bad small d-msg" role="alert"></div></div>`;
@@ -2996,6 +3001,7 @@ function doDecide(b){
 function handleAction(b){
   const act=b.dataset.act;
   if(act&&act.startsWith('fw')&&window.FW){if(act==='fwSend'&&isLiveDay(S.day)&&b.dataset.a)LIVE.sent[b.dataset.a]=S.day;FW.handle(b);if(act==='fwSend')renderTimeline();return true}
+  if(act==='fillReason'){const f=b.closest('.dform'),n=f.querySelector('.d-reason');n.value=b.dataset.r;f.querySelector('.d-msg').textContent='';n.focus();return true}
   if(act==='fillEv'){const f=b.closest('.vform'),n=f.querySelector('.f-note'),w=f.querySelector('.f-wit');n.value=b.dataset.ev;if(!w.value.trim())w.value='Operations lead (demo)';n.focus();return true}
   if(act==='verify'){doVerify(b.closest('.vform'));return true}
   if(act==='decide'){doDecide(b);return true}
