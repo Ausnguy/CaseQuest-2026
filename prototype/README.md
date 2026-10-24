@@ -11,3 +11,12 @@
 Data is embedded from `data/processed/*.csv` at build time (readings, events, HSE, sites, assets). If the processed data changes, the embedded numbers will not update automatically.
 
 Standalone demo aid, independent of the Streamlit app.
+
+## PARVIS voice agent
+
+Orb at bottom-right. Answers are computed from the embedded data and Solutions rules (no LLM, no API key), tailored to Plant manager / Parts planner / HSE supervisor / Executive, and it moves the 3D camera and rollout sliders. It never lifts a hold, verifies a closure or approves work.
+
+- Speech in: Whisper (`whisper-tiny.en`, about 40 MB) via transformers.js. While it loads, Chrome/Edge/Safari built-in recognition is used. Recording stops automatically when you pause; failures are explained in the chat.
+- Speech out: Kokoro HD British male voices (George, Lewis, Daniel, Fable), about 330 MB, needs WebGPU (Chrome/Edge). Falls back to the best British browser voice.
+- Click "Prepare voices (~370 MB)" while online before the demo; models are then cached by the browser.
+- Serve it (`python3 -m http.server 8000` in this folder, open `http://localhost:8000/lone-mesa-gate-console.html`) or use GitHub Pages. Opening as a local file can block the microphone and model cache.
