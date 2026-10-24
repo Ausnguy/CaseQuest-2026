@@ -5,6 +5,7 @@ import { BASE, HOME, SITES, type Job, type Vec } from '@dispatch/dispatch';
 import { C, F, S } from '@/theme';
 
 // Same schematic layout as the console's field map: six sites, the base in the middle, home off to the east.
+// Labels are drawn at 10x and scaled down: Android mangles letter spacing at font sizes below 1.
 export function FieldMap({ me, job, holdSites }: { me: Vec | null; job?: Job; holdSites: Set<string> }) {
   return (
     <View style={styles.map} accessibilityLabel={job ? `Field map with your route to site ${job.site}` : 'Field map'}>
@@ -16,13 +17,13 @@ export function FieldMap({ me, job, holdSites }: { me: Vec | null; job?: Job; ho
             <G key={s.id}>
               <Rect x={s.pos[0] - 1.6} y={s.pos[1] - 1.1} width={3.2} height={2.2} rx={0.3}
                 fill={hold ? '#4a1d24' : '#12392f'} stroke={target ? C.amber : hold ? C.red : C.teal} strokeWidth={target ? 0.25 : 0.08} />
-              <SvgText x={s.pos[0]} y={s.pos[1] + 2.1} fontSize={0.95} fill={target ? C.amber : C.muted} textAnchor="middle" fontFamily={F.medium}>{s.name}</SvgText>
+              <SvgText transform="scale(0.1)" x={s.pos[0] * 10} y={(s.pos[1] + 2.1) * 10} fontSize={9.5} fill={target ? C.amber : C.muted} textAnchor="middle" fontFamily={F.medium}>{s.name}</SvgText>
             </G>
           );
         })}
         <Rect x={-0.8} y={-0.8} width={1.6} height={1.6} transform="rotate(45)" fill="#2b2150" stroke={C.violet} strokeWidth={0.08} />
-        <SvgText x={BASE.pos[0]} y={2} fontSize={0.8} fill={C.violet} textAnchor="middle" fontFamily={F.medium}>Base</SvgText>
-        <SvgText x={HOME[0]} y={2} fontSize={0.8} fill={C.muted} textAnchor="middle" fontFamily={F.medium}>Off site</SvgText>
+        <SvgText transform="scale(0.1)" x={BASE.pos[0] * 10} y={20} fontSize={8} fill={C.violet} textAnchor="middle" fontFamily={F.medium}>Base</SvgText>
+        <SvgText transform="scale(0.1)" x={HOME[0] * 10} y={20} fontSize={8} fill={C.muted} textAnchor="middle" fontFamily={F.medium}>Off site</SvgText>
         {job?.leg && (
           <Line x1={job.leg.from[0]} y1={job.leg.from[1]} x2={job.leg.to[0]} y2={job.leg.to[1]} stroke={C.blue} strokeWidth={0.15} strokeDasharray="0.5 0.35" />
         )}
