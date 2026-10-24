@@ -929,7 +929,7 @@ body.presenter .insp{bottom:0}
 #aChart{display:block;width:100%}
 
 /* ---------- timeline lanes ---------- */
-.tl{position:fixed;z-index:15;left:0;right:calc(var(--inspW) + var(--aiW));bottom:0;height:var(--tlH);background:var(--paper);border-top:1px solid var(--divider);padding:10px 18px 10px;display:grid;grid-template-columns:76px minmax(0,1fr) 186px;grid-template-rows:34px 1fr;column-gap:14px;row-gap:8px;user-select:none}
+.tl{position:fixed;z-index:15;left:0;right:calc(var(--inspW) + var(--aiW));bottom:0;height:var(--tlH);background:var(--paper);border-top:1px solid var(--divider);padding:10px 18px 10px;display:grid;grid-template-columns:auto minmax(0,1fr) 186px;grid-template-rows:34px 1fr;column-gap:14px;row-gap:8px;user-select:none}
 body:not(.page-map) .tl{display:none}
 .tl-play{display:flex;align-items:center;gap:6px}
 #tlPlay{width:34px;height:34px;padding:0;display:grid;place-items:center;background:var(--ink);color:var(--paper);border:0;flex:0 0 34px}
@@ -946,6 +946,8 @@ body:not(.page-map) .tl{display:none}
 .tl-band.done{background:repeating-linear-gradient(-45deg,rgba(29,31,32,.22) 0 2px,transparent 2px 4px);border-left-color:var(--green)}
 .tl-mk{position:absolute;top:2px;width:7px;height:7px;margin-left:-3.5px;transform:rotate(45deg);background:var(--paper);border:1px solid var(--ink)}
 .tl-mk.w{background:var(--red);border-color:var(--red-ink)}
+.tl-mk.av{background:var(--paper);border-color:var(--green)}
+.tl-next{font-size:11px;padding:3px 8px;white-space:nowrap}
 .tl-head{position:absolute;top:-16px;bottom:-4px;width:0;border-left:1.5px solid var(--ink);pointer-events:none}
 .tl-head::before{content:"";position:absolute;top:0;left:-5px;width:9px;height:9px;background:var(--ink)}
 .tl-now{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -1041,6 +1043,7 @@ body.ai-open .ai-tab{display:none}body.ai-open .ai-panel{display:flex}
 body.page-map .toasts,body.page-map.insp-open .toasts{right:calc(var(--inspW) + var(--aiW) + 16px);bottom:calc(var(--tlH) + 16px)}
 .toast{background:var(--paper);color:var(--ink);border:1px solid var(--ink);box-shadow:var(--shadow-lg)}
 .toast.good{background:var(--paper);border-color:var(--green)}.toast.good .ico{color:var(--green)}
+.toast.bad{background:var(--paper);border-color:var(--red)}.toast.bad .ico{color:var(--red)}
 .toast button{background:transparent;border:1px solid var(--divider);color:var(--ink)}
 .sd-chip{background:transparent;border:1px solid var(--accent);color:var(--accent-700)}
 .sd-tip{background:var(--paper);border:1px solid var(--ink)}
@@ -1079,6 +1082,7 @@ body.is-live .tl{box-shadow:inset 0 3px 0 var(--red)}
 .donow .k{font:500 9.5px/1 var(--font-mono);letter-spacing:.08em;color:var(--n700)}
 .donow b{font:600 19px/1.2 var(--font-heading);letter-spacing:.01em}
 .donow p{margin:0;font-size:13px;line-height:1.45;color:var(--n800)}
+.donow .due{color:var(--red-ink);font-weight:700}
 .donow .row{margin-top:2px}.donow .row button{font-size:13px;padding:8px 14px}
 .donow .more{font-size:12px;color:var(--accent-700);background:none;border:0;padding:0;align-self:flex-start}
 .mini-sites{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--divider)}
@@ -1233,7 +1237,7 @@ details.recent .act{margin-top:6px}
   <div class="tip" id="tip"></div>
 
   <div class="fcap"><b>FIELD MAP</b><span class="mono">6 SITES · 18 ASSETS · SCHEMATIC LAYOUT</span></div>
-  <div class="live-note" role="note"><b>LIVE · SIMULATED</b><span>Real 2025 sensor days replayed in a new order to show how Parvius runs live. Not real 2026 data.</span></div>
+  <div class="live-note" role="note"><b>LIVE · SIMULATED</b><span>Real 2025 warnings and breakdowns, re-dated to show how Parvius runs live. Not real 2026 data.</span></div>
   <div class="fkey mono" aria-label="Map key">
     <span><i class="k-run"></i>RUNNING</span><span><i class="k-warn"></i>EARLY WARNING</span><span><i class="k-stop"></i>STOPPED</span><span><i class="k-hold"></i>SAFETY HOLD</span>
     <span class="k-div"></span><span><i class="k-rec"></i>RECORDED</span><span><i class="k-mod"></i>MODELED</span>
@@ -1291,7 +1295,7 @@ details.recent .act{margin-top:6px}
 </main>
 
 <section class="tl" id="tl" aria-label="Historical replay">
-  <div class="tl-play"><button id="tlPlay" aria-label="Replay 2025"><svg class="ico"><use href="#i-play"/></svg></button><span class="mono">HISTORICAL<br>REPLAY</span></div>
+  <div class="tl-play"><button id="tlPlay" aria-label="Replay 2025"><svg class="ico"><use href="#i-play"/></svg></button><button id="tlNext" class="tl-next" aria-label="Jump to the next warning or breakdown">Next ▸</button><span class="mono">HISTORICAL<br>REPLAY</span></div>
   <div class="tl-months mono" id="tlMonths"></div>
   <div class="tl-end mono">TO MAR 2026</div>
   <div class="tl-names mono" id="tlNames"></div>
@@ -1561,7 +1565,7 @@ function flagFor(series,day){
 }
 
 /* ---------- state ---------- */
-let S={role:'Planner',day:D.defaultDay,sel:null,verified:{},log:[],hl:[]};
+let S={role:'Planner',day:365,sel:null,verified:{},log:[],hl:[]};
 const KEY='lm-gate-console-v1';
 try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);S.verified=o.verified||{};S.log=(o.log||[]).map(e=>Object.freeze(e))}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({verified:S.verified,log:S.log}))}catch(e){}}
@@ -1571,43 +1575,69 @@ const stat=sid=>siteStatus(sid,S.verified);
 /* ---------- per-day derived ---------- */
 /* ---------- simulated live feed ----------
    After the 2025 history the replay runs on into a SIMULATED live period, Jan 1 to Mar 1, 2026. No reading is
-   invented: each machine replays real July–December 2025 days (data the failure model never trained on) in shuffled
-   blocks of 10–21 days, carrying those days' readings, stops and the model's own predictions. Same seed, same demo.
-   2025 totals (D.events, Trends, briefings) never include it, and every live surface is labelled SIMULATED. */
+   invented, but the order is scripted for the demo: eight real 2025 episodes where the model warned and the machine
+   then really failed are re-dated onto the live days (one warning every 2 days, from Jan 1), and every other
+   machine-day replays a real, quiet Jul-Dec 2025 day (data the failure model never trained on). The model's own
+   predictions are copied only for the episode windows. Same seed, same demo. It is not real 2026 data: 2025 totals
+   (D.events, Trends, briefings) never include it, and every live surface is labelled SIMULATED. */
 const LIVE_FIRST=365,LIVE_DAYS=60,LAST_DAY=LIVE_FIRST+LIVE_DAYS-1;
 const isLiveDay=d=>d>=LIVE_FIRST;
-const LIVE_NOTE='Simulated live feed: real 2025 sensor days replayed in a new order to show how Parvius runs live. Not real 2026 data.';
+const LIVE_NOTE='Simulated live feed: real 2025 warning-and-failure episodes and quiet days, re-dated to look live. Not real 2026 data.';
 const LIVE=(()=>{
   let seed=2026;const rnd=()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-  const src={},events=[];
+  const iso=x=>Math.round((Date.UTC(+x.slice(0,4),+x.slice(5,7)-1,+x.slice(8,10))-BASE.getTime())/864e5);
+  const EPS=[['A014','2025-07-02','2025-07-04'],['A001','2025-07-03','2025-07-05'],['A008','2025-07-03','2025-07-05'],['A005','2025-07-05','2025-07-07'],['A010','2025-07-19','2025-07-20'],['A017','2025-07-05','2025-07-07'],['A015','2025-08-07','2025-08-09'],['A004','2025-08-03','2025-08-05']];
+  const src={},events=[],episodes=[],win={};
+  EPS.forEach(([aid,w,f],i)=>{
+    const ws=iso(w),fs=iso(f),wl=LIVE_FIRST+2*i,fl=wl+(fs-ws),sh=fl-fs;
+    win[aid]={i,ws,wl,fl,sh,lo:wl-4,hi:fl+2};
+    let cause='';
+    D.events.filter(e=>e.a===aid&&Math.floor(e.s)>=ws&&Math.floor(e.s)<=fs+1).forEach(e=>{cause=cause||e.c;events.push({...e,s:e.s+sh,e:Math.min(e.e+sh,LAST_DAY+1),live:true,episode:i})});
+    episodes.push({i,aid,site:assetBy[aid].site,warnDay:wl,failDay:fl,cause});
+  });
   D.assets.forEach(a=>{
-    const map=[],ser=D.series[a.id];
-    while(map.length<LIVE_DAYS){
-      const len=10+Math.floor(rnd()*12),take=Math.min(len,LIVE_DAYS-map.length),start=181+Math.floor(rnd()*(364-181-len)),shift=LIVE_FIRST+map.length-start;
-      for(let k=0;k<take;k++)map.push(start+k);
-      D.events.filter(e=>e.a===a.id&&Math.floor(e.s)>=start&&Math.floor(e.s)<start+take).forEach(e=>events.push({...e,s:e.s+shift,e:Math.min(e.e+shift,LAST_DAY+1),live:true}));
+    const ser=D.series[a.id],ev=D.events.filter(e=>e.a===a.id),pool=[];
+    for(let d=181;d<=358;d++){
+      let ok=!ev.some(e=>e.s<=d+5&&e.e>=d-5);
+      for(let k=d-6;ok&&k<=d;k++){if((ser.v[k]!==null&&ser.v[k]>1.15)||ser.n[k])ok=false}
+      if(ok)pool.push(d);
+    }
+    for(let k=pool.length-1;k>0;k--){const j=Math.floor(rnd()*(k+1));[pool[k],pool[j]]=[pool[j],pool[k]]}
+    const quiet=pool.slice(0,12),w=win[a.id],map=[];
+    for(let k=0;k<LIVE_DAYS;k++){
+      const d=LIVE_FIRST+k;
+      map.push(w&&d>=w.lo&&d<=w.hi?d-w.sh:(quiet.length?quiet[k%quiet.length]:181+k));
     }
     map.forEach((sd,k)=>{const d=LIVE_FIRST+k;ser.v[d]=ser.v[sd];ser.n[d]=ser.n[sd];ser.r[d]=d+Math.max(0,ser.r[sd]-sd)});
     src[a.id]=map;
   });
-  return {src,events,plansMerged:false};
+  return {src,events,plansMerged:false,episodes,win,sent:{},shown:{},avoided:0,savedHours:0};
 })();
-// every stop the replay can see: 2025 history plus the simulated live stops (which all start after 2025)
+// every stop the replay can see: 2025 history plus the scripted live stops (which all start after 2025)
 const ALL_EVENTS=D.events.concat(LIVE.events);
-// the model's real prediction for each source day, re-dated onto the live day (fieldwork.js loads the model async)
+// a live failure the manager got ahead of: an engineer was sent on or before the day it would have started
+const isAvoided=e=>e.live&&LIVE.sent[e.a]!==undefined&&Math.floor(e.s)>=LIVE.sent[e.a]&&Math.floor(e.s)<=LIVE.sent[e.a]+5;
+// the model's real prediction for each source day, re-dated onto the live day, only inside each machine's episode window
 function liveMergePlans(){
   if(LIVE.plansMerged||!window.FW||!FW.model)return false;
   const P=FW.model.plans;
   for(let k=0;k<LIVE_DAYS;k++){
-    const key=dayStr(LIVE_FIRST+k),list=[];
-    D.assets.forEach(a=>{const sd=LIVE.src[a.id][k],p=(P[dayStr(sd)]||[]).find(x=>x.asset_id===a.id);if(p)list.push({...p,day:key,simulated:true,source_day:dayStr(sd)})});
+    const ld=LIVE_FIRST+k,key=dayStr(ld),list=[];
+    D.assets.forEach(a=>{const w=LIVE.win[a.id];if(!w||ld<w.lo||ld>w.fl)return;const sd=LIVE.src[a.id][k],p=(P[dayStr(sd)]||[]).find(x=>x.asset_id===a.id);if(p)list.push({...p,day:key,simulated:true,source_day:dayStr(sd)})});
     if(list.length)P[key]=list;
   }
   return LIVE.plansMerged=true;
 }
 const liveMergeT=setInterval(()=>{if(liveMergePlans()){clearInterval(liveMergeT);if(isLiveDay(S.day))refreshViews()}},400);
-function eventsUpTo(day){return ALL_EVENTS.filter(e=>e.s<=day+1)}
-function stoppedNow(aid,day){const t=day+0.5;return ALL_EVENTS.find(e=>e.a===aid&&e.s<=t&&e.e>=t)||null}
+// next live day where an episode warning starts or an episode machine fails (before the live period: its first day)
+function nextLiveEvent(d){
+  if(d<LIVE_FIRST)return LIVE_FIRST;
+  const ds=[];LIVE.episodes.forEach(x=>{ds.push(x.warnDay,x.failDay)});
+  const n=ds.filter(x=>x>d&&x<=LAST_DAY).sort((a,b)=>a-b)[0];
+  return n===undefined?null:n;
+}
+function eventsUpTo(day){return ALL_EVENTS.filter(e=>e.s<=day+1&&!isAvoided(e))}
+function stoppedNow(aid,day){const t=day+0.5;return ALL_EVENTS.find(e=>e.a===aid&&e.s<=t&&e.e>=t&&!isAvoided(e))||null}
 function allFlags(day){const o={};D.assets.forEach(a=>o[a.id]=flagFor(D.series[a.id],day));return o}
 
 /* ---------- tabs / role ---------- */
@@ -2593,8 +2623,8 @@ window.parvis=window.vigil={ask,interpret,transcribe,loadWhisper,loadHD,speak,mi
 
 /* ======================= v2 UI: command center ======================= */
 const ico=(n,cls='')=>`<svg class="ico ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
-const UI={page:'overview',mode:'story',beat:0,verifyOpen:null,workOpen:null,narrate:false,presenter:false,tour:[],sheet:null,persona:'Demo HSE supervisor'};
-try{const o=JSON.parse(localStorage.getItem('lm-v2-ui')||'{}');if(o.mode==='explore')UI.mode='explore'}catch(e){}
+const UI={page:'overview',mode:'explore',beat:0,verifyOpen:null,workOpen:null,narrate:false,presenter:false,tour:[],sheet:null,persona:'Demo HSE supervisor'};
+try{const o=JSON.parse(localStorage.getItem('lm-v2-ui')||'{}');if(o.mode==='story')UI.mode='story'}catch(e){}
 function uiSave(){try{localStorage.setItem('lm-v2-ui',JSON.stringify({mode:UI.mode}))}catch(e){}}
 const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sumSteady=()=>SITE_ORDER.reduce((a,s)=>a+steady(s),0);
@@ -2768,6 +2798,7 @@ $('#beats').addEventListener('click',e=>{
   if(a.dataset.beatAct==='explore')setMode('explore');
   if(a.dataset.beatAct==='send'&&window.FW){
     if(S.role!=='Manager')setRole('Manager');
+    if(isLiveDay(S.day)&&a.dataset.a)LIVE.sent[a.dataset.a]=S.day;
     FW.handle({dataset:{act:'fwSend',a:a.dataset.a}});flyHome({pitch:0.82,dist:42,yaw:-0.5});
   }
   if(a.dataset.beatAct==='unlock'){
@@ -2819,7 +2850,19 @@ function onDay(){
   setLiveState();
   if(UI.page==='map'&&!dlgOpen())renderInsp();
   renderTimeline();renderAI(false);
-  updateDateChip();renderWorkBadge();schedulePageRender();
+  updateDateChip();renderWorkBadge();schedulePageRender();liveOutcomes();
+}
+// once per scripted episode: a green toast if the manager sent an engineer in time, a red one if the machine broke down unattended
+function liveOutcomes(){
+  if(!isLiveDay(S.day))return;
+  LIVE.episodes.forEach(x=>{
+    if(LIVE.shown[x.i])return;
+    const e=LIVE.events.filter(v=>v.episode===x.i).sort((p,q)=>p.s-q.s)[0];
+    if(!e)return;const d0=Math.floor(e.s);if(S.day<d0||S.day>d0+1)return;
+    const a=assetBy[x.aid],sn=siteBy[a.site].name;LIVE.shown[x.i]=1;
+    if(isAvoided(e)){LIVE.avoided++;LIVE.savedHours+=e.h;toast(`${ico('check')}<div><b>Breakdown avoided at ${sn}</b>The ${a.type.toLowerCase()} ${x.aid} was fixed before it failed (${(x.cause||'').toLowerCase()}). About ${h1(e.h)} hours of downtime saved${e.pw>0?`, including ${h1(e.pw)} h that would have been spent waiting for a part`:''}.</div>`,{kind:'good big',ms:8000})}
+    else toast(`${ico('bolt')}<div><b>${sn} ${a.type.toLowerCase()} ${x.aid} broke down</b>${(x.cause||'').toLowerCase()}. An engineer could have been sent ${x.failDay-x.warnDay} days earlier.</div>`,{kind:'bad big',ms:8000});
+  });
 }
 // History vs the simulated live feed must never be confused: body class, header pill, map banner and a one-time notice.
 let liveSeen=false;
@@ -2844,7 +2887,7 @@ function renderTimeline(){
     const bands=D.gates.filter(g=>g.site===sid&&g.block).map(g=>{const d0=dayIdx(g.due);if(d0>day||d0>364)return '';const v=S.verified[g.id];
       return `<div class="tl-band${v?' done':''}" style="left:${tlPct(d0)};width:calc(${tlPct(day)} - ${tlPct(d0)})" title="${g.id} · ${esc(g.hazard)} · ${v?'verified':'overdue'} since ${prettyDate(g.due)}"></div>`}).join('');
     const marks=ALL_EVENTS.filter(e=>assetBy[e.a].site===sid&&Math.floor(e.s)<=day).map(e=>
-      `<div class="tl-mk${e.pw>0?' w':''}" style="left:${tlPct(e.s)}" title="${shortDay(e.s)} · ${e.a} ${esc(e.c.toLowerCase())} · ${h1(e.h)} h${e.pw>0?`, ${h1(e.pw)} h waiting for parts`:''}"></div>`).join('');
+      `<div class="tl-mk${isAvoided(e)?' av':e.pw>0?' w':''}" style="left:${tlPct(e.s)}" title="${isAvoided(e)?'Avoided: engineer sent in time · ':''}${shortDay(e.s)} · ${e.a} ${esc(e.c.toLowerCase())} · ${h1(e.h)} h${e.pw>0?`, ${h1(e.pw)} h waiting for parts`:''}"></div>`).join('');
     return `<div class="tl-lane">${bands}${marks}</div>`;
   }).join('')+`<div class="tl-head" style="left:${tlPct(day)}"></div>`;
   tr.setAttribute('aria-valuenow',day);tr.setAttribute('aria-valuetext',prettyDay(day));
@@ -2864,14 +2907,16 @@ function renderTimeline(){
     if(e.key==='ArrowLeft'){e.preventDefault();setDay(Math.max(6,S.day-step))}
   });
   $('#tlPlay').addEventListener('click',()=>$('#play').click());
+  $('#tlNext').addEventListener('click',jumpNextEvent);
 })();
 let playT=null;
+function jumpNextEvent(){if(playT){clearTimeout(playT);playT=null;setPlayIcon()}const n=nextLiveEvent(S.day);if(n!==null)setDay(n)}
 function setPlayIcon(){['#play','#play2','#tlPlay'].forEach(s=>{const b=$(s);b.innerHTML=ico(playT?'pause':'play');b.setAttribute('aria-label',playT?'Pause replay':'Replay 2025')});$('#play2').classList.toggle('on',!!playT)}
 // History plays fast; the simulated live period plays slowly so predictions can be dispatched as they appear.
 $('#play').addEventListener('click',()=>{
   if(playT){clearTimeout(playT);playT=null;setPlayIcon();return}
   if(S.day>=LAST_DAY-1)setDay(6);
-  const step=()=>{if(S.day>=LAST_DAY){playT=null;setPlayIcon();return}setDay(S.day+1);playT=setTimeout(step,isLiveDay(S.day)?650:90)};
+  const step=()=>{if(S.day>=LAST_DAY){playT=null;setPlayIcon();return}setDay(S.day+1);playT=setTimeout(step,isLiveDay(S.day)?2500:90)};
   playT=setTimeout(step,90);setPlayIcon();
 });
 $('#orbit').addEventListener('click',()=>{orbit=!orbit;$('#orbit span').textContent='Orbit: '+(orbit?'on':'off')});
@@ -2951,7 +2996,7 @@ function doDecide(b){
 }
 function handleAction(b){
   const act=b.dataset.act;
-  if(act&&act.startsWith('fw')&&window.FW){FW.handle(b);return true}
+  if(act&&act.startsWith('fw')&&window.FW){if(act==='fwSend'&&isLiveDay(S.day)&&b.dataset.a)LIVE.sent[b.dataset.a]=S.day;FW.handle(b);if(act==='fwSend')renderTimeline();return true}
   if(act==='fillEv'){const f=b.closest('.vform'),n=f.querySelector('.f-note'),w=f.querySelector('.f-wit');n.value=b.dataset.ev;if(!w.value.trim())w.value='Operations lead (demo)';n.focus();return true}
   if(act==='verify'){doVerify(b.closest('.vform'));return true}
   if(act==='decide'){doDecide(b);return true}
@@ -3005,12 +3050,14 @@ const likelyCause=p=>p.parts.slice().sort((a,b)=>b.likelihood-a.likelihood)[0].f
 function inspOverview(){
   const live=isLiveDay(S.day),holds=SITE_ORDER.filter(s=>stat(s)==='HOLD'),down=D.assets.filter(a=>stoppedNow(a.id,S.day));
   const preds=openPredictions(),predSites=new Set(preds.map(p=>p.site_id)),m=workModel();
-  const say=[holds.length?nOf(holds.length,'site on safety hold','sites on safety hold'):'',down.length?nOf(down.length,'machine down','machines down'):'',preds.length?nOf(preds.length,'machine likely to fail soon','machines likely to fail soon'):''].filter(Boolean);
+  const av=live?LIVE.avoided:0;
+  const say=[holds.length?nOf(holds.length,'site on safety hold','sites on safety hold'):'',down.length?nOf(down.length,'machine down','machines down'):'',preds.length?nOf(preds.length,'machine likely to fail soon','machines likely to fail soon'):'',av?`${av} ${av===1?'breakdown':'breakdowns'} avoided · ${Math.round(LIVE.savedHours)} h saved`:''].filter(Boolean);
   const card=(cls,k,title,text,btn,more)=>`<div class="donow ${cls}"><span class="k">${k}</span><b>${title}</b><p>${text}</p>${btn?`<div class="row">${btn}</div>`:''}${more?`<button class="more" data-act="page" data-p="work">${more}</button>`:''}</div>`;
   let doNow='';
   if(S.role==='Manager'){
-    const p=preds[0];
-    doNow=p?card('amb','DO THIS NOW',`Send an engineer to ${esc(siteBy[p.site_id].name)}`,`The ${esc(p.asset_type.toLowerCase())} ${p.asset_id} will likely fail in the next 3 days (${esc(likelyCause(p).toLowerCase())}). Sending someone now, with the kit, avoids the breakdown and the wait for a part.${live?' <span class="sim-tag">SIMULATED</span>':''}`,
+    const p=preds[0],fs=window.FW&&FW.state,noEng=fs&&fs.engineers&&!fs.engineers.some(g=>!g.jobId),w=p&&LIVE.win[p.asset_id],dleft=w&&live?w.fl-S.day:null;
+    doNow=p&&noEng?card('amb','ALL ENGINEERS BUSY','All engineers are busy',`${esc(p.asset_type.toLowerCase())} ${p.asset_id} is likely to fail soon but nobody is free to go. Reset dispatch to free them up.`,`<button class="primary" data-act="fwReset">Reset dispatch</button>`,'')
+      :p?card('amb','DO THIS NOW',`Send an engineer to ${esc(siteBy[p.site_id].name)}`,`The ${esc(p.asset_type.toLowerCase())} ${p.asset_id} will likely fail in the next 3 days (${esc(likelyCause(p).toLowerCase())}). Sending someone now, with the kit, avoids the breakdown and the wait for a part.${dleft!==null&&dleft>=0?` <strong class="due">Breaks down ${dleft<=1?'tomorrow':'in '+dleft+' days'} if nobody goes.</strong>`:''}${live?' <span class="sim-tag">SIMULATED</span>':''}`,
         `<button class="primary" data-act="fwSend" data-a="${p.asset_id}">Send engineer</button><button class="ghost" data-act="asset" data-a="${p.asset_id}">Details</button>`,preds.length>1?`+${preds.length-1} more likely to fail · see Work`:'')
       :card('','NOTHING URGENT','No machine is likely to fail in the next 3 days','Engineers already sent show on the map. Press play to move through time.','','');
   }else if(S.role==='Site HSE supervisor'){
@@ -3028,7 +3075,7 @@ function inspOverview(){
   const sites=SITE_ORDER.map(sid=>{const x=siteState(sid),[w,c]=x.hold?['SAFETY HOLD',C_RED]:x.down?['DOWN',C_RED]:(x.fl||predSites.has(sid))?['WATCH',C_AMB]:['RUNNING',C_GRN];
     return `<button class="mini-site" data-act="site" data-site="${sid}"><i style="background:${c}"></i><b>${siteBy[sid].name}</b><span style="color:${c}">${w}</span></button>`}).join('');
   const log=S.log.slice(-5).reverse().map(l=>`<div class="act"><time>${l.ts.slice(11,16)}</time><i style="background:${l.action==='Verified closure'?C_GRN:C_INK}"></i><span>${esc(l.role==='Site HSE supervisor'?'Safety supervisor':l.role)} · ${esc(l.action.toLowerCase())} ${esc(l.gate||l.asset||'')}${l.site?' at '+esc(siteBy[l.site]?.name||''):''}.</span></div>`);
-  const field=ALL_EVENTS.filter(e=>Math.floor(e.s)<=S.day&&Math.floor(e.s)>S.day-7).sort((a,b)=>b.s-a.s).slice(0,5).map(e=>{const a=assetBy[e.a];
+  const field=ALL_EVENTS.filter(e=>!isAvoided(e)&&Math.floor(e.s)<=S.day&&Math.floor(e.s)>S.day-7).sort((a,b)=>b.s-a.s).slice(0,5).map(e=>{const a=assetBy[e.a];
     return `<div class="act"><time>${shortDay(e.s).toUpperCase()}</time><i style="background:${e.pw>0?C_RED:C_INK}"></i><span>${siteBy[a.site].name} ${a.type.toLowerCase()} stopped (${esc(e.c.toLowerCase())})${e.pw>0?', waited for a part':''}.</span></div>`});
   const recent=log.concat(field);
   return `<div class="iv">
@@ -3290,6 +3337,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='/'){e.preventDefault();openPalette();return}
   const k=['why','roll','hse','plan'][+e.key-1];if(k){openSheet(k);return}
   if(sheetOpen)return;
+  if(e.key===']'){e.preventDefault();jumpNextEvent();return}
   if(UI.page!=='map')return;
   const onChrome=!a||a===document.body||a===cv||a.closest('#rail');
   if(UI.mode==='story'&&onChrome&&(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown')){e.preventDefault();nextBeat();return}
@@ -3884,7 +3932,7 @@ function renderAll(){
   if(UI.page==='overview')renderOverview();if(UI.page==='work')renderWork();if(UI.page==='site')renderSite();
 }
 window.addEventListener("resize",()=>{resize3d();drawSpark();drawSiteCharts();if(S.sel&&S.sel.type==='asset')drawAssetChart()});
-resize3d();frameTargets(true);setRole(S.role);setDay(S.day);renderAll();setPlayIcon();setMode(UI.mode);go(location.hash.replace(/^#\/?/,''));requestAnimationFrame(loop);
+resize3d();frameTargets(true);setRole(S.role);setDay(S.day);renderAll();setPlayIcon();setMode(UI.mode);go(location.hash.replace(/^#\/?/,'')||'map');;requestAnimationFrame(loop);
 </script>
 <script src="fieldwork.js"></script>
 </body>
