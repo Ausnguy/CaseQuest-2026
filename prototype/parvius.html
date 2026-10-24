@@ -407,7 +407,7 @@ body.page-overview #pg-overview,body.page-work #pg-work{display:block;animation:
 .hl-tiles .good{background:var(--ok-tint)}.hl-tiles .good b{color:var(--ok)}
 .headline{position:relative}
 .read-btn{position:absolute;top:16px;right:16px;font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px}
-.headline .say{padding-right:150px}
+.headline .say{padding-right:270px}
 .sites-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 .scard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:500;min-width:0}
 .scard.hold{background:var(--brand-tint);border-color:var(--brand-line)}
@@ -2376,7 +2376,7 @@ function renderOverview(){
   if(flagged.length)say2+=` ${nOf(flagged.length,'more is','more are')} showing early warning signs.`;
   $('#ovHeadline').className='headline'+(holds.length||n?'':' ok');
   UI.ovSpeech=(say+' '+say2).replace(/<[^>]+>/g,'');
-  $('#ovHeadline').innerHTML=`<button class="read-btn" data-ov="read:">${ico('speaker')} Read this to me</button><p class="say">${say}</p><p class="say2">${say2}</p>
+  $('#ovHeadline').innerHTML=`<div class="read-btn" style="border:0;padding:0;gap:6px"><button data-ov="copy:" style="font-size:12px;padding:5px 10px">Copy summary</button><button data-ov="read:" style="font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px">${ico('speaker')} Read this to me</button></div><p class="say">${say}</p><p class="say2">${say2}</p>
     <div class="hl-tiles">
       <div class="${n?'hot':'good'}"><b>${n}</b><span>machines down now</span></div>
       <div class="${w?'hot':''}"><b>${w}</b><span>of those waiting for a part</span></div>
@@ -2421,7 +2421,7 @@ function renderOverview(){
   const pf=flagged.filter(a=>stat(a.site)==='ELIGIBLE'&&!decidedFlag(a.id)),bf=flagged.filter(a=>stat(a.site)==='HOLD'&&!decidedFlag(a.id));
   if(pf.length)steps.push(`<div class="orow"><span class="oi amber">${ico('wave')}</span><div class="ot"><b>Planner:</b> decide on ${nOf(pf.length,'readiness flag','readiness flags')} at cleared sites.<span class="sub">So the right part is on the shelf before it's needed.</span></div>
     <div class="oa"><button data-ov="work:f:${pf[0].id}">Review flags</button></div></div>`);
-  if(bf.length)steps.push(`<div class="orow"><span class="oi">${ico('clock')}</span><div class="ot">${nOf(bf.length,'more flag is','more flags are')} waiting behind safety holds.<span class="sub">They can be acted on once the site is cleared.</span></div></div>`);
+  if(bf.length)steps.push(`<div class="orow"><span class="oi">${ico('clock')}</span><div class="ot">${pf.length?nOf(bf.length,'more flag is','more flags are'):nOf(bf.length,'readiness flag is','readiness flags are')} waiting behind safety holds.<span class="sub">They can be acted on once the site is cleared.</span></div></div>`);
   $('#ovNext').innerHTML=steps.length?steps.join(''):`<div class="empty">${ico('check')}Nothing needs doing on this date. Every site is cleared and no flags are open.</div>`;
   // hours
   const p=problemFacts(),bySite=SITE_ORDER.map(sid=>{const e2=p.ev.filter(e=>assetBy[e.a].site===sid);return {sid,e2,t:e2.reduce((a,e)=>a+e.h,0)}}).sort((a,b)=>b.t-a.t),mx=bySite[0].t;
@@ -2447,9 +2447,27 @@ $('#pg-overview').addEventListener('click',e=>{
   const parts=b.dataset.ov.split(':'),t=parts[0],id=parts.slice(1).join(':');
   if(t==='asset'||t==='site')showOnMap(t,id);
   if(t==='story'){nav('map');setMode('story');goBeat(0)}
+  if(t==='copy')copySummary();
   if(t==='read'){ensureAudio();if(!voiceOn){voiceOn=true;agSave();renderChips()}stopSpeaking();speak(UI.ovSpeech||'')}
   if(t==='work'){nav('work');setTimeout(()=>flashCard(id),60)}
 });
+
+function summaryText(){
+  const txt=el=>el.innerText.replace(/\s+/g,' ').trim();
+  const steps=$$('#ovNext .orow .ot').map((el,i)=>`${i+1}. ${txt(el)}`);
+  const broken=$$('#ovBroken .orow .ot').map(el=>`- ${txt(el)}`);
+  return [`Lone Mesa status, as of ${prettyDay(S.day)} (Parvius)`,'',txt($('#ovHeadline .say')),txt($('#ovHeadline .say2')),'',
+    broken.length?'Down right now:':'Nothing is down right now.',...broken,'',steps.length?'Next steps:':'No open steps.',...steps,'',
+    'Numbers marked MODELED are estimates from the case\'s own reduction rates.'].join('\n');
+}
+function copySummary(){
+  const t=summaryText(),done=()=>toast(`${ico('check')}<span>Summary copied. Paste it into an email or chat.</span>`);
+  const fallback=()=>{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){toast('Copy failed. Select the text manually.')}ta.remove()};
+  if(!(navigator.clipboard&&window.isSecureContext))return fallback();
+  let settled=false;const once=f=>()=>{if(!settled){settled=true;f()}};
+  navigator.clipboard.writeText(t).then(once(done),once(fallback));
+  setTimeout(once(fallback),1000);
+}
 
 /* ======================= Work ======================= */
 function workModel(){
