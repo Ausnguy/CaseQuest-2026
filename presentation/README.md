@@ -2,6 +2,7 @@
 
 - **Deck (view, present, download PDF/PowerPoint):** https://claude.ai/artifact/Cc69HRuTETj6Mak1r7Gy2X
   - It's private until Aayan shares it from the deck's **Share** menu. Ask him if the link won't open.
+- **Ready-made files:** [`Lone Mesa Parts Program.pdf`](Lone%20Mesa%20Parts%20Program.pdf) (submit this one) and [`Lone Mesa Parts Program.pptx`](Lone%20Mesa%20Parts%20Program.pptx)
 - **Script:** [`docs/presentation-script.md`](../docs/presentation-script.md). The same text is in each slide's speaker notes.
 - **Slide plan and rubric mapping:** [`docs/presentation-plan.md`](../docs/presentation-plan.md)
 
