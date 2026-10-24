@@ -30,7 +30,7 @@ Full reasoning, including how three blind AI grader agents ranked eight strategi
 | `src/casequest/` | Cleaning, 39 integrity checks, metrics, option modeling, rollout roadmap, readiness signals |
 | `tests/` | Automated tests for cleaning rules, dataset integrity, analysis and the recommendation |
 | `docs/` | Phase write-ups, cleaning log, reconciliation checks, fact pack, external research, team plan |
-| `prototype/` | Parvius, the standalone operations console with the Parvis voice agent (single HTML file) |
+| `prototype/` | Parvius, the operations console with the Parvis voice agent (single HTML file, `parvius.html`) |
 | `web/` | Vercel hosting for the console plus the shared dispatch API (parts orders, engineer jobs) |
 | `mobile/` | Expo app for the field engineer's phone, talks to the dispatch API |
 
@@ -40,25 +40,52 @@ Docs, in reading order: `phase-1-discovery`, `phase-2-data-audit`, `phase-3-fact
 
 **Live:** <https://casequest-2026.vercel.app>
 
-`prototype/parvius.html` is a single self-contained interactive file:
+Parvius is the Lone Mesa operations console: `prototype/parvius.html`, a single self-contained HTML file. The engineer's phone app in `mobile/` and a small dispatch API in `web/` work alongside it.
 
-- **Overview** that says what's going on in plain English: sites on hold, machines down, what might break next, and what to do first
-- **Work board** with safety checks to verify, readiness flags to decide, and what's blocked by a hold, each actionable in place
-- **3D site map** with HSE HOLD cages, spare-shelf cubes and avoided-hours towers, plus a six-beat story mode for the pitch
-- **Roles** (Planner, Site HSE supervisor, Manager) enforcing the gate rules: no override on a hold, only a supervisor records verified closure, planners approve with a logged reason
-- **2025 replay** using only readings received by the chosen date, with readiness flags
-- **Rollout and business-case sliders** (reproduces 666 h year one and 968 h steady state)
-- **Guardrail self-test** and an append-only, exportable decision log
-- **Predicted failures and field work** (Manager role): the failure model's alerts, with one-click **Send engineer** that orders missing kits and times the engineer to arrive as they land. The 3D map shows the parts truck and the engineer driving out and back. Shared live with the engineer's phone app in `mobile/` through the dispatch API in `web/`
-- **Parvis**, a voice agent that briefs a plant manager, parts planner, HSE supervisor or executive from the data (rules engine, no LLM or API key). Whisper handles speech input and Kokoro provides an HD British male voice. It never lifts a hold or authorizes work.
+### What it does
 
-The live site above needs no setup. To run it locally instead, use a local server so the mic and voice models work (opening the file directly can block them):
+Every page is "as of" the 2025 day being replayed, using only readings received by that date. Every number is labelled **recorded** (solid outline) or **modeled** (dashed outline).
+
+| Page | What it's for |
+|---|---|
+| **Map** | 3D map of the six sites: safety-hold cages, spare-shelf cubes and avoided-hours towers. The **inspector** on the right shows the field overview, a site (hold status, equipment, HSE approval workflow, open checks) or an asset (7-day early warning, 60-day vibration, planner decision). **Timeline lanes** along the bottom show each site's stops and overdue critical checks; drag to scrub through 2025. A six-beat **story mode** walks the pitch. |
+| **Overview** | What's going on in plain English: sites on hold, machines down, what might break next, what to do first. |
+| **Work** | Safety checks to verify, readiness flags to decide, and what's blocked behind a hold. |
+| **Predicted failures** | The failure model's alerts for the replay day, on the Overview, the map's field overview, the asset inspector and the Work board: likely cause, chance of failure within 3 days, the readings behind it and which kits are on the shelf. As Manager, **Send engineer** orders any missing kit and books the engineer to arrive as it lands. The 3D map shows the parts truck and the engineer driving out and back; the phone app in `mobile/` gets the job live. |
+| **Trends** (`#/site/S04`) | One site's 2025 trends by day, week or month: vibration per asset, downtime by stage, parts-wait, this month against last, any two periods side by side, causes and every stop. Open it from a site's inspector or by double-clicking a site on the map. |
+| **Briefings** | Why this problem, business case (rollout sliders reproduce 666 h year one and 968 h steady state), safety and guardrails (with a self-test), plan and KPIs. |
+
+**Roles and guardrails.** "Acting as" (HSE supervisor, Planner, Manager) enforces the gate rules:
+- A hold has no override; only a verified closure lifts it.
+- Only an HSE supervisor can sign a closure. The sign-off needs a name, a witness, a date no later than today, an evidence note and a field-verification confirmation.
+- Only the planner stages a kit, with a logged reason, and never at a held site.
+- Managers watch progress and run dispatch.
+- Every action lands in an append-only, exportable decision log.
+
+**Parvis** is the briefing agent, in the right-hand analysis column and the `Ctrl K` command bar. It answers from the data with a rules engine (no LLM or API key) and never lifts a hold or authorizes work. Whisper handles speech input and Kokoro provides an HD British male voice.
+
+**Design.** The look follows the "Parvius Operations" Claude Design file and its Industry design system:
+- Barlow Condensed headings over Barlow body text, with IBM Plex Mono labels.
+- Square hairline frames with registration marks.
+- Red means blocked or stopped, amber an early warning, and green cleared.
+
+### Run it
+
+The live site needs no setup. To run the console locally, serve it so the mic and voice models work (opening the file directly can block them):
 
 ```bash
 cd prototype && python3 -m http.server 8000
 ```
 
-Open <http://localhost:8000/parvius.html> in Chrome or Edge. Field work still talks to the live dispatch API. Click **Prepare voices (~370 MB)** once on good wifi before the demo. More detail in `prototype/README.md`.
+Open <http://localhost:8000/parvius.html> in Chrome or Edge. Click **Download HD voices** in the `Ctrl K` bar once on good wifi before the demo.
+
+Dispatch talks to the live API. Opened straight from disk, the console can't reach it. To run the console and the API together on a laptop:
+
+```bash
+cd web && npm install && npm run dev   # console + API with an in-memory store
+```
+
+Then open <http://localhost:3300/>. The engineer's phone app runs with Expo Go (`cd mobile && npm install && npx expo start --lan`); see `mobile/README.md`. More detail: `prototype/README.md` and `web/README.md`.
 
 The Streamlit "Parts Readiness Console" described in `docs/phase-5-product-design.md` is designed but not yet in this repo.
 

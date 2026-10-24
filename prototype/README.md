@@ -20,6 +20,7 @@ It has these pages, chosen from the header:
   - **Blocked by a safety hold**: flags that wait on a site's checks, with a link to those checks.
   - **Done**: verified checks and planner decisions.
   - You verify checks and decide on flags right on the cards. "Who's on it" and "Progress" sit alongside.
+- **Predicted failures and dispatch** (`fieldwork.js`): the failure model's alerts (`data/model/predictions.json`, served as `/model.json`) on the Overview, the map's field overview, the asset inspector and the Work board. As Manager, **Send engineer** orders any kit missing from the site shelf and books the engineer to arrive as it lands. The 3D map shows the parts truck from the warehouse and the engineers driving out and back, and the Work page's Field crew panel lists engineers and parts on the road. It talks to the dispatch API in `web/` (same origin on Vercel and `npm run dev`, otherwise production or `?api=`), shared live with the engineer's phone in `mobile/`.
 - **Map**: the 3D command center.
   - **Story mode**: six beats (Problem → Why parts → The gate → Unlock it → Payoff → Plan) that fly the camera. In "Unlock it" you verify Arroyo's checks yourself and watch the cage drop and the prize meter count up.
   - **Explore mode**: click any site or asset to open the inspector.
